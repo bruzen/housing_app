@@ -1,5 +1,34 @@
+# import streamlit as st
+# from datetime import time
+
+import yfinance as yf
 import streamlit as st
-from datetime import time
+
+st.write("""
+# Simple Stock Price App
+
+Shown are the stock **closing price** and ***volume*** of Google!
+
+""")
+
+# https://towardsdatascience.com/how-to-get-stock-data-using-python-c0de1df17e75
+#define the ticker symbol
+tickerSymbol = 'GOOGL'
+#get data on this ticker
+tickerData = yf.Ticker(tickerSymbol)
+#get the historical prices for this ticker
+tickerDf = tickerData.history(period='1d', start='2010-5-31', end='2020-5-31')
+# Open	High	Low	Close	Volume	Dividends	Stock Splits
+
+st.write("""
+## Closing Price
+""")
+st.line_chart(tickerDf.Close)
+st.write("""
+## Volume Price
+""")
+st.line_chart(tickerDf.Volume)
+
 
 # st.title("Making a Button")
 # result = st.button("Click Here")
@@ -32,31 +61,31 @@ from datetime import time
 # st.write("Start time:", start_time)
 
 
-page_names = ['Checkbox', 'Button']
-page = st.radio('Navigation', page_names)
-st.write("**The variable 'page' returns:**", page)
+# page_names = ['Checkbox', 'Button']
+# page = st.radio('Navigation', page_names)
+# st.write("**The variable 'page' returns:**", page)
 
-if page == 'Checkbox':
-   st.subheader('Welcome to the Checkbox page!')
-   st.write("Nice to see you! :wave:")
+# if page == 'Checkbox':
+#    st.subheader('Welcome to the Checkbox page!')
+#    st.write("Nice to see you! :wave:")
 
-   check = st.checkbox("Click here")
-   st.write('State of the checkbox:', check)
+#    check = st.checkbox("Click here")
+#    st.write('State of the checkbox:', check)
 
-   if check:
-       nested_btn = st.button("Button nested in Checkbox")
+#    if check:
+#        nested_btn = st.button("Button nested in Checkbox")
 
-       if nested_btn:
-           st.write(":cake:"*20)
-else:
-   st.subheader("Welcome to the Button page!")
-   st.write(":thumbsup:")
+#        if nested_btn:
+#            st.write(":cake:"*20)
+# else:
+#    st.subheader("Welcome to the Button page!")
+#    st.write(":thumbsup:")
 
-   result = st.button('Click Here')
-   st.write("State of button:",result)
+#    result = st.button('Click Here')
+#    st.write("State of button:",result)
 
-   if result:
-       nested_check = st.checkbox("Checkbox nested in Button")
+#    if result:
+#        nested_check = st.checkbox("Checkbox nested in Button")
 
-       if nested_check:
-           st.write(":heart:"*20)
+#        if nested_check:
+#            st.write(":heart:"*20)
