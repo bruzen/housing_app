@@ -1,5 +1,7 @@
 import streamlit as st
 
-st.title('🎈 App Name')
-
-st.write('Hello world!')
+st. title("Making a Button"
+result = st. button ("Click Here")
+st. write (result)
+if result:
+  st. write(": smile:")
