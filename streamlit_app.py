@@ -25,8 +25,8 @@ appointment = st.slider(
     value=(time(11, 30), time(12, 45)))
 st.write("You're scheduled for:", appointment)
     
-start_time = st.slider(
-    "When do you start?",
-    value=datetime(2020, 1, 1, 9, 30),
-    format="MM/DD/YY - hh:mm")
-st.write("Start time:", start_time)
+# start_time = st.slider(
+#     "When do you start?",
+#     value=datetime(2020, 1, 1, 9, 30),
+#     format="MM/DD/YY - hh:mm")
+# st.write("Start time:", start_time)
