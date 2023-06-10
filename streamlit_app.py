@@ -2,6 +2,9 @@ import streamlit as st
 import numpy as np
 import matplotlib.pyplot as plt
 
+# Set up the Streamlit app
+st.set_page_config(layout='wide')  # Optional: Set the layout to wide
+
 # Set up the grid
 GRID_SIZE = 20
 EMPTY = 0
@@ -70,11 +73,8 @@ def simulate_step(grid):
 
     return new_grid
 
-# Set up the Streamlit app
-st.set_page_config(layout='wide')  # Optional: Set the layout to wide
-st.title("Schelling's Model of Segregation")
-
 # Design the user interface
+st.title("Schelling's Model of Segregation")
 num_steps = st.slider("Number of Steps", min_value=1, max_value=100, value=10)
 play_button = st.button("Play")
 step_number = st.empty()
@@ -102,11 +102,4 @@ for step in range(num_steps):
 # Display previous steps
 if len(grid_history) > 0:
     st.subheader("Previous Steps")
-    step_index = st.slider("Step Index", 0, len(grid_history) - 1, 0)
-
-    ax.imshow(grid_history[step_index], cmap='bwr', vmin=0, vmax=2)
-    ax.set_title(f"Step: {step_index}")
-    ax.axis('off')
-
-    st.pyplot(fig)
-
+    step_index = st.slider("Step Index", 0, len(grid_history
