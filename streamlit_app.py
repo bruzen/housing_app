@@ -101,3 +101,12 @@ for step in range(num_steps):
 
 # Display previous steps
 if len(grid_history) > 0:
+    st.subheader("Previous Steps")
+    step_index = st.slider("Step Index", 0, len(grid_history) - 1, 0)
+
+    ax.imshow(grid_history[step_index], cmap='bwr', vmin=0, vmax=2)
+    ax.set_title(f"Step: {step_index}")
+    ax.axis('off')
+
+    st.pyplot(fig)
+
