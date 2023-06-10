@@ -35,7 +35,9 @@ class SimpleModel(Model):
         for i in range(self.num_agents):
             a = SimpleAgent(i, self)
             self.schedule.add(a)
-            self.grid.place_agent(a, self.random.choice(self.grid.get_all_cell_positions()))
+            x = self.random.randrange(self.grid.width)
+            y = self.random.randrange(self.grid.height)
+            self.grid.place_agent(a, (x, y))
         
         self.datacollector = DataCollector(
             model_reporters={"Wealth": lambda m: self.get_total_wealth()})
