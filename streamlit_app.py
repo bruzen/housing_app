@@ -35,9 +35,7 @@ class SimpleModel(Model):
         for i in range(self.num_agents):
             a = SimpleAgent(i, self)
             self.schedule.add(a)
-            x = self.random.randrange(self.grid.width)
-            y = self.random.randrange(self.grid.height)
-            self.grid.position_agent(a, (x, y))
+            self.grid.place_agent(a, self.random.choice(self.grid.get_all_cell_positions()))
         
         self.datacollector = DataCollector(
             model_reporters={"Wealth": lambda m: self.get_total_wealth()})
@@ -60,12 +58,11 @@ def main():
     
     # User input for simulation parameters
     num_agents = st.slider("Number of Agents", min_value=10, max_value=100, value=50)
-    grid_width = st.slider("Grid Width", min_value=5, max_value=20, value=10)
-    grid_height = st.slider("Grid Height", min_value=5, max_value=20, value=10)
+    grid_size = st.slider("Grid Size", min_value=10, max_value=50, value=20)
     num_steps = st.slider("Number of Steps", min_value=10, max_value=200, value=100)
     
     # Run the simulation and retrieve data
-    model = SimpleModel(N=num_agents, width=grid_width, height=grid_height)
+    model = SimpleModel(N=num_agents, width=grid_size, height=grid_size)
     for _ in range(num_steps):
         model.step()
     
