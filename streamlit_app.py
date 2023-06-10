@@ -1,105 +1,84 @@
 import streamlit as st
-import numpy as np
-import matplotlib.pyplot as plt
+from mesa import Agent, Model
+from mesa.time import RandomActivation
+from mesa.space import SingleGrid
+from mesa.datacollection import DataCollector
 
-# Set up the Streamlit app
-st.set_page_config(layout='wide')  # Optional: Set the layout to wide
+class SimpleAgent(Agent):
+    def __init__(self, unique_id, model):
+        super().__init__(unique_id, model)
+        self.wealth = 1
+    
+    def step(self):
+        self.move()
+        self.interact()
+    
+    def move(self):
+        possible_steps = self.model.grid.get_neighborhood(
+            self.pos, moore=True, include_center=False)
+        new_position = self.random.choice(possible_steps)
+        self.model.grid.move_agent(self, new_position)
+    
+    def interact(self):
+        cellmates = self.model.grid.get_cell_list_contents([self.pos])
+        if len(cellmates) > 1:
+            other_agent = self.random.choice(cellmates)
+            self.wealth += 1
+            other_agent.wealth -= 1
 
-# Set up the grid
-GRID_SIZE = 20
-EMPTY = 0
-AGENT_A = 1
-AGENT_B = 2
+class SimpleModel(Model):
+    def __init__(self, N):
+        self.num_agents = N
+        self.schedule = RandomActivation(self)
+        self.grid = SingleGrid(10, 10, torus=True)
+        
+        for i in range(self.num_agents):
+            a = SimpleAgent(i, self)
+            self.schedule.add(a)
+            x = self.random.randrange(self.grid.width)
+            y = self.random.randrange(self.grid.height)
+            self.grid.position_agent(a, (x, y))
+        
+        self.datacollector = DataCollector(
+            model_reporters={"Wealth": lambda m: self.get_total_wealth()})
+    
+    def step(self):
+        self.datacollector.collect(self)
+        self.schedule.step()
+    
+    def get_total_wealth(self):
+        return sum([agent.wealth for agent in self.schedule.agents])
 
-# Initialize the grid with random agent distribution
-@st.cache(allow_output_mutation=True)
-def initialize_grid():
-    return np.random.choice([AGENT_A, AGENT_B], size=(GRID_SIZE, GRID_SIZE), p=[0.5, 0.5])
+# Function to run the simulation
+def run_simulation():
+    model = SimpleModel(N=100)
+    for _ in range(100):
+        model.step()
+    
+    return model.datacollector.get_model_vars_dataframe()
 
-grid = initialize_grid()
-empty_cells = np.where(grid == EMPTY)
-
-# Define the segregation threshold
-seg_threshold = st.slider("Segregation Threshold", 0.0, 1.0, 0.3, 0.05)
-
-# Calculate the percentage of similar neighbors
-def calculate_similarity(grid, i, j):
-    agent_type = grid[i, j]
-    total_neighbors = 0
-    similar_neighbors = 0
-
-    for di in [-1, 0, 1]:
-        for dj in [-1, 0, 1]:
-            if di == 0 and dj == 0:
-                continue
-
-            ni = i + di
-            nj = j + dj
-
-            if ni < 0 or ni >= GRID_SIZE or nj < 0 or nj >= GRID_SIZE:
-                continue
-
-            total_neighbors += 1
-
-            if grid[ni, nj] == agent_type:
-                similar_neighbors += 1
-
-    if total_neighbors == 0:
-        return 0.0
-
-    return similar_neighbors / total_neighbors
-
-# Perform one step of the simulation
-def simulate_step(grid):
-    new_grid = grid.copy()
-    empty_cells = np.where(grid == EMPTY)
-
-    for i, j in zip(*empty_cells):
-        similarity = calculate_similarity(grid, i, j)
-
-        if similarity < seg_threshold:
-            agent_type = grid[i, j]
-
-            # Find a random empty cell to move to
-            random_index = np.random.randint(len(empty_cells[0]))
-            ni, nj = empty_cells[0][random_index], empty_cells[1][random_index]
-
-            new_grid[i, j] = EMPTY
-            new_grid[ni, nj] = agent_type
-
-            # Update the empty cells list
-            empty_cells[0][random_index] = i
-            empty_cells[1][random_index] = j
-
-    return new_grid
-
-# Design the user interface
-st.title("Schelling's Model of Segregation")
-num_steps = st.slider("Number of Steps", min_value=1, max_value=100, value=10)
-play_button = st.button("Play")
-step_number = st.empty()
-
-# Run the simulation
-fig, ax = plt.subplots(figsize=(6, 6))  # Set the figure size
-current_step = 0
-grid_history = []
-
-for step in range(num_steps):
-    if play_button:
-        grid_history.append(grid.copy())
-        grid = simulate_step(grid)
-
-    ax.imshow(grid, cmap='bwr', vmin=0, vmax=2)
-    ax.set_title(f"Step: {step}")
-    ax.axis('off')
-
-    st.pyplot(fig)
-
-    if play_button:
-        current_step += 1
-        step_number.text(f"Current Step: {current_step}")
-
-# Display previous steps
-if len(grid_history) > 0:
-    st.subheader("Previous Steps")
-    step
+# Streamlit App
+def main():
+    # Set page title and layout
+    st.set_page_config(page_title="Agent-Based Model", layout="wide")
+    
+    # Set app title and description
+    st.title("Agent-Based Model with Streamlit Cloud")
+    st.write("This is a simple example of an agent-based model displayed using Streamlit Cloud.")
+    
+    # Run the simulation and retrieve data
+    data = run_simulation()
+    
+    # Display data using Streamlit components
+    st.header("Model Output")
+    st.dataframe(data)
+    
+    st.header("Visualization")
+    # Add visualization components here (e.g., matplotlib, plotly, etc.)
+    # You can create plots or charts to visualize the model output.
+    # For example, you can use st.pyplot() to display matplotlib plots.
+    # Customize the visualization as per your specific needs.
+    
+# Run the app
+if __name__ == '__main__':
+    main()
