@@ -64,10 +64,12 @@ def simulate_step():
             empty_cells[1][random_index] = j
 
 # Set up the Streamlit app
+st.set_page_config(layout='wide')  # Optional: Set the layout to wide
 st.title("Schelling's Model of Segregation")
 
 # Design the user interface
 num_steps = st.slider("Number of Steps", min_value=1, max_value=100, value=10)
+play_button = st.button("Play")
 
 # Run the simulation
 fig, ax = plt.subplots()
@@ -79,57 +81,10 @@ for step in range(num_steps):
 
     st.pyplot(fig)
 
-    simulate_step()
+    if play_button:
+        simulate_step()
 
 # Run the Streamlit app
 if __name__ == '__main__':
-    st.set_page_config(layout='wide')  # Optional: Set the layout to wide
     st.sidebar.markdown("Adjust the number of steps using the slider.")
     simulate_step()  # Perform an initial simulation step
-
-
-# import streamlit as st
-# import pandas as pd
-# import numpy as np
-# import pydeck as pdk
-# import matplotlib.pyplot as plt
-
-
-# chart_data = pd.DataFrame(
-#    np.random.randn(1000, 2) / [50, 50] + [37.76, -122.4],
-#    columns=['lat', 'lon'])
-
-# st.pydeck_chart(pdk.Deck(
-#     map_style=None,
-#     initial_view_state=pdk.ViewState(
-#         latitude=37.76,
-#         longitude=-122.4,
-#         zoom=11,
-#         pitch=50,
-#     ),
-#     layers=[
-#         pdk.Layer(
-#            'HexagonLayer',
-#            data=chart_data,
-#            get_position='[lon, lat]',
-#            radius=200,
-#            elevation_scale=4,
-#            elevation_range=[0, 1000],
-#            pickable=True,
-#            extruded=True,
-#         ),
-#         pdk.Layer(
-#             'ScatterplotLayer',
-#             data=chart_data,
-#             get_position='[lon, lat]',
-#             get_color='[200, 30, 0, 160]',
-#             get_radius=200,
-#         ),
-#     ],
-# ))
-
-# arr = np.random.normal(1, 1, size=100)
-# fig, ax = plt.subplots()
-# ax.hist(arr, bins=20)
-
-# st.pyplot(fig)
