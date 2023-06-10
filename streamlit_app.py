@@ -12,7 +12,7 @@ AGENT_B = 2
 SEGREGATION_THRESHOLD = 0.3
 
 # Initialize the grid with random agent distribution
-grid = np.random.choice([AGENT_A, AGENT_B], size=(GRID_SIZE, GRID_SIZE), p=[0.45, 0.45])
+grid = np.random.choice([AGENT_A, AGENT_B], size=(GRID_SIZE, GRID_SIZE), p=[0.5, 0.5])
 empty_cells = np.where(grid == EMPTY)
 
 # Calculate the percentage of similar neighbors
