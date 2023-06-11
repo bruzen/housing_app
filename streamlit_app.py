@@ -4,6 +4,7 @@ from mesa.time import RandomActivation
 from mesa.space import MultiGrid
 from mesa.datacollection import DataCollector
 import streamlit as st
+import pandas as pd
 
 # Define the Agent class
 class MyAgent(Agent):
@@ -51,9 +52,12 @@ def run_model(num_steps):
     for _ in range(num_steps):
         model.step()
 
-    # Display the number of agents and their states using Streamlit
+    # Get the model and agent data
     model_data = model.datacollector.get_model_vars_dataframe()
     agent_data = model.datacollector.get_agent_vars_dataframe()
+    agent_data.reset_index(inplace=True)  # Reset index to include 'Step' column
+
+    # Display the number of agents and their states using Streamlit
     st.line_chart(model_data)
     st.line_chart(agent_data)
 
