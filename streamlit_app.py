@@ -5,10 +5,10 @@ import streamlit as st
 
 
 class Agent:
-    def __init__(self, x, y):
+    def __init__(self, x, y, num_states):
         self.x = x
         self.y = y
-        self.state = 0
+        self.state = random.randint(0, num_states - 1)
 
     def step(self, model):
         self.state += 1
@@ -16,10 +16,11 @@ class Agent:
 
 
 class SimpleModel:
-    def __init__(self, N, width, height):
+    def __init__(self, N, width, height, num_states):
         self.num_agents = N
         self.grid_width = width
         self.grid_height = height
+        self.num_states = num_states
         self.grid = np.zeros((width, height), dtype=int)
         self.schedule = []
 
@@ -27,7 +28,7 @@ class SimpleModel:
         for i in range(self.num_agents):
             x = random.randint(0, self.grid_width - 1)
             y = random.randint(0, self.grid_height - 1)
-            agent = Agent(x, y)
+            agent = Agent(x, y, self.num_states)
             self.schedule.append(agent)
             self.grid[x, y] = agent.state
 
@@ -40,7 +41,7 @@ class SimpleModel:
 
 def run_model(num_steps):
     # Create a simple model
-    model = SimpleModel(N=100, width=10, height=10)
+    model = SimpleModel(N=100, width=10, height=10, num_states=5)
 
     # Create data for visualization
     agent_data = []
