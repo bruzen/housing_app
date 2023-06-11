@@ -1,67 +1,84 @@
+import random
 import numpy as np
-from mesa import Agent, Model
-from mesa.time import RandomActivation
-from mesa.space import MultiGrid
-from mesa.datacollection import DataCollector
+import matplotlib.pyplot as plt
 import streamlit as st
-import pandas as pd
 
-# Define the Agent class
-class MyAgent(Agent):
-    def __init__(self, unique_id, model):
-        super().__init__(unique_id, model)
-        self.state = 0  # Initial state
 
-    def step(self):
-        neighbors = self.model.grid.get_neighbors(self.pos, moore=True)
-        if neighbors:
-            other_agent = self.random.choice(neighbors)
-            self.model.grid.move_agent(self, other_agent.pos)
-            self.state += 1  # Update agent state
+class Agent:
+    def __init__(self, x, y):
+        self.x = x
+        self.y = y
+        self.state = 0
 
-# Define the Model class
-class MyModel(Model):
-    def __init__(self, width, height, num_agents):
-        self.width = width
-        self.height = height
-        self.num_agents = num_agents
-        self.schedule = RandomActivation(self)
-        self.grid = MultiGrid(self.width, self.height, torus=True)
+    def step(self, model):
+        self.state += 1
+        self.state %= model.num_states
 
+
+class SimpleModel:
+    def __init__(self, N, width, height):
+        self.num_agents = N
+        self.grid_width = width
+        self.grid_height = height
+        self.grid = np.zeros((width, height), dtype=int)
+        self.schedule = []
+
+        # Create agents
         for i in range(self.num_agents):
-            agent = MyAgent(i, self)
-            self.schedule.add(agent)
-            x = self.random.randrange(self.width)
-            y = self.random.randrange(self.height)
-
-            try:
-                self.grid.place_agent(agent, (x, y))
-            except Exception as e:
-                print(f"Error placing agent {agent.unique_id} at position ({x}, {y}): {e}")
-
-        self.datacollector = DataCollector(model_reporters={"NumAgents": lambda m: m.schedule.get_agent_count()},
-                                           agent_reporters={"State": lambda a: a.state})
+            x = random.randint(0, self.grid_width - 1)
+            y = random.randint(0, self.grid_height - 1)
+            agent = Agent(x, y)
+            self.schedule.append(agent)
+            self.grid[x, y] = agent.state
 
     def step(self):
-        self.datacollector.collect(self)
-        self.schedule.step()
+        random.shuffle(self.schedule)
+        for agent in self.schedule:
+            agent.step(self)
+            self.grid[agent.x, agent.y] = agent.state
 
-# Streamlit app
+
 def run_model(num_steps):
-    model = MyModel(10, 10, 100)
-    for _ in range(num_steps):
+    # Create a simple model
+    model = SimpleModel(N=100, width=10, height=10)
+
+    # Create data for visualization
+    agent_data = []
+
+    # Run the model for the specified number of steps
+    for step in range(num_steps):
+        # Step the model
         model.step()
 
-    # Get the model and agent data
-    model_data = model.datacollector.get_model_vars_dataframe()
-    agent_data = model.datacollector.get_agent_vars_dataframe()
-    agent_data.reset_index(inplace=True)  # Reset index to include 'Step' column
+        # Collect agent state data
+        agent_state_counts = np.zeros(model.num_states, dtype=int)
+        for agent in model.schedule:
+            agent_state_counts[agent.state] += 1
+        agent_data.append(agent_state_counts.copy())
 
-    # Display the number of agents and their states using Streamlit
-    st.line_chart(model_data)
-    st.line_chart(agent_data)
+    # Convert data to numpy array and transpose for plotting
+    agent_data = np.array(agent_data).T
 
-# Run the Streamlit app
-if __name__ == "__main__":
-    num_steps = st.sidebar.slider("Number of Steps", 0, 100, 10)
+    # Plot grid and agent state evolution
+    fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(10, 5))
+    ax1.imshow(model.grid, cmap='viridis')
+    ax1.set_title("Agent State Grid")
+    ax1.axis('off')
+    ax2.plot(agent_data)
+    ax2.set_title("Agent State Evolution")
+    ax2.set_xlabel("Step")
+    ax2.set_ylabel("Count")
+
+    # Display the plots using Streamlit
+    st.pyplot(fig)
+
+
+def main():
+    st.title("Agent-Based Model Visualization")
+
+    num_steps = st.slider("Number of Steps", min_value=1, max_value=100, value=50)
     run_model(num_steps)
+
+
+if __name__ == '__main__':
+    main()
