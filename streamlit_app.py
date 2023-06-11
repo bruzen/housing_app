@@ -11,7 +11,7 @@ class MyAgent(Agent):
         super().__init__(unique_id, model)
 
     def step(self):
-        neighbors = self.model.grid.get_neighbors(self.pos)
+        neighbors = self.model.grid.get_neighbors(self.pos, moore=True)  # Specify the 'moore' argument
         if neighbors:
             other_agent = self.random.choice(neighbors)
             self.model.grid.move_agent(self, other_agent.pos)
@@ -30,7 +30,11 @@ class MyModel(Model):
             self.schedule.add(agent)
             x = self.random.randrange(self.width)
             y = self.random.randrange(self.height)
-            self.grid.place_agent(agent, (x, y))
+
+            try:
+                self.grid.place_agent(agent, (x, y))
+            except Exception as e:
+                print(f"Error placing agent {agent.unique_id} at position ({x}, {y}): {e}")
 
         self.datacollector = DataCollector(model_reporters={"NumAgents": lambda m: m.schedule.get_agent_count()})
 
