@@ -9,12 +9,14 @@ import streamlit as st
 class MyAgent(Agent):
     def __init__(self, unique_id, model):
         super().__init__(unique_id, model)
+        self.state = 0  # Initial state
 
     def step(self):
-        neighbors = self.model.grid.get_neighbors(self.pos, moore=True)  # Specify the 'moore' argument
+        neighbors = self.model.grid.get_neighbors(self.pos, moore=True)
         if neighbors:
             other_agent = self.random.choice(neighbors)
             self.model.grid.move_agent(self, other_agent.pos)
+            self.state += 1  # Update agent state
 
 # Define the Model class
 class MyModel(Model):
@@ -36,7 +38,8 @@ class MyModel(Model):
             except Exception as e:
                 print(f"Error placing agent {agent.unique_id} at position ({x}, {y}): {e}")
 
-        self.datacollector = DataCollector(model_reporters={"NumAgents": lambda m: m.schedule.get_agent_count()})
+        self.datacollector = DataCollector(model_reporters={"NumAgents": lambda m: m.schedule.get_agent_count()},
+                                           agent_reporters={"State": lambda a: a.state})
 
     def step(self):
         self.datacollector.collect(self)
@@ -48,8 +51,11 @@ def run_model(num_steps):
     for _ in range(num_steps):
         model.step()
 
-    # Display the number of agents using Streamlit
-    st.line_chart(model.datacollector.get_model_vars_dataframe())
+    # Display the number of agents and their states using Streamlit
+    model_data = model.datacollector.get_model_vars_dataframe()
+    agent_data = model.datacollector.get_agent_vars_dataframe()
+    st.line_chart(model_data)
+    st.line_chart(agent_data)
 
 # Run the Streamlit app
 if __name__ == "__main__":
