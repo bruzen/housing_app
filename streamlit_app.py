@@ -22,6 +22,7 @@ class SimpleModel:
         self.grid_width = width
         self.grid_height = height
         self.num_states = num_states
+        self.grid = np.zeros((width, height), dtype=int)
         self.schedule = []
 
         # Create agents
@@ -30,11 +31,13 @@ class SimpleModel:
             y = random.randint(0, self.grid_height - 1)
             agent = SimpleAgent(x, y, self.num_states)
             self.schedule.append(agent)
+            self.grid[x, y] = agent.state
 
     def step(self):
         random.shuffle(self.schedule)
         for agent in self.schedule:
             agent.step(self)
+            self.grid[agent.x, agent.y] = agent.state
 
 
 def run_model(num_steps):
@@ -74,6 +77,10 @@ def run_model(num_steps):
 
     # Display the plots using Streamlit
     st.altair_chart(chart, use_container_width=True)
+
+    # Display the agent state grid
+    st.subheader("Agent State Grid")
+    st.image(model.grid, caption="Agent State Grid", use_column_width=True)
 
 
 def main():
