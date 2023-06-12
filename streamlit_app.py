@@ -8,34 +8,32 @@ from mesa import Model
 from mesa.space import SingleGrid
 from mesa.time import SimultaneousActivation
 
+from mesa import Agent
 
-class Cell:
+
+class Cell(Agent):
     """
     Represents a single cell in Conway's Game of Life.
     """
 
-    DEAD = 0
-    ALIVE = 1
-
     def __init__(self, pos, model):
-        self.pos = pos
-        self.model = model
-        self.state = self.DEAD
+        super().__init__(pos, model)
+        self.state = "ALIVE"
 
     def step(self):
         """
-        Compute the next state of the cell based on its neighbors.
+        Compute the next state of the cell.
         """
         neighbors = self.model.grid.get_neighbors(self.pos, moore=True)
-        live_neighbors = sum(1 for neighbor in neighbors if neighbor.state == self.ALIVE)
+        alive_neighbors = sum(1 for neighbor in neighbors if neighbor.state == "ALIVE")
 
-        if self.state == self.ALIVE:
-            if live_neighbors < 2 or live_neighbors > 3:
-                self.state = self.DEAD
+        if self.state == "ALIVE":
+            if alive_neighbors < 2 or alive_neighbors > 3:
+                self.state = "DEAD"
         else:
-            if live_neighbors == 3:
-                self.state = self.ALIVE
-
+            if alive_neighbors == 3:
+                self.state = "ALIVE"
+                
 
 class ConwaysGameOfLife(Model):
     """
