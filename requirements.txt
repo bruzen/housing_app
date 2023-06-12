@@ -1,3 +1,4 @@
+vega-datasets
 mesa
 streamlit
 pandas
