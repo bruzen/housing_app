@@ -4,46 +4,75 @@ import pandas as pd
 import streamlit as st
 import altair as alt
 import matplotlib.pyplot as plt
+from mesa import Model
+from mesa.space import SingleGrid
+from mesa.time import SimultaneousActivation
 
 
-class SimpleAgent:
-    def __init__(self, x, y, num_states):
-        self.x = x
-        self.y = y
-        self.state = random.randint(0, num_states - 1)
+class Cell:
+    """
+    Represents a single cell in Conway's Game of Life.
+    """
 
-    def step(self, model):
-        self.state += 1
-        self.state %= model.num_states
+    DEAD = 0
+    ALIVE = 1
 
-
-class SimpleModel:
-    def __init__(self, N, width, height, num_states):
-        self.num_agents = N
-        self.grid_width = width
-        self.grid_height = height
-        self.num_states = num_states
-        self.grid = np.zeros((width, height), dtype=int)
-        self.schedule = []
-
-        # Create agents
-        for i in range(self.num_agents):
-            x = random.randint(0, self.grid_width - 1)
-            y = random.randint(0, self.grid_height - 1)
-            agent = SimpleAgent(x, y, self.num_states)
-            self.schedule.append(agent)
-            self.grid[x, y] = agent.state
+    def __init__(self, pos, model):
+        self.pos = pos
+        self.model = model
+        self.state = self.DEAD
 
     def step(self):
-        random.shuffle(self.schedule)
-        for agent in self.schedule:
-            agent.step(self)
-            self.grid[agent.x, agent.y] = agent.state
+        """
+        Compute the next state of the cell based on its neighbors.
+        """
+        neighbors = self.model.grid.get_neighbors(self.pos, moore=True)
+        live_neighbors = sum(1 for neighbor in neighbors if neighbor.state == self.ALIVE)
+
+        if self.state == self.ALIVE:
+            if live_neighbors < 2 or live_neighbors > 3:
+                self.state = self.DEAD
+        else:
+            if live_neighbors == 3:
+                self.state = self.ALIVE
+
+
+class ConwaysGameOfLife(Model):
+    """
+    Represents the 2-dimensional array of cells in Conway's
+    Game of Life.
+    """
+
+    def __init__(self, width=50, height=50):
+        """
+        Create a new playing area of (width, height) cells.
+        """
+
+        # Set up the grid and schedule
+        self.grid = SingleGrid(width, height, torus=True)
+        self.schedule = SimultaneousActivation(self)
+
+        # Place a cell at each location, with some initialized to ALIVE and some to DEAD
+        for x in range(width):
+            for y in range(height):
+                cell = Cell((x, y), self)
+                if random.random() < 0.1:
+                    cell.state = cell.ALIVE
+                self.grid.place_agent(cell, (x, y))
+                self.schedule.add(cell)
+
+        self.running = True
+
+    def step(self):
+        """
+        Have the scheduler advance each cell by one step
+        """
+        self.schedule.step()
 
 
 def run_model(num_steps):
-    # Create a simple model
-    model = SimpleModel(N=100, width=10, height=10, num_states=5)
+    # Create a Game of Life model
+    model = ConwaysGameOfLife(width=50, height=50)
 
     # Create data for visualization
     agent_data = []
@@ -54,18 +83,18 @@ def run_model(num_steps):
         model.step()
 
         # Collect agent state data
-        agent_state_counts = np.zeros(model.num_states, dtype=int)
-        for agent in model.schedule:
-            agent_state_counts[agent.state] += 1
+        agent_state_counts = np.zeros(2, dtype=int)
+        for cell in model.schedule.agents:
+            agent_state_counts[cell.state] += 1
         agent_data.append(agent_state_counts.copy())
 
     # Convert data to Pandas DataFrame for Altair visualization
-    df = pd.DataFrame(agent_data, columns=[f"State {i}" for i in range(model.num_states)])
+    df = pd.DataFrame(agent_data, columns=['DEAD', 'ALIVE'])
     df['Step'] = np.arange(num_steps)
 
     # Create the Altair time series plot
     chart = alt.Chart(df).transform_fold(
-        [f"State {i}" for i in range(model.num_states)],
+        ['DEAD', 'ALIVE'],
         as_=['State', 'Count']
     ).mark_line().encode(
         x='Step:Q',
@@ -82,22 +111,13 @@ def run_model(num_steps):
     # Display the agent state grid
     st.subheader("Agent State Grid")
 
-    fig, ax = plt.subplots()
-    ax.imshow(model.grid, cmap='viridis')
-    ax.axis('off')
-    st.pyplot(fig)
+    grid_data = np.zeros((model.grid.width, model.grid.height), dtype=int)
+    for cell in model.schedule.agents:
+        grid_data[cell.pos[0], cell.pos[1]] = cell.state
 
-    # Additional non-interactive plot for agent state
-    st.subheader("Agent State Plot")
-
-    state_counts = np.sum(agent_data, axis=0)
-    state_labels = [f"State {i}" for i in range(model.num_states)]
-
-    plt.figure()
-    plt.bar(state_labels, state_counts)
-    plt.xlabel("Agent State")
-    plt.ylabel("Count")
-    st.pyplot(plt)
+    plt.imshow(grid_data, cmap='viridis')
+    plt.axis('off')
+    st.pyplot()
 
 
 def main():
