@@ -1,7 +1,9 @@
 import random
 import numpy as np
+import matplotlib.pyplot as plt
 import streamlit as st
 import altair as alt
+import pandas as pd
 
 
 class Agent:
@@ -57,33 +59,55 @@ def run_model(num_steps):
             agent_state_counts[agent.state] += 1
         agent_data.append(agent_state_counts.copy())
 
-    # Convert data to numpy array
+    # Convert data to numpy array and transpose for plotting
     agent_data = np.array(agent_data).T
 
-    # Create a time series annotation plot
-    time_series = np.arange(num_steps)
-    annotations = np.argmax(agent_data, axis=0)
+    # Plot grid and agent state evolution
+    fig, (ax1, ax2, ax3) = plt.subplots(1, 3, figsize=(18, 5))
+    ax1.imshow(model.grid, cmap='viridis')
+    ax1.set_title("Agent State Grid")
+    ax1.axis('off')
 
-    data = np.concatenate((time_series.reshape(-1, 1), annotations.reshape(-1, 1)), axis=1)
-    df = pd.DataFrame(data, columns=["Time", "Annotation"])
+    ax2.plot(agent_data)
+    ax2.set_title("Agent State Evolution")
+    ax2.set_xlabel("Step")
+    ax2.set_ylabel("Count")
 
-    line_chart = alt.Chart(df).mark_line().encode(
-        x="Time",
-        y="Annotation",
-        tooltip=["Time", "Annotation"]
+    # Convert agent data to dataframe for Altair plot
+    df = pd.DataFrame(agent_data.T, columns=[f"State {i}" for i in range(model.num_states)])
+    df["Step"] = range(num_steps)
+
+    # Create the Altair line plot with annotations
+    chart = alt.Chart(df).mark_line().encode(
+        x="Step",
+        y=[f"State {i}" for i in range(model.num_states)],
+        color=alt.Color("state:N", legend=None)
+    ).properties(
+        width=500,
+        height=300
+    ).interactive()
+
+    # Add text annotations to the plot
+    text = chart.mark_text(
+        align='left',
+        baseline='middle',
+        dx=5,
+        dy=-5,
+        color='black'
+    ).encode(
+        text=alt.Text("value:Q", format=".0f"),
+        opacity=alt.value(0.6)
     )
 
-    # Display the agent state evolution and the time series annotation plot using Streamlit
-    st.line_chart(agent_data)
-    st.altair_chart(line_chart, use_container_width=True)
+    annotated_chart = chart + text
+
+    ax3.set_title("Agent State Evolution with Annotations")
+    ax3.axis('off')
+    st.altair_chart(annotated_chart, use_container_width=True)
+
+    # Show the plot in Streamlit
+    st.pyplot(fig)
 
 
-def main():
-    st.title("Agent-Based Model Visualization")
-
-    num_steps = st.slider("Number of Steps", min_value=1, max_value=100, value=50)
-    run_model(num_steps)
-
-
-if __name__ == "__main__":
-    main()
+# Run the model for 50 steps
+run_model(50)
