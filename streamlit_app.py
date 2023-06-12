@@ -1,158 +1,113 @@
+import random
+import numpy as np
 import altair as alt
 import pandas as pd
 import streamlit as st
 from vega_datasets import data
+import matplotlib.pyplot as plt
 
-st.set_page_config(
-    page_title="Time series annotations", page_icon="⬇", layout="centered"
-)
+class Agent:
+    def __init__(self, x, y, num_states):
+        self.x = x
+        self.y = y
+        self.state = random.randint(0, num_states - 1)
+
+    def step(self, model):
+        self.state += 1
+        self.state %= model.num_states
 
 
-@st.experimental_memo
-def get_data():
-    source = data.stocks()
-    source = source[source.date.gt("2004-01-01")]
-    return source
+class SimpleModel:
+    def __init__(self, N, width, height, num_states):
+        self.num_agents = N
+        self.grid_width = width
+        self.grid_height = height
+        self.num_states = num_states
+        self.grid = np.zeros((width, height), dtype=int)
+        self.schedule = []
+
+        # Create agents
+        for i in range(self.num_agents):
+            x = random.randint(0, self.grid_width - 1)
+            y = random.randint(0, self.grid_height - 1)
+            agent = Agent(x, y, self.num_states)
+            self.schedule.append(agent)
+            self.grid[x, y] = agent.state
+
+    def step(self):
+        random.shuffle(self.schedule)
+        for agent in self.schedule:
+            agent.step(self)
+            self.grid[agent.x, agent.y] = agent.state
 
 
-@st.experimental_memo(ttl=60 * 60 * 24)
-def get_chart(data):
-    hover = alt.selection_single(
-        fields=["date"],
-        nearest=True,
-        on="mouseover",
-        empty="none",
+def run_model(num_steps):
+    # Create a simple model
+    model = SimpleModel(N=100, width=10, height=10, num_states=5)
+
+    # Create data for visualization
+    agent_data = []
+
+    # Run the model for the specified number of steps
+    for step in range(num_steps):
+        # Step the model
+        model.step()
+
+        # Collect agent state data
+        agent_state_counts = np.zeros(model.num_states, dtype=int)
+        for agent in model.schedule:
+            agent_state_counts[agent.state] += 1
+        agent_data.append(agent_state_counts.copy())
+
+    # Convert data to numpy array and transpose for plotting
+    agent_data = np.array(agent_data).T
+
+    # Plot grid and agent state evolution
+    fig, (ax1, ax2, ax3) = plt.subplots(1, 3, figsize=(18, 5))
+    ax1.imshow(model.grid, cmap='viridis')
+    ax1.set_title("Agent State Grid")
+    ax1.axis('off')
+
+    ax2.plot(agent_data)
+    ax2.set_title("Agent State Evolution")
+    ax2.set_xlabel("Step")
+    ax2.set_ylabel("Count")
+
+    # Convert agent data to dataframe for Altair plot
+    df = pd.DataFrame(agent_data.T, columns=[f"State {i}" for i in range(model.num_states)])
+    df["Step"] = range(num_steps)
+
+    # Create the Altair line plot with annotations
+    chart = alt.Chart(df).mark_line().encode(
+        x="Step",
+        y=[f"State {i}" for i in range(model.num_states)],
+        color=alt.Color("state:N", legend=None)
+    ).properties(
+        width=500,
+        height=300
+    ).interactive()
+
+    # Add text annotations to the plot
+    text = chart.mark_text(
+        align='left',
+        baseline='middle',
+        dx=5,
+        dy=-5,
+        color='black'
+    ).encode(
+        text=alt.Text("value:Q", format=".0f"),
+        opacity=alt.value(0.6)
     )
 
-    lines = (
-        alt.Chart(data, height=500, title="Evolution of stock prices")
-        .mark_line()
-        .encode(
-            x=alt.X("date", title="Date"),
-            y=alt.Y("price", title="Price"),
-            color="symbol",
-        )
-    )
+    annotated_chart = chart + text
 
-    # Draw points on the line, and highlight based on selection
-    points = lines.transform_filter(hover).mark_circle(size=65)
+    ax3.set_title("Agent State Evolution with Annotations")
+    ax3.axis('off')
+    st.altair_chart(annotated_chart, use_container_width=True)
 
-    # Draw a rule at the location of the selection
-    tooltips = (
-        alt.Chart(data)
-        .mark_rule()
-        .encode(
-            x="yearmonthdate(date)",
-            y="price",
-            opacity=alt.condition(hover, alt.value(0.3), alt.value(0)),
-            tooltip=[
-                alt.Tooltip("date", title="Date"),
-                alt.Tooltip("price", title="Price (USD)"),
-            ],
-        )
-        .add_selection(hover)
-    )
-
-    return (lines + points + tooltips).interactive()
+    # Show the plot in Streamlit
+    st.pyplot(fig)
 
 
-st.title("⬇ Time series annotations")
-
-st.write("Give more context to your time series using annotations!")
-
-col1, col2, col3 = st.columns(3)
-with col1:
-    ticker = st.text_input("Choose a ticker (⬇💬👇ℹ️ ...)", value="⬇")
-with col2:
-    ticker_dx = st.slider(
-        "Horizontal offset", min_value=-30, max_value=30, step=1, value=0
-    )
-with col3:
-    ticker_dy = st.slider(
-        "Vertical offset", min_value=-30, max_value=30, step=1, value=-10
-    )
-
-# Original time series chart. Omitted `get_chart` for clarity
-source = get_data()
-chart = get_chart(source)
-
-# Input annotations
-ANNOTATIONS = [
-    ("Mar 01, 2008", "Pretty good day for GOOG"),
-    ("Dec 01, 2007", "Something's going wrong for GOOG & AAPL"),
-    ("Nov 01, 2008", "Market starts again thanks to..."),
-    ("Dec 01, 2009", "Small crash for GOOG after..."),
-]
-
-# Create a chart with annotations
-annotations_df = pd.DataFrame(ANNOTATIONS, columns=["date", "event"])
-annotations_df.date = pd.to_datetime(annotations_df.date)
-annotations_df["y"] = 0
-annotation_layer = (
-    alt.Chart(annotations_df)
-    .mark_text(size=15, text=ticker, dx=ticker_dx, dy=ticker_dy, align="center")
-    .encode(
-        x="date:T",
-        y=alt.Y("y:Q"),
-        tooltip=["event"],
-    )
-    .interactive()
-)
-
-# Display both charts together
-st.altair_chart((chart + annotation_layer).interactive(), use_container_width=True)
-
-st.write("## Code")
-
-st.write(
-    "See more in our public [GitHub"
-    " repository](https://github.com/streamlit/example-app-time-series-annotation)"
-)
-
-st.code(
-    f"""
-import altair as alt
-import pandas as pd
-import streamlit as st
-from vega_datasets import data
-
-@st.experimental_memo
-def get_data():
-    source = data.stocks()
-    source = source[source.date.gt("2004-01-01")]
-    return source
-
-source = get_data()
-
-# Original time series chart. Omitted `get_chart` for clarity
-chart = get_chart(source)
-
-# Input annotations
-ANNOTATIONS = [
-    ("Mar 01, 2008", "Pretty good day for GOOG"),
-    ("Dec 01, 2007", "Something's going wrong for GOOG & AAPL"),
-    ("Nov 01, 2008", "Market starts again thanks to..."),
-    ("Dec 01, 2009", "Small crash for GOOG after..."),
-]
-
-# Create a chart with annotations
-annotations_df = pd.DataFrame(ANNOTATIONS, columns=["date", "event"])
-annotations_df.date = pd.to_datetime(annotations_df.date)
-annotations_df["y"] = 0
-annotation_layer = (
-    alt.Chart(annotations_df)
-    .mark_text(size=15, text="{ticker}", dx={ticker_dx}, dy={ticker_dy}, align="center")
-    .encode(
-        x="date:T",
-        y=alt.Y("y:Q"),
-        tooltip=["event"],
-    )
-    .interactive()
-)
-
-# Display both charts together
-st.altair_chart((chart + annotation_layer).interactive(), use_container_width=True)
-
-""",
-    "python",
-)
+# Run the model for 50 steps
+run_model(50)
