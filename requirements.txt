@@ -1,6 +1,4 @@
 mesa
-numpy
 streamlit
-altair
 pandas
 matplotlib==3.4.3
