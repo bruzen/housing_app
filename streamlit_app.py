@@ -87,6 +87,18 @@ def run_model(num_steps):
     ax.axis('off')
     st.pyplot(fig)
 
+    # Additional non-interactive plot for agent state
+    st.subheader("Agent State Plot")
+
+    state_counts = np.sum(agent_data, axis=0)
+    state_labels = [f"State {i}" for i in range(model.num_states)]
+
+    plt.figure()
+    plt.bar(state_labels, state_counts)
+    plt.xlabel("Agent State")
+    plt.ylabel("Count")
+    st.pyplot(plt)
+
 
 def main():
     st.title("Agent-Based Model Visualization")
