@@ -1,7 +1,7 @@
 import random
 import numpy as np
-import matplotlib.pyplot as plt
 import streamlit as st
+import altair as alt
 
 
 class Agent:
@@ -57,21 +57,25 @@ def run_model(num_steps):
             agent_state_counts[agent.state] += 1
         agent_data.append(agent_state_counts.copy())
 
-    # Convert data to numpy array and transpose for plotting
+    # Convert data to numpy array
     agent_data = np.array(agent_data).T
 
-    # Plot grid and agent state evolution
-    fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(10, 5))
-    ax1.imshow(model.grid, cmap='viridis')
-    ax1.set_title("Agent State Grid")
-    ax1.axis('off')
-    ax2.plot(agent_data)
-    ax2.set_title("Agent State Evolution")
-    ax2.set_xlabel("Step")
-    ax2.set_ylabel("Count")
+    # Create a time series annotation plot
+    time_series = np.arange(num_steps)
+    annotations = np.argmax(agent_data, axis=0)
 
-    # Display the plots using Streamlit
-    st.pyplot(fig)
+    data = np.concatenate((time_series.reshape(-1, 1), annotations.reshape(-1, 1)), axis=1)
+    df = pd.DataFrame(data, columns=["Time", "Annotation"])
+
+    line_chart = alt.Chart(df).mark_line().encode(
+        x="Time",
+        y="Annotation",
+        tooltip=["Time", "Annotation"]
+    )
+
+    # Display the agent state evolution and the time series annotation plot using Streamlit
+    st.line_chart(agent_data)
+    st.altair_chart(line_chart, use_container_width=True)
 
 
 def main():
@@ -81,5 +85,5 @@ def main():
     run_model(num_steps)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()
