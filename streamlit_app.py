@@ -3,6 +3,7 @@ import numpy as np
 import pandas as pd
 import streamlit as st
 import altair as alt
+import matplotlib.pyplot as plt
 
 
 class SimpleAgent:
@@ -80,7 +81,11 @@ def run_model(num_steps):
 
     # Display the agent state grid
     st.subheader("Agent State Grid")
-    st.image(model.grid, caption="Agent State Grid", use_column_width=True, clamp=True)
+
+    fig, ax = plt.subplots()
+    ax.imshow(model.grid, cmap='viridis')
+    ax.axis('off')
+    st.pyplot(fig)
 
 
 def main():
