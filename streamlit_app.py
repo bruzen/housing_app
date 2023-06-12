@@ -1,113 +1,92 @@
-import random
 import numpy as np
+import matplotlib.pyplot as plt
 import altair as alt
 import pandas as pd
-import streamlit as st
-from vega_datasets import data
-import matplotlib.pyplot as plt
+from mesa import Agent, Model
+from mesa.time import RandomActivation
+from mesa.space import MultiGrid
+from mesa.datacollection import DataCollector
+from mesa.visualization.modules import CanvasGrid
+from mesa.visualization.ModularVisualization import ModularServer
 
-class Agent:
-    def __init__(self, x, y, num_states):
-        self.x = x
-        self.y = y
-        self.state = random.randint(0, num_states - 1)
-
-    def step(self, model):
-        self.state += 1
-        self.state %= model.num_states
-
-
-class SimpleModel:
-    def __init__(self, N, width, height, num_states):
-        self.num_agents = N
-        self.grid_width = width
-        self.grid_height = height
-        self.num_states = num_states
-        self.grid = np.zeros((width, height), dtype=int)
-        self.schedule = []
-
-        # Create agents
-        for i in range(self.num_agents):
-            x = random.randint(0, self.grid_width - 1)
-            y = random.randint(0, self.grid_height - 1)
-            agent = Agent(x, y, self.num_states)
-            self.schedule.append(agent)
-            self.grid[x, y] = agent.state
+# Define the Agent class
+class MyAgent(Agent):
+    def __init__(self, unique_id, model):
+        super().__init__(unique_id, model)
+        self.state = np.random.choice(['A', 'B', 'C'])
 
     def step(self):
-        random.shuffle(self.schedule)
-        for agent in self.schedule:
-            agent.step(self)
-            self.grid[agent.x, agent.y] = agent.state
+        # The agent randomly changes its state
+        self.state = np.random.choice(['A', 'B', 'C'])
 
+# Define the Model class
+class MyModel(Model):
+    def __init__(self, N):
+        self.num_agents = N
+        self.schedule = RandomActivation(self)
+        self.grid = MultiGrid(10, 10, torus=True)
+        self.datacollector = DataCollector(
+            model_reporters={"Count_A": lambda m: self.count_agents(m, 'A'),
+                             "Count_B": lambda m: self.count_agents(m, 'B'),
+                             "Count_C": lambda m: self.count_agents(m, 'C')}
+        )
+        
+        # Create agents
+        for i in range(self.num_agents):
+            agent = MyAgent(i, self)
+            self.schedule.add(agent)
 
-def run_model(num_steps):
-    # Create a simple model
-    model = SimpleModel(N=100, width=10, height=10, num_states=5)
+            # Place agents on the grid
+            x = np.random.randint(0, self.grid.width)
+            y = np.random.randint(0, self.grid.height)
+            self.grid.place_agent(agent, (x, y))
 
-    # Create data for visualization
-    agent_data = []
+        self.running = True
 
-    # Run the model for the specified number of steps
-    for step in range(num_steps):
-        # Step the model
-        model.step()
+    def step(self):
+        self.datacollector.collect(self)
+        self.schedule.step()
 
-        # Collect agent state data
-        agent_state_counts = np.zeros(model.num_states, dtype=int)
-        for agent in model.schedule:
-            agent_state_counts[agent.state] += 1
-        agent_data.append(agent_state_counts.copy())
+    def count_agents(self, model, state):
+        agents = [agent for agent in model.schedule.agents if agent.state == state]
+        return len(agents)
 
-    # Convert data to numpy array and transpose for plotting
-    agent_data = np.array(agent_data).T
-
-    # Plot grid and agent state evolution
-    fig, (ax1, ax2, ax3) = plt.subplots(1, 3, figsize=(18, 5))
-    ax1.imshow(model.grid, cmap='viridis')
-    ax1.set_title("Agent State Grid")
-    ax1.axis('off')
-
-    ax2.plot(agent_data)
-    ax2.set_title("Agent State Evolution")
-    ax2.set_xlabel("Step")
-    ax2.set_ylabel("Count")
-
-    # Convert agent data to dataframe for Altair plot
-    df = pd.DataFrame(agent_data.T, columns=[f"State {i}" for i in range(model.num_states)])
-    df["Step"] = range(num_steps)
-
-    # Create the Altair line plot with annotations
+# Create the Altair time series plot
+def plot_aggregate_state(model):
+    df = model.datacollector.get_model_vars_dataframe()
+    df = df.reset_index().melt('Index', var_name='State', value_name='Count')
+    
     chart = alt.Chart(df).mark_line().encode(
-        x="Step",
-        y=[f"State {i}" for i in range(model.num_states)],
-        color=alt.Color("state:N", legend=None)
+        x='Index:Q',
+        y='Count:Q',
+        color='State:N'
     ).properties(
-        width=500,
+        width=400,
         height=300
-    ).interactive()
-
-    # Add text annotations to the plot
-    text = chart.mark_text(
-        align='left',
-        baseline='middle',
-        dx=5,
-        dy=-5,
-        color='black'
-    ).encode(
-        text=alt.Text("value:Q", format=".0f"),
-        opacity=alt.value(0.6)
     )
+    
+    return chart
 
-    annotated_chart = chart + text
+# Create the canvas grid visualization
+def agent_portrayal(agent):
+    portrayal = {"Shape": "circle", "Filled": "true", "r": 0.5}
+    if agent.state == 'A':
+        portrayal["Color"] = "red"
+    elif agent.state == 'B':
+        portrayal["Color"] = "green"
+    elif agent.state == 'C':
+        portrayal["Color"] = "blue"
+    return portrayal
 
-    ax3.set_title("Agent State Evolution with Annotations")
-    ax3.axis('off')
-    st.altair_chart(annotated_chart, use_container_width=True)
+# Set up the visualization server
+grid = CanvasGrid(agent_portrayal, 10, 10, 500, 500)
+chart = plot_aggregate_state
 
-    # Show the plot in Streamlit
-    st.pyplot(fig)
-
-
-# Run the model for 50 steps
-run_model(50)
+server = ModularServer(
+    MyModel,
+    [grid, chart],
+    "My Model",
+    {"N": 100}  # Number of agents
+)
+server.port = 8521  # Set the port for the server
+server.launch()
