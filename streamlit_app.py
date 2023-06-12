@@ -1,5 +1,6 @@
 import random
 import numpy as np
+import pandas as pd
 import streamlit as st
 import altair as alt
 
