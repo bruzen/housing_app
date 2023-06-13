@@ -3,7 +3,8 @@ import pandas as pd
 import streamlit as st
 import altair as alt
 import matplotlib.pyplot as plt
-from .model import ConwaysGameOfLife
+import mesa
+from model import ConwaysGameOfLife
 
 
 def run_model(num_steps):
