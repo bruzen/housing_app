@@ -15,9 +15,9 @@ def run_model(num_steps):
     agent_out = city.datacollector.get_agent_vars_dataframe()
     model_out = city.datacollector.get_model_vars_dataframe()
 
-    workers = model_out.workers
-    wage = model_out.wage
-    city_extent = model_out.city_extent
+    workers = model_out['workers'].to_numpy()
+    wage = model_out['wage'].to_numpy()
+    city_extent = model_out['city_extent'].to_numpy()
 
     # Create the plots
     fig, ax = plt.subplots(2, 2)
