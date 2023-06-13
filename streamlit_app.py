@@ -4,14 +4,11 @@ import pandas as pd
 import streamlit as st
 import altair as alt
 import matplotlib.pyplot as plt
-from .agent import Cell
+from mesa import Agent
 from mesa import Model
 from mesa.space import SingleGrid
 from mesa.time import SimultaneousActivation
-
-
-from mesa import Agent
-                
+from agent import Cell                
 
 class ConwaysGameOfLife(Model):
     """
