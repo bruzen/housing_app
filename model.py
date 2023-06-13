@@ -3,8 +3,7 @@ import math
 import pandas as pd
 from scipy.spatial import distance
 
-# TODO Only keep 1-2 packages for forecasting. Delete others.
-from sklearn import linear_model
+from scikit-learn import linear_model
 import statsmodels.api as sm
 from pysal.model import spreg
 
