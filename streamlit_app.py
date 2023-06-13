@@ -3,67 +3,56 @@ import pandas as pd
 import streamlit as st
 import altair as alt
 import matplotlib.pyplot as plt
-import mesa
-from model import ConwaysGameOfLife
-
+from model import City  # Import the City model from model.py
 
 def run_model(num_steps):
-    # Create a Game of Life model
-    model = ConwaysGameOfLife(width=50, height=50)
+    # Create and run the model
+    city = City()
+    for t in range(num_steps):
+        city.step()
 
-    # Create data for visualization
-    agent_data = []
+    # Get output data
+    agent_out = city.datacollector.get_agent_vars_dataframe()
+    model_out = city.datacollector.get_model_vars_dataframe()
 
-    # Run the model for the specified number of steps
-    for step in range(num_steps):
-        # Step the model
-        model.step()
+    workers = model_out.workers
+    wage = model_out.wage
+    city_extent = model_out.city_extent
 
-        # Collect agent state data
-        agent_state_counts = np.zeros(2, dtype=int)
-        for cell in model.schedule.agents:
-            agent_state_counts[cell.state] += 1
-        agent_data.append(agent_state_counts.copy())
+    # Create the plots
+    fig, ax = plt.subplots(2, 2)
+    fig.tight_layout(h_pad=4)
+    fig.suptitle('Model Output')
+    plt.subplots_adjust(top=0.85)
 
-    # Convert data to Pandas DataFrame for Altair visualization
-    df = pd.DataFrame(agent_data, columns=['DEAD', 'ALIVE'])
-    df['Step'] = np.arange(num_steps)
+    ax[0, 0].plot(workers, label='workers')
+    ax[0, 0].plot(wage, linestyle='--', label='wage')
+    ax[0, 0].plot(city_extent, linestyle='dotted', label='extent')
+    ax[0, 0].set_title('Workers vs Wage')
+    ax[0, 0].set_xlabel('Time')
+    ax[0, 0].set_ylabel('Number')
+    ax[0, 0].legend(loc='upper right')
 
-    # Create the Altair time series plot
-    chart = alt.Chart(df).transform_fold(
-        ['DEAD', 'ALIVE'],
-        as_=['State', 'Count']
-    ).mark_line().encode(
-        x='Step:Q',
-        y='Count:Q',
-        color='State:N'
-    ).properties(
-        width=400,
-        height=300
-    )
+    ax[0, 1].plot(workers, wage)
+    ax[0, 1].plot(city_extent, wage)
+    ax[0, 1].set_title('subplot 2')
+
+    ax[1, 0].plot(workers, wage)
+    ax[1, 0].set_title('subplot 3')
+    ax[1, 0].set_xlabel('workers')
+    ax[1, 0].set_ylabel('wage')
+
+    ax[1, 1].plot(workers, wage)
+    ax[1, 1].set_title('subplot 4')
 
     # Display the plots using Streamlit
-    st.altair_chart(chart, use_container_width=True)
-
-    # Display the agent state grid
-    st.subheader("Agent State Grid")
-
-    grid_data = np.zeros((model.grid.width, model.grid.height), dtype=int)
-    for cell in model.schedule.agents:
-        grid_data[cell.pos[0], cell.pos[1]] = cell.state
-
-    fig, ax = plt.subplots()
-    ax.imshow(grid_data, cmap='viridis')
-    ax.axis('off')
     st.pyplot(fig)
-
 
 def main():
     st.title("Agent-Based Model Visualization")
 
     num_steps = st.slider("Number of Steps", min_value=1, max_value=100, value=50)
     run_model(num_steps)
-
 
 if __name__ == '__main__':
     main()
