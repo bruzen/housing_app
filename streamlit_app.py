@@ -8,7 +8,7 @@ from mesa import Agent
 from mesa import Model
 from mesa.space import SingleGrid
 from mesa.time import SimultaneousActivation
-from agent import Cell                
+from agent import Cell
 
 class ConwaysGameOfLife(Model):
     """
@@ -88,9 +88,10 @@ def run_model(num_steps):
     for cell in model.schedule.agents:
         grid_data[cell.pos[0], cell.pos[1]] = cell.state
 
-    plt.imshow(grid_data, cmap='viridis')
-    plt.axis('off')
-    st.pyplot()
+    fig, ax = plt.subplots()
+    ax.imshow(grid_data, cmap='viridis')
+    ax.axis('off')
+    st.pyplot(fig)
 
 
 def main():
