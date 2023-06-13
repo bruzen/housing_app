@@ -5,37 +5,43 @@ import altair as alt
 import matplotlib.pyplot as plt
 from model import City  # Import the City model from model.py
 
-def run_model(num_steps):
+def run_model(num_steps, width, height, subsistence_wage, working_periods, savings_rate, r_prime, r_margin,
+              prefactor, agglomeration_ratio, workers_share, property_tax_rate, mortgage_period,
+              housing_services_share, maintenance_share, seed_population, density, max_mortgage_share,
+              ability_to_carry_mortgage, wealth_sensitivity, wage_adjust_coeff_new_workers,
+              wage_adjust_coeff_exist_workers, workforce_rural_firm, price_of_output, beta_city,
+              alpha_firm, z, init_wage_premium_ratio, init_city_extent):
+    
     # Create and run the model with the specified parameter values
     city = City(
-        width=50,
-        height=1,
-        subsistence_wage=40000.,
-        working_periods=40,
-        savings_rate=0.3,
-        r_prime=0.05,
-        r_margin=0.01,
-        prefactor=250,
-        agglomeration_ratio=1.2,
-        workers_share=0.72,
-        property_tax_rate=0.04,
-        mortgage_period=5.0,
-        housing_services_share=0.3,
-        maintenance_share=0.2,
-        seed_population=0,
-        density=100,
-        max_mortgage_share=0.9,
-        ability_to_carry_mortgage=0.28,
-        wealth_sensitivity=0.1,
-        wage_adjust_coeff_new_workers=0.5,
-        wage_adjust_coeff_exist_workers=0.5,
-        workforce_rural_firm=100,
-        price_of_output=1.,
-        beta_city=1.12,
-        alpha_firm=0.18,
-        z=0.5,
-        init_wage_premium_ratio=0.2,
-        init_city_extent=10.
+        width=width,
+        height=height,
+        subsistence_wage=subsistence_wage,
+        working_periods=working_periods,
+        savings_rate=savings_rate,
+        r_prime=r_prime,
+        r_margin=r_margin,
+        prefactor=prefactor,
+        agglomeration_ratio=agglomeration_ratio,
+        workers_share=workers_share,
+        property_tax_rate=property_tax_rate,
+        mortgage_period=mortgage_period,
+        housing_services_share=housing_services_share,
+        maintenance_share=maintenance_share,
+        seed_population=seed_population,
+        density=density,
+        max_mortgage_share=max_mortgage_share,
+        ability_to_carry_mortgage=ability_to_carry_mortgage,
+        wealth_sensitivity=wealth_sensitivity,
+        wage_adjust_coeff_new_workers=wage_adjust_coeff_new_workers,
+        wage_adjust_coeff_exist_workers=wage_adjust_coeff_exist_workers,
+        workforce_rural_firm=workforce_rural_firm,
+        price_of_output=price_of_output,
+        beta_city=beta_city,
+        alpha_firm=alpha_firm,
+        z=z,
+        init_wage_premium_ratio=init_wage_premium_ratio,
+        init_city_extent=init_city_extent
     )
     for t in range(num_steps):
         city.step()
@@ -81,7 +87,23 @@ def main():
     st.title("Agent-Based Model Visualization")
 
     num_steps = st.slider("Number of Steps", min_value=1, max_value=100, value=50)
-    run_model(num_steps)
-
-if __name__ == '__main__':
-    main()
+    width = st.slider("Width", min_value=1, max_value=100, value=50)
+    height = st.slider("Height", min_value=1, max_value=100, value=1)
+    subsistence_wage = st.slider("Subsistence Wage", min_value=10000., max_value=50000., value=40000., step=1000.)
+    working_periods = st.slider("Working Periods", min_value=1, max_value=50, value=40)
+    savings_rate = st.slider("Savings Rate", min_value=0.1, max_value=1.0, value=0.3, step=0.05)
+    r_prime = st.slider("R Prime", min_value=0.01, max_value=0.1, value=0.05, step=0.01)
+    r_margin = st.slider("R Margin", min_value=0.01, max_value=0.1, value=0.01, step=0.01)
+    prefactor = st.slider("Prefactor", min_value=100, max_value=500, value=250)
+    agglomeration_ratio = st.slider("Agglomeration Ratio", min_value=0.1, max_value=2.0, value=1.2, step=0.1)
+    workers_share = st.slider("Workers Share", min_value=0.1, max_value=1.0, value=0.72, step=0.05)
+    property_tax_rate = st.slider("Property Tax Rate", min_value=0.01, max_value=0.1, value=0.04, step=0.01)
+    mortgage_period = st.slider("Mortgage Period", min_value=1.0, max_value=10.0, value=5.0, step=0.5)
+    housing_services_share = st.slider("Housing Services Share", min_value=0.1, max_value=1.0, value=0.3, step=0.05)
+    maintenance_share = st.slider("Maintenance Share", min_value=0.1, max_value=1.0, value=0.2, step=0.05)
+    seed_population = st.slider("Seed Population", min_value=0, max_value=100, value=0)
+    density = st.slider("Density", min_value=10, max_value=1000, value=100)
+    max_mortgage_share = st.slider("Max Mortgage Share", min_value=0.1, max_value=1.0, value=0.9, step=0.05)
+    ability_to_carry_mortgage = st.slider("Ability to Carry Mortgage", min_value=0.1, max_value=1.0, value=0.28, step=0.05)
+    wealth_sensitivity = st.slider("Wealth Sensitivity", min_value=0.1, max_value=1.0, value=0.1, step=0.05)
+    wage_adjust_coeff_new_workers = st.slider("Wage Adjust Coeff for New Workers", min_value=0.1, max_value
