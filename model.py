@@ -280,8 +280,8 @@ class City(Model):
         self.price_model = self.get_price_model()
         self.p_dot       = self.get_p_dot()
         
-        print(self.p_dot)
-        print('\n')
+        # print(self.p_dot)
+        # print('\n')
 
         # TODO: if firms hire, should they hire after agents apply, 
         # do they need a seperate function to update wages first?
