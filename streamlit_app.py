@@ -4,35 +4,13 @@ import pandas as pd
 import streamlit as st
 import altair as alt
 import matplotlib.pyplot as plt
+from .agent import Cell
 from mesa import Model
 from mesa.space import SingleGrid
 from mesa.time import SimultaneousActivation
 
+
 from mesa import Agent
-
-
-class Cell(Agent):
-    """
-    Represents a single cell in Conway's Game of Life.
-    """
-
-    def __init__(self, pos, model):
-        super().__init__(pos, model)
-        self.state = "ALIVE"
-
-    def step(self):
-        """
-        Compute the next state of the cell.
-        """
-        neighbors = self.model.grid.get_neighbors(self.pos, moore=True)
-        alive_neighbors = sum(1 for neighbor in neighbors if neighbor.state == "ALIVE")
-
-        if self.state == "ALIVE":
-            if alive_neighbors < 2 or alive_neighbors > 3:
-                self.state = "DEAD"
-        else:
-            if alive_neighbors == 3:
-                self.state = "ALIVE"
                 
 
 class ConwaysGameOfLife(Model):
