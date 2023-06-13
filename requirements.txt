@@ -6,4 +6,5 @@ pandas
 scikit-learn
 statsmodels
 scipy
+pysal
 matplotlib==3.4.3
