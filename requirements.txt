@@ -3,6 +3,6 @@ mesa
 streamlit
 numpy
 pandas
-sklearn
+scikit-learn
 scipy
 matplotlib==3.4.3
