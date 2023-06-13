@@ -1,46 +1,9 @@
-import random
 import numpy as np
 import pandas as pd
 import streamlit as st
 import altair as alt
 import matplotlib.pyplot as plt
-from mesa import Agent
-from mesa import Model
-from mesa.space import SingleGrid
-from mesa.time import SimultaneousActivation
-from agent import Cell
-
-class ConwaysGameOfLife(Model):
-    """
-    Represents the 2-dimensional array of cells in Conway's
-    Game of Life.
-    """
-
-    def __init__(self, width=50, height=50):
-        """
-        Create a new playing area of (width, height) cells.
-        """
-
-        # Set up the grid and schedule
-        self.grid = SingleGrid(width, height, torus=True)
-        self.schedule = SimultaneousActivation(self)
-
-        # Place a cell at each location, with some initialized to ALIVE and some to DEAD
-        for x in range(width):
-            for y in range(height):
-                cell = Cell((x, y), self)
-                if random.random() < 0.1:
-                    cell.state = cell.ALIVE
-                self.grid.place_agent(cell, (x, y))
-                self.schedule.add(cell)
-
-        self.running = True
-
-    def step(self):
-        """
-        Have the scheduler advance each cell by one step
-        """
-        self.schedule.step()
+from model import ConwaysGameOfLife
 
 
 def run_model(num_steps):
