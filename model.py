@@ -21,25 +21,25 @@ logging.basicConfig(filename='logfile.log',
                     format='%(asctime)s %(name)s %(levelname)s:%(message)s')
 logger = logging.getLogger(__name__)
 
-def capture_rents(model):
-    """Current rents for each location in the grid."""
-    rent_grid = []
-    for row in model.grid.grid:
-        new_row = []
-        for cell in row:
-            # TODO Should initial cell_rent be empty/null to signal unassigned?
-            cell_rent = -1.0
-            for item in cell:
-                try:
-                    # TODO Should we get rent from owner rather than resident?
-                    # TODO Add a warning/error if mult agents have same resid.
-                    if (item.residence):
-                        cell_rent = item.rent
-                except:
-                    pass
-            new_row.append(cell_rent)
-        rent_grid.append(new_row)
-    return rent_grid
+# def capture_rents(model):
+#     """Current rents for each location in the grid."""
+#     rent_grid = []
+#     for row in model.grid.grid:
+#         new_row = []
+#         for cell in row:
+#             # TODO Should initial cell_rent be empty/null to signal unassigned?
+#             cell_rent = -1.0
+#             for item in cell:
+#                 try:
+#                     # TODO Should we get rent from owner rather than resident?
+#                     # TODO Add a warning/error if mult agents have same resid.
+#                     if (item.residence):
+#                         cell_rent = item.rent
+#                 except:
+#                     pass
+#             new_row.append(cell_rent)
+#         rent_grid.append(new_row)
+#     return rent_grid
 
 class City(Model):
     """Combining a labour market and land market.
@@ -231,7 +231,7 @@ class City(Model):
         # Define what data the model will collect in each time step
         # TODO record interest rate, number of sales, etc.
         model_reporters      = {
-            "rents":          capture_rents,
+#             "rents":          capture_rents,
             "companies":      lambda m: m.schedule.get_breed_count(Firm),
             "people":         lambda m: m.schedule.get_breed_count(Person),
             "wage":           lambda m: m.firm.wage,
