@@ -27,6 +27,6 @@ The housing market agent-based model aims to capture the dynamics and interactio
 
 To learn more about agent-based modeling and its application in housing market simulations, consider exploring the following resources:
 
-- Resource 1: [Introduction to Agent-Based Modeling](https://www.sciencedirect.com/science/article/pii/S259010992100016X)
-- Resource 2: [Agent-Based Models of Housing Markets: A Comprehensive Review](https://www.sciencedirect.com/science/article/pii/S0169207018302856)
-- Resource 3: [Agent-Based Modeling and Simulation in Housing Research](https://link.springer.com/chapter/10.1007/978-3-319-59439-5_2)
+- Resource 1: [Introduction to Agent-Based Modeling]()
+- Resource 2: [Agent-Based Models of Housing Markets: A Comprehensive Review]()
+- Resource 3: [Agent-Based Modeling and Simulation in Housing Research]()
