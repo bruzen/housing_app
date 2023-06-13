@@ -106,4 +106,22 @@ def main():
     max_mortgage_share = st.slider("Max Mortgage Share", min_value=0.1, max_value=1.0, value=0.9, step=0.05)
     ability_to_carry_mortgage = st.slider("Ability to Carry Mortgage", min_value=0.1, max_value=1.0, value=0.28, step=0.05)
     wealth_sensitivity = st.slider("Wealth Sensitivity", min_value=0.1, max_value=1.0, value=0.1, step=0.05)
-    wage_adjust_coeff_new_workers = st.slider("Wage Adjust Coeff for New Workers", min_value=0.1, max_value
+    wage_adjust_coeff_new_workers = st.slider("Wage Adjust Coeff for New Workers", min_value=0.1, max_value=1.0, value=0.5, step=0.05)
+    wage_adjust_coeff_exist_workers = st.slider("Wage Adjust Coeff for Existing Workers", min_value=0.1, max_value=1.0, value=0.5, step=0.05)
+    workforce_rural_firm = st.slider("Workforce in Rural Firm", min_value=10, max_value=1000, value=100)
+    price_of_output = st.slider("Price of Output", min_value=0.1, max_value=10.0, value=1.0, step=0.1)
+    beta_city = st.slider("Beta City", min_value=0.1, max_value=2.0, value=1.12, step=0.1)
+    alpha_firm = st.slider("Alpha Firm", min_value=0.1, max_value=1.0, value=0.18, step=0.05)
+    z = st.slider("Z", min_value=0.1, max_value=1.0, value=0.5, step=0.05)
+    init_wage_premium_ratio = st.slider("Initial Wage Premium Ratio", min_value=0.1, max_value=1.0, value=0.2, step=0.05)
+    init_city_extent = st.slider("Initial City Extent", min_value=1.0, max_value=50.0, value=10.0, step=1.0)
+
+    run_model(num_steps, width, height, subsistence_wage, working_periods, savings_rate, r_prime, r_margin,
+              prefactor, agglomeration_ratio, workers_share, property_tax_rate, mortgage_period,
+              housing_services_share, maintenance_share, seed_population, density, max_mortgage_share,
+              ability_to_carry_mortgage, wealth_sensitivity, wage_adjust_coeff_new_workers,
+              wage_adjust_coeff_exist_workers, workforce_rural_firm, price_of_output, beta_city,
+              alpha_firm, z, init_wage_premium_ratio, init_city_extent)
+
+if __name__ == '__main__':
+    main()
