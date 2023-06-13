@@ -1,5 +1,10 @@
 vega-datasets
 mesa
 streamlit
+numpy
 pandas
+pysal
+scipy
+sklearn
+statsmodels
 matplotlib==3.4.3
