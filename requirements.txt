@@ -4,5 +4,6 @@ streamlit
 numpy
 pandas
 scikit-learn
+statsmodels
 scipy
 matplotlib==3.4.3
