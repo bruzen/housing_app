@@ -20,9 +20,9 @@ def run_model(num_steps, subsistence_wage, working_periods, savings_rate, r_prim
     agent_out = city.datacollector.get_agent_vars_dataframe()
     model_out = city.datacollector.get_model_vars_dataframe()
 
-    workers = model_out.workers
-    wage = model_out.wage
-    city_extent = model_out.city_extent
+    workers = np.array(model_out.workers)
+    wage = np.array(model_out.wage)
+    city_extent = np.array(model_out.city_extent)
 
     # Create the plots
     fig, ax = plt.subplots(2, 2)
