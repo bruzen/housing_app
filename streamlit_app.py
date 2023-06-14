@@ -68,4 +68,12 @@ def main():
     st.title("Agent-Based Model Visualization")
 
     num_steps = 50  # Default value for num_steps
-    subsistence_wage = 40000.  # Default value for
+    subsistence_wage = 40000.  # Default value for subsistence_wage
+    working_periods = 40  # Default value for working_periods
+    savings_rate = 0.3  # Default value for savings_rate
+    r_prime = 0.05  # Default value for r_prime
+
+    run_model(num_steps, subsistence_wage, working_periods, savings_rate, r_prime)
+
+if __name__ == "__main__":
+    main()
