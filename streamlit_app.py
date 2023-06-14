@@ -23,48 +23,46 @@ def run_model(num_steps, subsistence_wage, working_periods, savings_rate, r_prim
     city_extent = np.array(model_out['city_extent'])
     time = np.arange(num_steps)
 
-    # Create the plots using Altair
-    data = pd.DataFrame({'Time': time, 'Workers': workers, 'Wage': wage, 'City Extent': city_extent})
+    # Set up the figure and axes
+    fig, axes = plt.subplots(2, 2, figsize=(10, 8))
+    fig.suptitle('Model Output', fontsize=16)
 
-    chart1 = alt.Chart(data).mark_line().encode(
-        x='Time',
-        y='Workers',
-        color=alt.value('blue'),
-        tooltip=['Time', 'Workers']
-    ).properties(
-        title='Workers over Time',
-        width=400,
-        height=300
-    )
+    # Plot 1: Workers vs Wage
+    axes[0, 0].plot(time, workers, label='Workers', color='blue')
+    axes[0, 0].plot(time, wage, label='Wage', linestyle='--', color='green')
+    axes[0, 0].plot(time, city_extent, label='City Extent', linestyle='dotted', color='red')
+    axes[0, 0].set_xlabel('Time')
+    axes[0, 0].set_ylabel('Number')
+    axes[0, 0].set_title('Workers vs Wage')
+    axes[0, 0].legend(loc='upper right')
+    axes[0, 0].grid(True)
 
-    chart2 = alt.Chart(data).mark_line().encode(
-        x='Time',
-        y='Wage',
-        color=alt.value('green'),
-        tooltip=['Time', 'Wage']
-    ).properties(
-        title='Wage over Time',
-        width=400,
-        height=300
-    )
+    # Plot 2: Workers vs Wage (subplot 2)
+    axes[0, 1].plot(workers, wage, color='purple')
+    axes[0, 1].set_title('Subplot 2')
+    axes[0, 1].set_xlabel('Workers')
+    axes[0, 1].set_ylabel('Wage')
+    axes[0, 1].grid(True)
 
-    chart3 = alt.Chart(data).mark_line().encode(
-        x='Time',
-        y='City Extent',
-        color=alt.value('red'),
-        tooltip=['Time', 'City Extent']
-    ).properties(
-        title='City Extent over Time',
-        width=400,
-        height=300
-    )
+    # Plot 3: Workers vs City Extent (subplot 3)
+    axes[1, 0].plot(workers, city_extent, color='magenta')
+    axes[1, 0].set_title('Subplot 3')
+    axes[1, 0].set_xlabel('Workers')
+    axes[1, 0].set_ylabel('City Extent')
+    axes[1, 0].grid(True)
 
-    # Combine the plots into a single column
-    plots = chart1 | chart2 | chart3
+    # Plot 4: Workers vs Wage (subplot 4)
+    axes[1, 1].plot(workers, wage, color='brown')
+    axes[1, 1].set_title('Subplot 4')
+    axes[1, 1].set_xlabel('Workers')
+    axes[1, 1].set_ylabel('Wage')
+    axes[1, 1].grid(True)
+
+    plt.tight_layout()
 
     # Display the plots using Streamlit
     st.title("Agent-Based Model Visualization")
-    st.altair_chart(plots, use_container_width=True)
+    st.pyplot(fig)
 
 def main():
     num_steps = st.sidebar.slider("Number of Steps", min_value=1, max_value=100, value=50)
