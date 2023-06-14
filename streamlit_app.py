@@ -51,19 +51,21 @@ def run_model(num_steps, subsistence_wage, working_periods, savings_rate, r_prim
     ax[1, 1].set_title('subplot 4')
 
     # Display the plots using Streamlit
-    st.title("Agent-Based Model Visualization")
-    st.pyplot(fig)
+    col1, col2 = st.columns(2)
+
+    with col1:
+        st.title("Agent-Based Model Visualization")
+        st.slider("Number of Steps", min_value=1, max_value=100, value=num_steps, key="num_steps")
+        st.slider("Subsistence Wage", min_value=30000., max_value=50000., value=subsistence_wage, step=1000., key="subsistence_wage")
+        st.slider("Working Periods", min_value=30, max_value=50, value=working_periods, key="working_periods")
+        st.slider("Savings Rate", min_value=0.1, max_value=0.5, value=savings_rate, step=0.05, key="savings_rate")
+        st.slider("R Prime", min_value=0.03, max_value=0.07, value=r_prime, step=0.01, key="r_prime")
+    
+    with col2:
+        st.pyplot(fig)
 
 def main():
     st.title("Agent-Based Model Visualization")
 
-    num_steps = st.slider("Number of Steps", min_value=1, max_value=100, value=50)
-    subsistence_wage = st.slider("Subsistence Wage", min_value=30000., max_value=50000., value=40000., step=1000.)
-    working_periods = st.slider("Working Periods", min_value=30, max_value=50, value=40)
-    savings_rate = st.slider("Savings Rate", min_value=0.1, max_value=0.5, value=0.3, step=0.05)
-    r_prime = st.slider("R Prime", min_value=0.03, max_value=0.07, value=0.05, step=0.01)
-
-    run_model(num_steps, subsistence_wage, working_periods, savings_rate, r_prime)
-
-if __name__ == "__main__":
-    main()
+    num_steps = 50  # Default value for num_steps
+    subsistence_wage = 40000.  # Default value for
