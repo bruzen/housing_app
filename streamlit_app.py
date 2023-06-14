@@ -13,7 +13,6 @@ def run_model():
     col1, col2 = st.columns(2)
 
     with col1:
-        st.title("Agent-Based Model Visualization")
         num_steps = st.slider("Number of Steps", key="num_steps_1", min_value=1, max_value=100, value=50)
         subsistence_wage = st.slider("Subsistence Wage", key="subsistence_wage_1", min_value=30000., max_value=50000., value=40000., step=1000.)
         working_periods = st.slider("Working Periods", key="working_periods_1", min_value=30, max_value=50, value=40)
