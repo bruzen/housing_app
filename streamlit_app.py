@@ -3,69 +3,77 @@ import pandas as pd
 import streamlit as st
 import altair as alt
 import matplotlib.pyplot as plt
-from model import City  # Import the City model from model.py
+from model import City
 
-def run_model():
-    width = 50  # Set default values for width and height
+def run_model(num_steps, subsistence_wage, working_periods, savings_rate, r_prime):
+    width = 50
     height = 1
 
+    # Create and run the model
+    city = City(width=width, height=height, subsistence_wage=subsistence_wage, working_periods=working_periods,
+                savings_rate=savings_rate, r_prime=r_prime)
+
+    for t in range(num_steps):
+        city.step()
+
+    # Get output data
+    model_out = city.datacollector.get_model_vars_dataframe()
+    workers = np.array(model_out['workers'])
+    wage = np.array(model_out['wage'])
+    city_extent = np.array(model_out['city_extent'])
+    time = np.arange(num_steps)
+
+    # Create the plots using Altair
+    data = pd.DataFrame({'Time': time, 'Workers': workers, 'Wage': wage, 'City Extent': city_extent})
+
+    chart1 = alt.Chart(data).mark_line().encode(
+        x='Time',
+        y='Workers',
+        color=alt.value('blue'),
+        tooltip=['Time', 'Workers']
+    ).properties(
+        title='Workers over Time',
+        width=400,
+        height=300
+    )
+
+    chart2 = alt.Chart(data).mark_line().encode(
+        x='Time',
+        y='Wage',
+        color=alt.value('green'),
+        tooltip=['Time', 'Wage']
+    ).properties(
+        title='Wage over Time',
+        width=400,
+        height=300
+    )
+
+    chart3 = alt.Chart(data).mark_line().encode(
+        x='Time',
+        y='City Extent',
+        color=alt.value('red'),
+        tooltip=['Time', 'City Extent']
+    ).properties(
+        title='City Extent over Time',
+        width=400,
+        height=300
+    )
+
+    # Combine the plots into a single column
+    plots = chart1 | chart2 | chart3
+
     # Display the plots using Streamlit
-    col1, col2 = st.columns(2)
-
-    with col1:
-        num_steps = st.slider("Number of Steps", key="num_steps_1", min_value=1, max_value=100, value=50)
-        subsistence_wage = st.slider("Subsistence Wage", key="subsistence_wage_1", min_value=30000., max_value=50000., value=40000., step=1000.)
-        working_periods = st.slider("Working Periods", key="working_periods_1", min_value=30, max_value=50, value=40)
-        savings_rate = st.slider("Savings Rate", key="savings_rate_1", min_value=0.1, max_value=0.5, value=0.3, step=0.05)
-        r_prime = st.slider("R Prime", key="r_prime_1", min_value=0.03, max_value=0.07, value=0.05, step=0.01)
-
-    with col2:
-        # Create and run the model
-        city = City(width=width, height=height, subsistence_wage=subsistence_wage, working_periods=working_periods,
-                    savings_rate=savings_rate, r_prime=r_prime)
-
-        for t in range(num_steps):
-            city.step()
-
-        # Get output data
-        agent_out = city.datacollector.get_agent_vars_dataframe()
-        model_out = city.datacollector.get_model_vars_dataframe()
-
-        workers = np.array(model_out.workers)
-        wage = np.array(model_out.wage)
-        city_extent = np.array(model_out.city_extent)
-
-        # Create the plots
-        fig, ax = plt.subplots(2, 2)
-        fig.tight_layout(h_pad=4)
-        fig.suptitle('Model Output')
-        plt.subplots_adjust(top=0.85)
-
-        ax[0, 0].plot(workers, label='workers')
-        ax[0, 0].plot(wage, linestyle='--', label='wage')
-        ax[0, 0].plot(city_extent, linestyle='dotted', label='extent')
-        ax[0, 0].set_title('Workers vs Wage')
-        ax[0, 0].set_xlabel('Time')
-        ax[0, 0].set_ylabel('Number')
-        ax[0, 0].legend(loc='upper right')
-
-        ax[0, 1].plot(workers, wage)
-        ax[0, 1].plot(city_extent, wage)
-        ax[0, 1].set_title('subplot 2')
-
-        ax[1, 0].plot(workers, wage)
-        ax[1, 0].set_title('subplot 3')
-        ax[1, 0].set_xlabel('workers')
-        ax[1, 0].set_ylabel('wage')
-
-        ax[1, 1].plot(workers, wage)
-        ax[1, 1].set_title('subplot 4')
-
-        st.pyplot(fig)
+    st.title("Agent-Based Model Visualization")
+    st.altair_chart(plots, use_container_width=True)
 
 def main():
-    st.title("Agent-Based Model Visualization")
-    run_model()
+    num_steps = st.sidebar.slider("Number of Steps", min_value=1, max_value=100, value=50)
+    subsistence_wage = st.sidebar.slider("Subsistence Wage", min_value=30000., max_value=50000., value=40000., step=1000.)
+    working_periods = st.sidebar.slider("Working Periods", min_value=30, max_value=50, value=40)
+    savings_rate = st.sidebar.slider("Savings Rate", min_value=0.1, max_value=0.5, value=0.3, step=0.05)
+    r_prime = st.sidebar.slider("R Prime", min_value=0.03, max_value=0.07, value=0.05, step=0.01)
+
+    run_model(num_steps, subsistence_wage, working_periods, savings_rate, r_prime)
 
 if __name__ == "__main__":
     main()
