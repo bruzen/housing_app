@@ -51,7 +51,7 @@ def run_model(num_steps, subsistence_wage, working_periods, savings_rate, r_prim
     ax[1, 1].set_title('subplot 4')
 
     # Display the plots using Streamlit
-    col1, col2 = st.beta_columns(2)
+    col1, col2 = st.columns(2)
 
     with col1:
         st.title("Agent-Based Model Visualization")
@@ -66,7 +66,6 @@ def run_model(num_steps, subsistence_wage, working_periods, savings_rate, r_prim
 
 def main():
     st.title("Agent-Based Model Visualization")
-
     num_steps = st.slider("Number of Steps", min_value=1, max_value=100, value=50)
     subsistence_wage = st.slider("Subsistence Wage", min_value=30000., max_value=50000., value=35000., step=1000.)
     working_periods = st.slider("Working Periods", min_value=30, max_value=50, value=40)
