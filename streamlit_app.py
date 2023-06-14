@@ -14,12 +14,13 @@ def run_model():
 
     with col1:
         st.title("Agent-Based Model Visualization")
-        num_steps = st.slider("Number of Steps", key="num_steps_1", min_value=1, max_value=100, value=num_steps)
-        subsistence_wage = st.slider("Subsistence Wage", key="subsistence_wage_1", min_value=30000., max_value=50000., value=subsistence_wage, step=1000.)
-        working_periods = st.slider("Working Periods", key="working_periods_1", min_value=30, max_value=50, value=working_periods)
-        savings_rate = st.slider("Savings Rate", key="savings_rate_1", min_value=0.1, max_value=0.5, value=savings_rate, step=0.05)
-        r_prime = st.slider("R Prime", key="r_prime_1", min_value=0.03, max_value=0.07, value=r_prime, step=0.01)
+        num_steps = st.slider("Number of Steps", key="num_steps_1", min_value=1, max_value=100, value=50)
+        subsistence_wage = st.slider("Subsistence Wage", key="subsistence_wage_1", min_value=30000., max_value=50000., value=40000., step=1000.)
+        working_periods = st.slider("Working Periods", key="working_periods_1", min_value=30, max_value=50, value=40)
+        savings_rate = st.slider("Savings Rate", key="savings_rate_1", min_value=0.1, max_value=0.5, value=0.3, step=0.05)
+        r_prime = st.slider("R Prime", key="r_prime_1", min_value=0.03, max_value=0.07, value=0.05, step=0.01)
 
+    with col2:
         # Create and run the model
         city = City(width=width, height=height, subsistence_wage=subsistence_wage, working_periods=working_periods,
                     savings_rate=savings_rate, r_prime=r_prime)
@@ -27,7 +28,6 @@ def run_model():
         for t in range(num_steps):
             city.step()
 
-    with col2:
         # Get output data
         agent_out = city.datacollector.get_agent_vars_dataframe()
         model_out = city.datacollector.get_model_vars_dataframe()
