@@ -481,78 +481,108 @@ class Realtor(Agent):
 
         self.sale_listing   = []
         self.rental_listing = []
+        
+        self.bidders = {} # TODO use mesa concept
+        self.properties = {}
+        self.bids = defaultdict(list)
 
     def step(self):
         pass
 
+    def add_bid(self, bidder_id, property_id, price):
+        if bidder_id not in self.bidders:
+            self.bidders[bidder_id] = Bidder(bidder_id)
+
+        if property_id not in self.properties:
+            self.properties[property_id] = Property(property_id)
+
+        bidder = self.bidders[bidder_id] # TODO fix ref agent in mesa
+        property = self.properties[property_id]
+
+#         for bid in self.bids[property]:
+#             if bid.bidder.id == bidder.id:
+#                 print(f"Bidder with id {bidder_id} has already bid on property with id {property_id}. Update the bid if needed.")
+#                 return
+
+        bid = Bid(bidder, property, price)
+        self.bids[property].append(bid)
+
     def sell_homes(self):
-        """Review bids and sell homes."""
-        for sale_property in self.sale_listing:
-            best_offer = {'Offer': -1.0}
-            # TODO add bidding process, using reservation price
-            # Number of bidders effects price
-            for offer in sale_property.offers:
-                if (offer['Offer']) > best_offer['Offer']:
-                    # TODO check if we need this logic or make error if 
-                    # other non newcomers bid
-                    # TODO in the future people could earn and buy multiple
-                    # homes, remortgage a home to invest etc
-                    if ((offer['Bidder'] in self.model.newcomers) or
-                        (offer['Bidder'] not in
-                        self.model.schedule.get_breed_agents(Person))):
-                        best_offer = offer
-            if best_offer['Offer'] > 0:
-                buyer         = best_offer['Bidder']
-                seller        = sale_property.owner
-                price         = best_offer['Offer']
+        allocations = []
 
-                # Transfer ownership
-                buyer.properties_owned.append(sale_property)
-                seller.properties_owned.remove(sale_property)
-                sale_property.owner = buyer
+        for property in self.bids.keys():
+            property_bids = self.bids[property]
+            property_bids.sort(key=lambda x: x.price, reverse=True)
 
-                # TODO Get mortgage and make a down payment
-                # seller.savings += price
-                # seller.savings -= price
+            highest_bid = property_bids[0]
+            second_highest_price = property_bids[1].price if len(property_bids) > 1 else 0
 
-                # If a bank buys property, they rent it out
-                if buyer in self.model.schedule.get_breed_agents(Bank):
-                    logger.debug(f'Property {sale_property.unique_id} sold to \
-                                 bank for {price}.')
-                    self.rental_listing.append(sale_property)
-
-                # If a person buys property, they move in
-                elif buyer in self.model.schedule.get_breed_agents(Person):
-                    sale_property.resident     = buyer
-                    buyer.residence            = sale_property
-                    self.model.grid.move_agent(buyer, sale_property.pos)
-                    logger.debug(f'Property {sale_property.unique_id} sold to \
-                                 newcomer {buyer.unique_id} for {price}.')
-                    if buyer in self.model.newcomers:
-                        self.model.newcomers.remove(buyer)
-                else:
-                    logger.warning('Buyer was neither a person nor a bank.')
-
-                # Retiring agent leaves the city
-                if seller in self.model.schedule.get_breed_agents(Person):
-                    if seller in self.model.retiring_agents:
-                        seller.remove_agent()
-                    else:
-                        logger.warning('Seller was not retiring, so was not \
-                                       removed from model.')
-                else:
-                    logger.warning('Seller was not a person, so was not \
-                                   removed from model.')
+            if highest_bid.price > second_highest_price:
+                allocation = Allocation(property, highest_bid.bidder, highest_bid.price, second_highest_price)
             else:
-                logger.warning('No sale made since no offer was > 0.')
+                allocation = Allocation(property, None, highest_bid.price, 0) 
+        # TODO what if there's no succesfull bid, or no biddr
 
-            sale_property.offers.clear()
-        logger.debug(f'{len(self.sale_listing)} properties sold')
-        self.sale_listing.clear() # TODO replace with empty bids function below
+        self.complete_transaction(allocation)   
+               
+        self.bids.clear() 
+        self.bidders.clear()
+        self.properties.clear()
+        
+        # Sort allocations based on original price
+        # allocations.sort(key=lambda x: x.original_price, reverse=True)
+        # return allocations
 
-        # def empty_bids(bids):
-        #     for bidder in bids:
-        #         bids[bidder].clear()
+
+
+
+    def transfer_property(self, seller, buyer, sale_property):
+        """Transfers ownership of the property from seller to buyer."""
+        buyer.properties_owned.append(sale_property)
+        seller.properties_owned.remove(sale_property)
+        sale_property.owner = buyer
+
+    def handle_bank_purchase(self, buyer, sale_property):
+        """Handles the purchase of a property by a bank."""
+        logger.debug('Property %s sold to bank for %s.', sale_property.unique_id, best_offer['Offer'])
+        self.rental_listing.append(sale_property)
+
+    def handle_person_purchase(self, buyer, sale_property):
+        """Handles the purchase of a property by a person."""
+        sale_property.resident = buyer
+        buyer.residence = sale_property
+        self.model.grid.move_agent(buyer, sale_property.pos)
+        logger.debug('Property %s sold to newcomer %s for %s.', sale_property.unique_id, buyer.unique_id, best_offer['Offer'])
+
+        if buyer in self.model.newcomers:
+            self.model.newcomers.remove(buyer)
+
+    def handle_seller_departure(self, seller):
+        """Handles the departure of a selling agent."""
+        if seller in self.model.retiring_agents:
+            seller.remove_agent()
+        else:
+            logger.warning('Seller was not retiring, so was not removed from model.')
+
+    def complete_transaction(self, allocation):
+        """Completes the transaction between the buyer and the seller."""
+        buyer = allocation.successful_bidder
+        seller = allocation.property.owner
+        final_price = allocation.final_price
+
+        self.transfer_property(seller, buyer, allocation.property)
+
+        if buyer in self.model.schedule.get_breed_agents(Bank):
+            self.handle_bank_purchase(buyer, allocation.property, final_price)
+        elif buyer in self.model.schedule.get_breed_agents(Person):
+            self.handle_person_purchase(buyer, allocation.property, final_price)
+        else:
+            logger.warning('Buyer was neither a person nor a bank.')
+
+        if seller in self.model.schedule.get_breed_agents(Person):
+            self.handle_seller_departure(seller)
+        else:
+            logger.warning('Seller was not a person, so was not removed from model.')
 
 
     def rent_homes(self):
@@ -567,3 +597,17 @@ class Realtor(Agent):
                          property {renter.residence.unique_id} which has \
                          resident {rental.resident.unique_id}.')
         self.rental_listing.clear()
+
+        
+class Bid:
+    def __init__(self, bidder, property, price):
+        self.bidder = bidder
+        self.property = property
+        self.price = price
+
+class Allocation:
+    def __init__(self, property, successful_bidder, original_price, final_price):
+        self.property = property
+        self.successful_bidder = successful_bidder
+        self.original_price = original_price
+        self.final_price = final_price
