@@ -474,15 +474,15 @@ class Bank(Agent):
 
 
 class Realtor(Agent):
-    """Realtor agents connects sellers, buyers, and renters."""
+    """Realtor agents connect sellers, buyers, and renters."""
     def __init__(self, unique_id, model, pos):
         super().__init__(unique_id, model)
         self.pos = pos
 
-        self.sale_listing   = []
+        self.sale_listing = []
         self.rental_listing = []
-        
-        self.bidders = {} # TODO use mesa concept
+
+        self.bidders = {}
         self.properties = {}
         self.bids = defaultdict(list)
 
@@ -496,13 +496,8 @@ class Realtor(Agent):
         if property_id not in self.properties:
             self.properties[property_id] = Property(property_id)
 
-        bidder = self.bidders[bidder_id] # TODO fix ref agent in mesa
+        bidder = self.bidders[bidder_id]
         property = self.properties[property_id]
-
-#         for bid in self.bids[property]:
-#             if bid.bidder.id == bidder.id:
-#                 print(f"Bidder with id {bidder_id} has already bid on property with id {property_id}. Update the bid if needed.")
-#                 return
 
         bid = Bid(bidder, property, price)
         self.bids[property].append(bid)
@@ -520,21 +515,35 @@ class Realtor(Agent):
             if highest_bid.price > second_highest_price:
                 allocation = Allocation(property, highest_bid.bidder, highest_bid.price, second_highest_price)
             else:
-                allocation = Allocation(property, None, highest_bid.price, 0) 
-        # TODO what if there's no succesfull bid, or no biddr
+                allocation = Allocation(property, None, highest_bid.price, 0)
 
-        self.complete_transaction(allocation)   
-               
-        self.bids.clear() 
+            allocations.append(allocation)
+
+        self.complete_transactions(allocations)
+
+        self.bids.clear()
         self.bidders.clear()
         self.properties.clear()
-        
-        # Sort allocations based on original price
-        # allocations.sort(key=lambda x: x.original_price, reverse=True)
-        # return allocations
 
+    def complete_transactions(self, allocations):
+        for allocation in allocations:
+            buyer = allocation.successful_bidder
+            seller = allocation.property.owner
+            final_price = allocation.final_price
 
+            self.transfer_property(seller, buyer, allocation.property)
 
+            if isinstance(buyer, Bank):
+                self.handle_bank_purchase(buyer, allocation.property)
+            elif isinstance(buyer, Person):
+                self.handle_person_purchase(buyer, allocation.property, final_price)
+            else:
+                logger.warning('Buyer was neither a person nor a bank.')
+
+            if isinstance(seller, Person):
+                self.handle_seller_departure(seller)
+            else:
+                logger.warning('Seller was not a person, so was not removed from the model.')
 
     def transfer_property(self, seller, buyer, sale_property):
         """Transfers ownership of the property from seller to buyer."""
@@ -544,15 +553,15 @@ class Realtor(Agent):
 
     def handle_bank_purchase(self, buyer, sale_property):
         """Handles the purchase of a property by a bank."""
-        logger.debug('Property %s sold to bank for %s.', sale_property.unique_id, best_offer['Offer'])
+        logger.debug('Property %s sold to bank.', sale_property.unique_id)
         self.rental_listing.append(sale_property)
 
-    def handle_person_purchase(self, buyer, sale_property):
+    def handle_person_purchase(self, buyer, sale_property, final_price):
         """Handles the purchase of a property by a person."""
         sale_property.resident = buyer
         buyer.residence = sale_property
         self.model.grid.move_agent(buyer, sale_property.pos)
-        logger.debug('Property %s sold to newcomer %s for %s.', sale_property.unique_id, buyer.unique_id, best_offer['Offer'])
+        logger.debug('Property %s sold to newcomer %s.', sale_property.unique_id, buyer.unique_id)
 
         if buyer in self.model.newcomers:
             self.model.newcomers.remove(buyer)
@@ -562,43 +571,21 @@ class Realtor(Agent):
         if seller in self.model.retiring_agents:
             seller.remove_agent()
         else:
-            logger.warning('Seller was not retiring, so was not removed from model.')
-
-    def complete_transaction(self, allocation):
-        """Completes the transaction between the buyer and the seller."""
-        buyer = allocation.successful_bidder
-        seller = allocation.property.owner
-        final_price = allocation.final_price
-
-        self.transfer_property(seller, buyer, allocation.property)
-
-        if buyer in self.model.schedule.get_breed_agents(Bank):
-            self.handle_bank_purchase(buyer, allocation.property, final_price)
-        elif buyer in self.model.schedule.get_breed_agents(Person):
-            self.handle_person_purchase(buyer, allocation.property, final_price)
-        else:
-            logger.warning('Buyer was neither a person nor a bank.')
-
-        if seller in self.model.schedule.get_breed_agents(Person):
-            self.handle_seller_departure(seller)
-        else:
-            logger.warning('Seller was not a person, so was not removed from model.')
-
+            logger.warning('Seller was not retiring, so was not removed from the model.')
 
     def rent_homes(self):
         """Rent homes listed by banks to newcomers."""
         logger.debug(f'{len(self.rental_listing)} properties to rent.')
         for rental in self.rental_listing:
-            renter             = self.model.create_newcomer()
-            rental.resident    = renter
-            renter.residence   = rental
+            renter = self.model.create_newcomer()
+            rental.resident = renter
+            renter.residence = rental
             self.model.newcomers.remove(renter)
-            logger.debug(f'Newly created renter {renter.unique_id} lives at \
-                         property {renter.residence.unique_id} which has \
-                         resident {rental.resident.unique_id}.')
+            logger.debug(f'Newly created renter {renter.unique_id} lives at '
+                         f'property {renter.residence.unique_id} which has '
+                         f'resident {rental.resident.unique_id}.')
         self.rental_listing.clear()
 
-        
 class Bid:
     def __init__(self, bidder, property, price):
         self.bidder = bidder
