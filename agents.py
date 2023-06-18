@@ -26,77 +26,134 @@ class Land(Agent):
     # TODO do we update warranted rent and prices in the LAND STEP?
     @property
     def warranted_rent(self):
+        """
+        Calculate the warranted rent for a land parcel.
+
+        Calculation:
+        warranted_rent = omega - cd + a * psi
+
+        where:
+        - omega: urban wage premium obtained from the firm model
+        - psi: subsistence wage from the model
+        - a: share of housing services determined by the model
+        - cd: transportation cost associated with the land parcel
+
+        Returns:
+        The calculated warranted rent for the land parcel.
+        """
         omega  = self.model.firm.wage_premium
         psi    = self.model.subsistence_wage
         a      = self.model.housing_services_share
         cd     = self.transport_cost
-        # c      = self.model.transport_cost_per_dist
-        # d      = self.distance_from_center
         return omega - cd + a*psi
 
     @property 
     def market_rent(self):
-        # TODO this can change
+        """
+        Get the market rent for a land parcel.
+
+        Note:
+        - TODO try scenarios where market_rent deviates from warranted_rent.
+
+        Returns:
+        The market rent for the land parcel.
+        """
         return self.warranted_rent
 
     @property
     def net_rent(self):
-        """Compute the rent for a land parcel, or what someone could afford
-        to pay to live there. 
+        """
+        Compute the net rent for a land parcel.
 
-        Rent depends on the urban wage premium over and above the subsistence
-        wage, and on transportation costs and the distance to the
-        central business district. Applies with a single wage. Adjust for
-        differential urban wages.
+        The net rent represents what someone could afford to pay to 
+        live at the land parcel. It is calculated based on the 
+        warranted rent, maintenance costs, and property tax.
 
+        Formula: warranted_rent - maintenance - property_tax or
         omega - c*d + a*psi - b*a*psi - tau*a*psi
 
+        Note:
+        - TODO Applies with a single wage. Adjust for differential urban wages.
+
+        Returns:
+        The net rent for the land parcel.
         """
         return self.warranted_rent - self.maintenance - self.property_tax
 
     @property
     def warranted_price(self):
-        return self.warranted_rent/self.model.r_prime
+        """
+        Calculate the warranted price of the land parcel.
+
+        The warranted price is calculated by dividing the 
+        warranted rent by the r_prime value.
+
+        Formula: warranted_rent / r_prime
+
+        Note:
+        - TODO Check this is for the appropriate period/discounting.
+
+        Returns:
+        The warranted price of the land parcel.
+        """
+        return self.warranted_rent / self.model.r_prime
     
     @property
     def appraised_price(self):
-        # Property valued used for taxation purposes
-        # TODO this should be a lagged market price
+        """
+        Get the appraised price of the land parcel used for taxation purposes.
+
+        Note:
+        - TODO: This should be a lagged market price.
+
+        Returns:
+        The appraised price of the land parcel.
+        """
         return self.warranted_price
 
     @property
     def property_tax(self):
+        """
+        Calculate the annual property tax of the land parcel.
+
+        The property tax is computed by multiplying the property tax rate by the appraised price.
+
+        Formula: property_tax_rate * appraised_price
+
+        Returns:
+        The annual property tax of the land parcel.
+        """
         tau              = self.property_tax_rate
         appraised_price  = self.appraised_price
         return tau * appraised_price
     
-    # def get_tax(self):
-    #     """ 
-    #     THIS DOES NOT CHANGE WITH INCREASING WAGES?
-    #     BUT THAT IS THE MAIN WAY TO FUND A CITY
+        """
+        TODO: Need to get the tax costs for the 
+        mortgage period, T?
+        
+        Example of rate for an  multiperiod annual rate:
+        omega = self.model.firm.wage_premium
+        psi   = self.model.subsistence_wage
+        a     = self.model.housing_services_share
+        cd    = self.transport_cost
+        sum_delta = self.model.discount_factor # RENAME
+        return tau * (omega - c*d + a*psi) * sum_delta
 
-    #     WHAT TO CALL THIS WEHRE DOES IT GO. WHERE DO WE USE THIS VS TAU
-    #     Just for initialization? - warranted price. 
-    #     Use warranted prices as initialization
-    #     Tax costs for the mortgage period, T. 
-    #     (Example of rate for an  multiperiod annual rate)
-    #     tax_T= tau*(omega-c*d + a*psi) * sum_delta_T
-    #     This is assuming taxes are paid at the end of each year for T years
-    #     tau_T       = tau * sum_T_delta 
-    #     #  present value of the tax rate over T years        
-    #     """
-    #     tau   = self.property_tax_rate
-    #     omega = self.model.firm.wage_premium
-    #     psi   = self.model.subsistence_wage
-    #     a     = self.model.housing_services_share
-    #     c     = self.model.transport_cost_per_dist # RENAME
-    #     d     = self.distance_from_center
-    #     sum_delta = self.model.discount_factor
-    #     return tau * (omega - c*d + a*psi) * sum_delta
-
+        assuming taxes are paid at the end of each year for T years
+        tau_T       = tau * sum_T_delta 
+        """
 
     @property
     def maintenance(self):
+        """
+        Calculate the maintenance cost for the land parcel.
+
+        The maintenance cost is determined by the share of housing services, the maintenance share,
+        and the subsistence wage.
+
+        Returns:
+        The maintenance cost for the land parcel.
+        """
         a      = self.model.housing_services_share
         b      = self.model.maintenance_share
         psi    = self.model.subsistence_wage
@@ -593,8 +650,8 @@ class Bid:
         self.price = price
 
 class Allocation:
-    def __init__(self, property, successful_bidder, original_price, final_price):
+    def __init__(self, property, successful_bidder, bid_price, final_price):
         self.property = property
         self.successful_bidder = successful_bidder
-        self.original_price = original_price
+        self.bid_price = bid_price
         self.final_price = final_price
