@@ -1,0 +1,26 @@
+# Compiled Python files
+*.pyc
+*.pyo
+*.pyc
+$py.class
+
+# Cached Python bytecode
+__pycache__/
+
+# Distribution / packaging
+/dist/
+/build/
+.eggs/
+*.egg-info/
+
+# Logs
+*.log
+
+# Jupyter Notebook
+.ipynb_checkpoints/
+
+# Output data
+/output_data/
+
+# macOS specific files
+.DS_Store 
