@@ -197,33 +197,33 @@ class Land(Agent):
         # Add the price data to the model's step price data
         self.model.step_price_data.append(price_data)
 
-def calculate_distance_from_center(self, method='euclidean'):
-    """
-    Calculate the Euclidean distance between a position and the center.
+    def calculate_distance_from_center(self, method='euclidean'):
+        """
+        Calculate the Euclidean distance between a position and the center.
 
-    Parameters:
-    - method: The distance calculation method ('euclidean' or 'cityblock').
+        Parameters:
+        - method: The distance calculation method ('euclidean' or 'cityblock').
 
-    Returns:
-    The distance between the position and the center.
-    """
-    if method == 'euclidean':
-        return distance.euclidean(self.pos, self.model.center)
-    elif method == 'cityblock':
-        return distance.cityblock(self.pos, self.model.center)
-    else:
-        raise ValueError("Invalid distance calculation method."
-                         "Supported methods are 'euclidean' and 'cityblock'.")
+        Returns:
+        The distance between the position and the center.
+        """
+        if method == 'euclidean':
+            return distance.euclidean(self.pos, self.model.center)
+        elif method == 'cityblock':
+            return distance.cityblock(self.pos, self.model.center)
+        else:
+            raise ValueError("Invalid distance calculation method."
+                            "Supported methods are 'euclidean' and 'cityblock'.")
 
-def calculate_transport_cost(self):
-    """
-    Calculate the transport cost based on the distance and cost per unit distance.
+    def calculate_transport_cost(self):
+        """
+        Calculate the transport cost based on the distance and cost per unit distance.
 
-    Returns:
-    The total transport cost.
-    """
-    cost = self.distance_from_center * self.model.transport_cost_per_dist
-    return cost
+        Returns:
+        The total transport cost.
+        """
+        cost = self.distance_from_center * self.model.transport_cost_per_dist
+        return cost
 
 class Person(Agent):
     """Person.
