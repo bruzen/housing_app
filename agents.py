@@ -175,49 +175,95 @@ class Land(Agent):
         self.resident             = resident
         self.owner                = owner
 
-        # TODO want warranted price history? - 
-        # self.rent_history         = [] 
+        # TODO: want warranted price history? 
+        # self.rent_history       = [] 
         self.offers               = []
-        self.euclidean_dist_from_center = distance.euclidean(self.pos,
-                                                             self.model.center)
-        self.cityblock_dist_from_center = distance.cityblock(self.pos,
-                                                             self.model.center)
-        self.distance_from_center =  self.euclidean_dist_from_center
-        # `transport_cost` cacluates travel costs using euclidean distance.
-                
-        self.transport_cost       = (self.distance_from_center *
-                                     self.model.transport_cost_per_dist)
+        self.distance_from_center = self.calculate_distance_from_center()
+        self.transport_cost       = self.calculate_transport_cost()
 
     def step(self): 
+        # TODO: How to handle realized prices?
         # self.rent_history.append(self.net_rent)
-        # self.tax = self.get_tax()
-        # How to handle realized prices?
-        price_data = {'id': self.unique_id, 
-                           'warranted_price': self.warranted_price,
-                           'time_step': self.model.time_step,
-                           'transport_cost': self.transport_cost,
-                           'wage': self.model.firm.wage}
+
+        # Prepare price data for the current step
+        price_data = {
+            'id': self.unique_id,
+            'warranted_price': self.warranted_price,
+            'time_step': self.model.time_step,
+            'transport_cost': self.transport_cost,
+            'wage': self.model.firm.wage
+       }
+
+        # Add the price data to the model's step price data
         self.model.step_price_data.append(price_data)
+
+def calculate_distance_from_center(self, method='euclidean'):
+    """
+    Calculate the Euclidean distance between a position and the center.
+
+    Parameters:
+    - method: The distance calculation method ('euclidean' or 'cityblock').
+
+    Returns:
+    The distance between the position and the center.
+    """
+    if method == 'euclidean':
+        return distance.euclidean(self.pos, self.model.center)
+    elif method == 'cityblock':
+        return distance.cityblock(self.pos, self.model.center)
+    else:
+        raise ValueError("Invalid distance calculation method."
+                         "Supported methods are 'euclidean' and 'cityblock'.")
+
+def calculate_transport_cost(self):
+    """
+    Calculate the transport cost based on the distance and cost per unit distance.
+
+    Returns:
+    The total transport cost.
+    """
+    cost = self.distance_from_center * self.model.transport_cost_per_dist
+    return cost
 
 class Person(Agent):
     """Person.
 
-    :param unique_id: An integer identifier.
-    :param model: The main city model.
-    :param pos: The person's location on the spatial grid.
-    :param init_working_period: The initial working period, between 0
-        and the retirement age. It increments in each step.
-    :param savings: The amount of money the agent has in savings.
-    :param debt: The amount of money the agent owes.
-    :param residence: The land parcel where the agent lives.
-    """
+    Represents an individual person in the city model.
 
+    :param unique_id: An integer identifier for the person.
+    :type unique_id: int.
+    :param model: The main city model.
+    :type model: CityModel.
+    :param pos: The person's location on the spatial grid.
+    :type pos: tuple.
+    :param init_working_period: The initial working period, between 0 and the retirement age. Defaults to 0.
+    :type init_working_period: int, optional.
+    :param savings: The amount of money the person has in savings. Defaults to 0.0.
+    :type savings: float, optional.
+    :param debt: The amount of money the person owes. Defaults to 0.0.
+    :type debt: float, optional.
+    :param residence_owned: The land parcel where the person lives. Defaults to None.
+    :type residence_owned: Land, optional.
+    """
     @property
     def borrowing_rate(self):
+        """Borrowing rate of the person.
+
+        Returns:
+        The borrowing rate calculated based on the model's  \
+        target rate and individual wealth adjustment.
+        """
         return self.model.r_target + self.individual_wealth_adjustment
 
     @property
     def individual_wealth_adjustment(self):
+        """Individual wealth adjustment.
+
+        # TODO: Fix
+ 
+        Returns:
+        The individual wealth adjustment value.
+        """
         return 5
 
     def __init__(self, unique_id, model, pos, init_working_period = 0,
@@ -239,7 +285,6 @@ class Person(Agent):
         # If the agent initially owns a property, set residence and owners
         if self.residence:
             self.properties_owned.append(self.residence)
-
             if self.residence.owner is not None:
                 logger.warning(f'Property {self.residence.unique_id} has \
                                  owner {self.residence.owner}, now \
@@ -326,17 +371,15 @@ class Person(Agent):
         # down more than the min from their savings.
         # TODO confirm they have enough savings
         max_allowed_bid = self.bank.get_max_allowed_bid(self)
-        for sale_property in (self.model.realtor.sale_listing):
+        for sale_property in self.model.realtor.sale_listing:
             max_desired_bid = self.model.bank.get_max_desired_bid(sale_property, self)
             max_bid = min(max_allowed_bid, max_desired_bid)
-            offer = {'Bidder': self,
-                     'Offer':  max_bid}
-            offer_val = offer['Offer']
-            logger.debug(f'Person {self.unique_id} bids {offer_val} \
-                           for property {sale_property.unique_id}, \
-                           if val is positive.')
-            if offer_val > 0:
-                sale_property.offers.append(offer)
+            bid = Bid(bidder=self, property=sale_property, price=max_bid)
+            logger.debug(f'Person {self.unique_id} bids {bid.price} \
+                        for property {sale_property.unique_id}, \
+                        if val is positive.')
+            if bid.price > 0:
+                sale_property.offers.append(bid)
 
     def remove_agent(self):
         if self in self.model.newcomers:
@@ -451,16 +494,13 @@ class Bank(Agent):
 
     def bid(self):
         """Banks bid on investment properties."""
-        for sale_property in (self.model.realtor.sale_listing):
-            # FIX - THIS NO LONGER INCLUDES BANK MAINTENANCE FACTORS ETC. - 
+        for sale_property in self.model.realtor.sale_listing:
             max_desired_bid = self.model.bank.get_max_desired_bid(sale_property, self)
-            offer = {'Bidder': self,
-                     'Offer':  max_desired_bid}
-            offer_val = offer['Offer']
-            logger.debug(f'Bank {self.unique_id} bids {offer_val} for \
-                         property {sale_property.unique_id}, if val is positive.')
-            if offer_val > 0:
-                sale_property.offers.append(offer)
+            bid = Bid(bidder=self, property=sale_property, price=max_desired_bid)
+            logger.debug(f'Bank {self.unique_id} bids {bid.price} for \
+                        property {sale_property.unique_id}, if val is positive.')
+            if bid.price > 0:
+                sale_property.offers.append(bid)
 
     def get_max_allowed_bid(self, applicant):
         savings = applicant.savings 
@@ -517,7 +557,7 @@ class Bank(Agent):
         # m is the downpayment they are proposing to make (downpayment share?)
         delta    = self.model.discount_factor 
         p_dot    = self.model.p_dot # Rate of price change
-        return net_rent/((1 - m)*r_target - delta*(1 + p_dot - (1 + r)*m))
+        return net_rent / ((1 - m)*r_target - delta*(1 + p_dot - (1 + r)*m))
     
         # TODO the investor must be a person or a bank initially
         # TODO Consider alternative discount rates for individuals    
