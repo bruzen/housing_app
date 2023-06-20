@@ -13,7 +13,7 @@ from mesa.space import MultiGrid
 from mesa.datacollection import DataCollector
 
 from model.agents import Land, Person, Firm, Bank, Realtor
-from schedule import RandomActivationByBreed
+from model.schedule import RandomActivationByBreed
 
 logging.basicConfig(filename='logfile.log',
                     filemode='w',
@@ -24,7 +24,7 @@ logger = logging.getLogger(__name__)
 # def capture_rents(model):
 #     """Current rents for each location in the grid."""
 #     rent_grid = []
-#     for row in model.grid.grid:
+#     for row in model.grid.grid:   
 #         new_row = []
 #         for cell in row:
 #             # TODO Should initial cell_rent be empty/null to signal unassigned?
