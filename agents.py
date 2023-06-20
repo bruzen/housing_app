@@ -27,10 +27,11 @@ class Land(Agent):
     @property
     def warranted_rent(self):
         """
-        Calculate the warranted rent for a land parcel.
+        Calculate the warranted rent for a land parcel. 
+        Summed and discounted.
 
         Calculation:
-        warranted_rent = omega - cd + a * psi
+        warranted_rent = (omega - cd + a * psi) * sum_delta
 
         where:
         - omega: urban wage premium obtained from the firm model
@@ -41,11 +42,12 @@ class Land(Agent):
         Returns:
         The calculated warranted rent for the land parcel.
         """
-        omega  = self.model.firm.wage_premium
-        psi    = self.model.subsistence_wage
-        a      = self.model.housing_services_share
-        cd     = self.transport_cost
-        return omega - cd + a*psi
+        omega     = self.model.firm.wage_premium
+        psi       = self.model.subsistence_wage
+        a         = self.model.housing_services_share
+        cd        = self.transport_cost
+        sum_delta = self.model.discount_factor
+        return (omega - cd + a*psi) * sum_delta
 
     @property 
     def market_rent(self):
@@ -53,7 +55,7 @@ class Land(Agent):
         Get the market rent for a land parcel.
 
         Note:
-        - TODO try scenarios where market_rent deviates from warranted_rent.
+        - Could try scenarios where market_rent deviates from warranted_rent.
 
         Returns:
         The market rent for the land parcel.
@@ -63,14 +65,14 @@ class Land(Agent):
     @property
     def net_rent(self):
         """
-        Compute the net rent for a land parcel.
+        Compute the net rent for a land parcel. 
+        Summed and discounted.
 
         The net rent represents what someone could afford to pay to 
         live at the land parcel. It is calculated based on the 
         warranted rent, maintenance costs, and property tax.
 
         Formula: warranted_rent - maintenance - property_tax or
-        omega - c*d + a*psi - b*a*psi - tau*a*psi
 
         Note:
         - TODO Applies with a single wage. Adjust for differential urban wages.
@@ -91,7 +93,8 @@ class Land(Agent):
         Formula: warranted_rent / r_prime
 
         Note:
-        - TODO Check this is for the appropriate period/discounting.
+        - Used as an initial value in starting the housing market 
+          near a reasonable value.
 
         Returns:
         The warranted price of the land parcel.
@@ -104,7 +107,8 @@ class Land(Agent):
         Get the appraised price of the land parcel used for taxation purposes.
 
         Note:
-        - TODO: This should be a lagged market price.
+        - Apraised price for taxation may actually be a fraction of the lagged
+          market price.
 
         Returns:
         The appraised price of the land parcel.
@@ -115,56 +119,39 @@ class Land(Agent):
     def property_tax(self):
         """
         Calculate the annual property tax of the land parcel.
+        Summed and discounted.
 
         The property tax is computed by multiplying the property tax rate by the appraised price.
 
-        Formula: property_tax_rate * appraised_price
+        Formula: property_tax_rate * appraised_price * sum_delta
 
         Returns:
         The annual property tax of the land parcel.
         """
         tau              = self.property_tax_rate
         appraised_price  = self.appraised_price
-        return tau * appraised_price
-    
-        """
-        TODO: Need to get the tax costs for the 
-        mortgage period, T?
-        
-        Example of rate for an  multiperiod annual rate:
-        omega = self.model.firm.wage_premium
-        psi   = self.model.subsistence_wage
-        a     = self.model.housing_services_share
-        cd    = self.transport_cost
-        sum_delta = self.model.discount_factor # RENAME
-        return tau * (omega - c*d + a*psi) * sum_delta
-
-        assuming taxes are paid at the end of each year for T years
-        tau_T       = tau * sum_T_delta 
-        """
+        sum_delta        = self.model.discount_factor
+        return tau * appraised_price * sum_delta
 
     @property
     def maintenance(self):
         """
         Calculate the maintenance cost for the land parcel.
+        Summed and discounted.
 
         The maintenance cost is determined by the share of housing services, the maintenance share,
         and the subsistence wage.
 
+        Formula: a * b * psi * sum_delta
+        
         Returns:
         The maintenance cost for the land parcel.
         """
-        a      = self.model.housing_services_share
-        b      = self.model.maintenance_share
-        psi    = self.model.subsistence_wage
-        return a * b * psi
-    
-    # TODO consider sum_delta
-    #     """Maintenance share of property service (a*b*psi summed and discounted)
-    #     OR IS IT TOTAL maintenance COST OVER THE MORTGAGE PERIOD?
-    #     """
-    #     sum_delta = self.discount_factor # Could vary by person
-    #     return (a * b * psi) * sum_delta
+        a         = self.model.housing_services_share
+        b         = self.model.maintenance_share
+        psi       = self.model.subsistence_wage
+        sum_delta = self.model.discount_factor
+        return a * b * psi * sum_delta
 
     def __init__(self, unique_id, model, pos, 
                  property_tax_rate = 0., 
@@ -257,14 +244,15 @@ class Person(Agent):
 
     @property
     def individual_wealth_adjustment(self):
-        """Individual wealth adjustment.
+        """Individual wealth adjustment. Added on to the agent's mortgage 
+        borrowng rate. It depends on the agent's wealth.
 
         # TODO: Fix
  
         Returns:
         The individual wealth adjustment value.
         """
-        return 5
+        return 0.0002
 
     def __init__(self, unique_id, model, pos, init_working_period = 0,
                  savings = 0., debt = 0.,
@@ -275,7 +263,6 @@ class Person(Agent):
         self.init_working_period = init_working_period
         self.working_period      = init_working_period
         self.savings             = savings
-        # self.debt                = debt # TODO make mortgage
 
         self.properties_owned    = []
         self.residence           = residence_owned
@@ -303,7 +290,7 @@ class Person(Agent):
 
     # @property
     # def wealth(self):
-    #     # TODO fix wealth is a function of assets and income
+    #     self.saving - self.mortgage # TODO fix wealth is a function of assets and income
     #     return -1
     
     # @property
@@ -315,8 +302,6 @@ class Person(Agent):
         self.count              += 1
         self.working_period     += 1
 
-        # Update savings
-        self.savings += self.model.savings_per_step
 
         # Newcomers, who don't find a home, leave the city
         if (self in self.model.newcomers):
@@ -348,10 +333,12 @@ class Person(Agent):
                 if (premium > self.residence.transport_cost):
                     self.is_working = 1
 
+            # Update savings
+            self.savings += self.model.savings_per_step # TODO debt, wealth
+
             # TODO pay costs for any properties owned
             # if self.residence in self.properties_owned:
-            #     # TODO pay mortgage if needed pay costs
-            #     pass
+            #   ...
             # else:
             #     self.savings -= self.rent # TODO check this is right rent
 

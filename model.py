@@ -12,7 +12,7 @@ from mesa import Model
 from mesa.space import MultiGrid
 from mesa.datacollection import DataCollector
 
-from agents import Land, Person, Firm, Bank, Realtor
+from model.agents import Land, Person, Firm, Bank, Realtor
 from schedule import RandomActivationByBreed
 
 logging.basicConfig(filename='logfile.log',
@@ -401,3 +401,6 @@ class City(Model):
         sum_delta = (1 - delta_mortgage_period)/delta
         return sum_delta
         # sum_delta = delta_mortgage_period * (1 - delta_mortgage_period) # Old
+
+# discount factor for ongoing year by year periods - for one year -- etc.....
+# todo note discounted net value of the capital gain, delta. in equation is a discoutn factor - discount factor for the term T, since you don't sell thill the end
