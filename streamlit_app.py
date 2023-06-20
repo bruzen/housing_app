@@ -3,7 +3,7 @@ import pandas as pd
 import streamlit as st
 import altair as alt
 import matplotlib.pyplot as plt
-from model import City
+from model.model import City
 
 def run_model(num_steps, subsistence_wage, working_periods, savings_rate, r_prime):
     width = 50
