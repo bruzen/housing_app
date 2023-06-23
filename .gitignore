@@ -24,3 +24,4 @@ __pycache__/
 
 # macOS specific files
 .DS_Store 
+profile_data.prof
