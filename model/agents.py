@@ -3,7 +3,7 @@ from collections import defaultdict
 from scipy.spatial import distance
 import numpy as np
 import pandas as pd
-from pympler import tracker
+# from pympler import tracker
 
 from mesa import Agent
 
@@ -14,8 +14,8 @@ logging.basicConfig(filename='logfile.log',
 logger = logging.getLogger(__name__)
 
 # Create a MemoryTracker instance TODO remove all 'tracker' lines
-mem_tracker = tracker.SummaryTracker()
-
+# mem_tracker = tracker.SummaryTracker()
+# mem_tracker.print_diff()
 class Land(Agent):
     """Land parcel.
 
@@ -79,7 +79,7 @@ class Land(Agent):
         Formula: warranted_rent - maintenance - property_tax or
 
         Note:
-        - TODO Applies with a single wage. Adjust for differential urban wages.
+        - Applies with a single wage. Could adjust for differential urban wages.
 
         Returns:
         The net rent for the land parcel.
@@ -198,10 +198,7 @@ class Land(Agent):
         Returns:
         The distance between the position and the center.
         """
-        mem_tracker.print_diff()
-
         if method == 'euclidean':
-            mem_tracker.print_diff()
             return distance.euclidean(self.pos, self.model.center)
         elif method == 'cityblock':
             return distance.cityblock(self.pos, self.model.center)
@@ -217,7 +214,6 @@ class Land(Agent):
         The total transport cost.
         """
         cost = self.distance_from_center * self.model.transport_cost_per_dist
-        mem_tracker.print_diff()
         return cost
 
 class Person(Agent):
@@ -263,11 +259,11 @@ class Person(Agent):
         Returns:
         The individual wealth adjustment value.
         """
-        r_target
-        K
-        W 
-        W_min
-        W_mean
+        r_target = self.model.r_target
+        K        = self.model.wealth_sensitivity
+        W        = self.wealth 
+        # W_min
+        # W_mean
         return 0.0002
 
     def __init__(self, unique_id, model, pos, init_working_period = 0,
@@ -589,16 +585,13 @@ class Realtor(Agent):
     def step(self):
         pass
 
-    def add_bid(self, bidder_id, property_id, price):
-        if bidder_id not in self.bidders:
-            self.bidders[bidder_id] = Bidder(bidder_id)
+    def add_bid(self, bidder, property, price):
+        if bidder not in self.bidders:
+            self.bidders[bidder] = bidder
 
-        if property_id not in self.properties:
-            self.properties[property_id] = Property(property_id)
-
-        bidder = self.bidders[bidder_id]
-        property = self.properties[property_id]
-
+        if property not in self.properties:
+            self.properties[property] = property
+    
         bid = Bid(bidder, property, price)
         self.bids[property].append(bid)
 

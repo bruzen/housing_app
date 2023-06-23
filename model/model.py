@@ -268,7 +268,7 @@ class City(Model):
 
         self.time_step += 1
 
-        logger.error(f'Step {self.schedule.steps}.')
+        logger.debug(f'Step {self.schedule.steps}.')
         self.step_price_data.clear()
 
         # Land records locational rents and calculates price forecast
@@ -320,9 +320,9 @@ class City(Model):
         # Record model output
         self.datacollector.collect(self)
 
-        logger.error(f'Agglomeration population: \
+        logger.debug(f'Agglomeration population: \
                      {self.agglomeration_population}.')
-        logger.error('\n')
+        logger.debug('\n')
 
     def create_newcomer(self):
         """Create newcomer at the center with no residence or property."""
