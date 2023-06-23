@@ -3,6 +3,7 @@ from collections import defaultdict
 from scipy.spatial import distance
 import numpy as np
 import pandas as pd
+from pympler import tracker
 
 from mesa import Agent
 
@@ -11,6 +12,9 @@ logging.basicConfig(filename='logfile.log',
                     level=logging.ERROR,
                     format='%(asctime)s %(name)s %(levelname)s:%(message)s')
 logger = logging.getLogger(__name__)
+
+# Create a MemoryTracker instance TODO remove all 'tracker' lines
+mem_tracker = tracker.SummaryTracker()
 
 class Land(Agent):
     """Land parcel.
@@ -194,7 +198,10 @@ class Land(Agent):
         Returns:
         The distance between the position and the center.
         """
+        mem_tracker.print_diff()
+
         if method == 'euclidean':
+            mem_tracker.print_diff()
             return distance.euclidean(self.pos, self.model.center)
         elif method == 'cityblock':
             return distance.cityblock(self.pos, self.model.center)
@@ -210,6 +217,7 @@ class Land(Agent):
         The total transport cost.
         """
         cost = self.distance_from_center * self.model.transport_cost_per_dist
+        mem_tracker.print_diff()
         return cost
 
 class Person(Agent):
@@ -249,9 +257,17 @@ class Person(Agent):
 
         # TODO: Fix
  
+        Formula: r_target + K/(W-W_min) - K/(W_mean-W_min)
+        K is wealth sensitivity parameter
+
         Returns:
         The individual wealth adjustment value.
         """
+        r_target
+        K
+        W 
+        W_min
+        W_mean
         return 0.0002
 
     def __init__(self, unique_id, model, pos, init_working_period = 0,
