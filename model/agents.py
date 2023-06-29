@@ -270,6 +270,18 @@ class Firm(Agent):
     :param init_wage_premium: initial urban wage premium.
     """
 
+    @property
+    def total_no_workers(self):
+        total_no_workers = len(
+            [a for a in self.schedule.agents_by_breed[Person].values()
+                     if a.is_working == 1]
+        )
+        return total_no_workers * self.density
+
+    @property
+    def agglomeration_population(self):
+        return self.total_no_workers * self.density + self.seed_population
+
     def __init__(self, unique_id, model, pos, init_wage_premium,
                  A_F, alpha_F, beta_F, price_of_output, cost_of_capital,
                  wage_adjust_coeff_new_workers, 
@@ -290,7 +302,6 @@ class Firm(Agent):
         self.n        = self.model.workforce_rural_firm # workforce_urban_firm
         self.no_firms = self.model.baseline_population/self.model.workforce_rural_firm
 
-         
         self.k        = 0 # TODO INITIALIZE
 
     # TODO Fix Firm wage update totaly and move to model
@@ -300,7 +311,7 @@ class Firm(Agent):
         # y_t= self.output(self.N, self.k, self.n)
 
         # agglom     = self.model.agglomeration_ratio
-        # population = self.model.agglomeration_population
+        # population = self.agglomeration_population
         # workers_share = self.model.workers_share  # lambda - TODO fix
         # wage_premium = workers_share * (agglom-1) * prefactor * population**agglom # omega # ****** 
         # self.wage = wage_premium + self.model.psi

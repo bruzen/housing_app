@@ -42,22 +42,7 @@ logger = logging.getLogger(__name__)
 #     return rent_grid
 
 class City(Model):
-    # TODO check use of density
-    # TODO should this be in firm?
-    @property
-    def total_no_workers(self):
-        total_no_workers = len(
-            [a for a in self.schedule.agents_by_breed[Person].values()
-                     if a.is_working == 1]
-        )
-        return total_no_workers * self.density
-
-    # TODO check use of density
-    @property
-    def agglomeration_population(self):
-        return self.total_no_workers * self.density + self.seed_population
-
-    # TODO FIX maybe check with agents to confirm
+    # TODO FIX check with agents to confirm
     @property
     def city_extent(self):
         # Compute urban boundary where it is not worthwhile to work
@@ -199,7 +184,7 @@ class City(Model):
             "people":         lambda m: m.schedule.get_breed_count(Person),
             "wage":           lambda m: m.firm.wage,
             "city_extent":    lambda m: m.city_extent,
-            "population":     lambda m: m.agglomeration_population,
+            "population":     lambda m: m.firm.agglomeration_population,
             "workers":        lambda m: len(
                 [a for a in self.schedule.agents_by_breed[Person].values()
                          if a.is_working == 1]
@@ -284,7 +269,7 @@ class City(Model):
         self.datacollector.collect(self)
 
         logger.debug(f'Agglomeration population: \
-                     {self.agglomeration_population}.')
+                     {self.firm.agglomeration_population}.')
         logger.debug('\n')
 
     def create_newcomer(self):
