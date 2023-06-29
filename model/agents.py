@@ -273,14 +273,14 @@ class Firm(Agent):
     @property
     def total_no_workers(self):
         total_no_workers = len(
-            [a for a in self.schedule.agents_by_breed[Person].values()
+            [a for a in self.model.schedule.agents_by_breed[Person].values()
                      if a.is_working == 1]
         )
-        return total_no_workers * self.density
+        return total_no_workers * self.model.density
 
     @property
     def agglomeration_population(self):
-        return self.total_no_workers * self.density + self.seed_population
+        return self.total_no_workers * self.model.density + self.model.seed_population
 
     def __init__(self, unique_id, model, pos, init_wage_premium,
                  A_F, alpha_F, beta_F, price_of_output, cost_of_capital,
