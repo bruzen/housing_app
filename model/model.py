@@ -184,7 +184,7 @@ class City(Model):
             "people":         lambda m: m.schedule.get_breed_count(Person),
             "wage":           lambda m: m.firm.wage,
             "city_extent":    lambda m: m.city_extent,
-            "population":     lambda m: m.firm.agglomeration_population,
+            "population":     lambda m: m.firm.N,
             "workers":        lambda m: len(
                 [a for a in self.schedule.agents_by_breed[Person].values()
                          if a.is_working == 1]
@@ -269,7 +269,7 @@ class City(Model):
         self.datacollector.collect(self)
 
         logger.debug(f'Agglomeration population: \
-                     {self.firm.agglomeration_population}.')
+                     {self.firm.N}.') # was agglomeration_population
         logger.debug('\n')
 
     def create_newcomer(self):

@@ -270,17 +270,20 @@ class Firm(Agent):
     :param init_wage_premium: initial urban wage premium.
     """
 
+    # TODO do both include seed_population?
     @property
-    def total_no_workers(self):
+    def N(self):
+        """total_no_workers"""
         total_no_workers = len(
             [a for a in self.model.schedule.agents_by_breed[Person].values()
                      if a.is_working == 1]
         )
-        return total_no_workers * self.model.density
+        return total_no_workers * self.model.density + self.model.seed_population
 
-    @property
-    def agglomeration_population(self):
-        return self.total_no_workers * self.model.density + self.model.seed_population
+    # @property
+    # def agglomeration_population(self):
+    #     """agglomeration_population"""
+    #     return self.total_no_workers * self.model.density + self.model.seed_population
 
     def __init__(self, unique_id, model, pos, init_wage_premium,
                  A_F, alpha_F, beta_F, price_of_output, cost_of_capital,
@@ -298,20 +301,21 @@ class Firm(Agent):
         self.wage_adjust_coeff_new_workers   = wage_adjust_coeff_new_workers
         self.wage_adjust_coeff_exist_workers = wage_adjust_coeff_exist_workers
 
-    
         self.n        = self.model.workforce_rural_firm # workforce_urban_firm
+        self.k        = 0 # TODO INITIALIZE
+
         self.no_firms = self.model.baseline_population/self.model.workforce_rural_firm
 
-        self.k        = 0 # TODO INITIALIZE
+
 
     # TODO Fix Firm wage update totaly and move to model
     def step(self):
 
 
-        # y_t= self.output(self.N, self.k, self.n)
+        y_t = self.output(self.N, self.k, self.n)
 
         # agglom     = self.model.agglomeration_ratio
-        # population = self.agglomeration_population
+        # N = self.N # agglomeration_population
         # workers_share = self.model.workers_share  # lambda - TODO fix
         # wage_premium = workers_share * (agglom-1) * prefactor * population**agglom # omega # ****** 
         # self.wage = wage_premium + self.model.psi
@@ -333,7 +337,7 @@ class Firm(Agent):
         beta_F  = self.beta_F
         gamma   = self.model.gamma
 
-        return A_F * N^gamma * k^alpha_F * n^beta_F
+        return A_F * N**gamma * k**alpha_F * n**beta_F
 
 class Bank(Agent):
     """Bank.
