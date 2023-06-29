@@ -42,46 +42,6 @@ logger = logging.getLogger(__name__)
 #     return rent_grid
 
 class City(Model):
-    """Combining a labour market and land market.
-
-    :param width: Width of the spatial grid. Each property ocupies one unit.
-    :param height: Height of the spatial grid. Each property ocupies one unit.
-    :param density: Workers per grid cell, for model coarse graining as 
-    a representative agent.
-    :param workers_share: Share of the agglomeration effect that goes to 
-    workers, lambda.
-    :param subsistence_wage: The value of the subsistence wage which workers
-        could achieve working in the countryside. Workers will work in the
-        city if it offers a wage premium above this subsistence wage, psi.
-    :param working_periods: The number of time steps from when a worker
-        begins work till retirement.
-    :param savings_rate: The share of the subsistence wage and net 
-    rent a worker can save in each time step, with undifferentiated labour 
-    and a uniform savings rate. SAME? TODO FIX
-    :param property_tax_rate: Property tax rate annually.
-    :param mortgage_period: The period for the mortgage. Number of years.
-    :param max_mortgage_share: The maximum share of purchase price, buyers 
-    can borrow as a mortgage 
-    param wealth_sensitivity: of maximum mortgage share of price. 
-    This is a parameter in the calculation of max_mortgage_share. 
-    It is specific to functional form used.
-    :param ability_to_carry_mortgage: The share of income that can be used 
-    to cover mortgage interest
-    :param housing_services_share: Share of subsitence wage going to housing 
-    services, a.
-    :param maintenance_share: Share of housing services going to maintenance 
-    and sevices, b.
-    :param r_prime: **** BANK RATE ????  Expected return on alternative 
-    investments.
-    # :param r_margin: Bank agent's desired return over and above alternative 
-    investments.
-    :param seed_population: Initial population at the center, working 
-    outside primary production sector, but adding to agglomeration economies.
-    TODO wage should have an adjustment rate
-    TODO update for new parameter values, prefactor, scaling factor etc
-    #  initial_savings: if agents save anything before reaching working age
-    """
-
     # TODO check use of density
     # TODO should this be in firm?
     @property
@@ -118,7 +78,6 @@ class City(Model):
                  r_margin                 = 0.01,
                  prefactor                = 250,  # A, maybe 251, larger than .2
                  agglomeration_ratio      = 1.2,  # was scaling_factor
-                 workers_share            = 0.72, # lambda, share aglom surplus
                  property_tax_rate        = 0.04, # tau, annual rate, was c
                  mortgage_period          = 5.0,  # T, in years
                  housing_services_share   = 0.3,  # a
@@ -132,7 +91,9 @@ class City(Model):
                  wage_adjust_coeff_exist_workers = 0.5,
                  workforce_rural_firm     = 100,
                  price_of_output          = 1.,
+                 gamma                    = 0.02, # FIX random number
                  beta_city                = 1.12,
+                 beta_firm                = 0.72, # beta and was lambda, workers_share of aglom surplus
                  alpha_firm               = 0.18,
                  z                        = 0.5,  # Scales # new entrants
                  init_wage_premium_ratio  = 0.2,
@@ -171,8 +132,9 @@ class City(Model):
         self.workforce_rural_firm   = workforce_rural_firm
 
         # Production function parameters
+        self.gamma               = gamma
         self.beta_city           = beta_city
-        self.workers_share       = workers_share # lambda
+        self.workers_share       = beta_firm # lambda
         self.z                   = z
 
         # Manage initial population. TODO could make density a matrix.
@@ -187,7 +149,6 @@ class City(Model):
 
         # Add firm, bank, and realtor
         self.unique_id        = 1
-        beta_firm             = workers_share
         firm_cost_of_capital  = r_prime
         self.firm             = Firm(self.unique_id, self, self.center, init_wage_premium,
                                      alpha_firm, beta_firm,
@@ -384,7 +345,7 @@ class City(Model):
     # def get_workers_share(self):
     #     """Share of wage premium that goes to workers, omega """
     #     psi     = self.subsistence_wage
-    #     lambda  = self.workers_share
+    #     lambda  = self.workers_share # now beta_firm
     #     agglom  = self.agglomeration_ratio
     #     return lambda * agglom * psi
 
