@@ -270,42 +270,35 @@ class Firm(Agent):
     :param init_wage_premium: initial urban wage premium.
     """
 
-    # # TODO maybe move Firm above Person
-    # @property
-    # def no_workers(self):
-    #     # TODO check we always add/remove from working list properly
-    #     return len(self.workers)
-    
-    @property
-    def workforce_urban_firm(self):
-    #   TODO FIX THIS NEEDS TO UPDATE
-        return self.model.workforce_rural_firm
-
-    @property
-    def no_firms(self):
-    #     TODO FIX THIS NEEDS TO UPDATE
-    #     TODO- initialize with baseline pop and rural workers/firm
-    #     return population/workers_per_firm
-        return self.model.baseline_population/self.model.workforce_rural_firm
-
     def __init__(self, unique_id, model, pos, init_wage_premium,
-                 alpha_firm, beta_firm, price_of_output, cost_of_capital,
+                 A_F, alpha_F, beta_F, price_of_output, cost_of_capital,
                  wage_adjust_coeff_new_workers, 
                  wage_adjust_coeff_exist_workers):
         super().__init__(unique_id, model)
         self.pos             = pos
         self.wage_premium    = init_wage_premium # omega
         self.wage            = init_wage_premium + self.model.subsistence_wage
-        self.alpha_firm      = alpha_firm
-        self.beta_firm       = beta_firm
+        self.A_F             = A_F
+        self.alpha_F         = alpha_F
+        self.beta_F          = beta_F
         self.price_of_output = price_of_output
         self.cost_of_capital = cost_of_capital
         self.wage_adjust_coeff_new_workers   = wage_adjust_coeff_new_workers
         self.wage_adjust_coeff_exist_workers = wage_adjust_coeff_exist_workers
 
+    
+        self.n        = self.model.workforce_rural_firm # workforce_urban_firm
+        self.no_firms = self.model.baseline_population/self.model.workforce_rural_firm
+
+         
+        self.k        = 0 # TODO INITIALIZE
+
     # TODO Fix Firm wage update totaly and move to model
     def step(self):
-        # prefactor  = self.model.prefactor
+
+
+        # y_t= self.output(self.N, self.k, self.n)
+
         # agglom     = self.model.agglomeration_ratio
         # population = self.model.agglomeration_population
         # workers_share = self.model.workers_share  # lambda - TODO fix
@@ -318,7 +311,18 @@ class Firm(Agent):
         self.wage += 1 
         # self.wage_premium   = wage_premium # **** TODO UPDATE URBAN WAGE PREMIUM
         # logger.error(f'Wage {self.wage}') # TODO Temp
-        
+
+        # self.N
+        # self.n
+        # self.k
+
+    def output(self, N, k, n):
+        A_F     = self.A_F
+        alpha_F = self.alpha_F
+        beta_F  = self.beta_F
+        gamma   = self.model.gamma
+
+        return A_F * N^gamma * k^alpha_F * n^beta_F
 
 class Bank(Agent):
     """Bank.

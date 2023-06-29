@@ -76,8 +76,10 @@ class City(Model):
                  savings_rate             = 0.3,
                  r_prime                  = 0.05, # 0.03
                  r_margin                 = 0.01,
-                 prefactor                = 250,  # A, maybe 251, larger than .2
-                 agglomeration_ratio      = 1.2,  # was scaling_factor
+                #  prefactor              = 250,  # CUT, this is A_city? maybe 251, larger than .2
+                 agglomeration_ratio      = 0.12, # was agglomeration_ratio 1.2,  # CUT? was scaling_factor
+                 A_F                      = 53,   # 53.34721 # scale factor for the firm
+                 A_city                   = 50,   # prefactor for city
                  property_tax_rate        = 0.04, # tau, annual rate, was c
                  mortgage_period          = 5.0,  # T, in years
                  housing_services_share   = 0.3,  # a
@@ -93,8 +95,8 @@ class City(Model):
                  price_of_output          = 1.,
                  gamma                    = 0.02, # FIX random number
                  beta_city                = 1.12,
-                 beta_firm                = 0.72, # beta and was lambda, workers_share of aglom surplus
-                 alpha_firm               = 0.18,
+                 beta_F                   = 0.72, # beta and was lambda, workers_share of aglom surplus
+                 alpha_F                  = 0.18,
                  z                        = 0.5,  # Scales # new entrants
                  init_wage_premium_ratio  = 0.2,
                  init_city_extent         = 10.,  # f
@@ -119,7 +121,6 @@ class City(Model):
         self.newcomers        = []
         self.retiring_agents  = []
 
-        self.prefactor              = prefactor
         self.agglomeration_ratio    = agglomeration_ratio
         self.mortgage_period        = mortgage_period         
         self.housing_services_share = housing_services_share # a
@@ -134,8 +135,9 @@ class City(Model):
         # Production function parameters
         self.gamma               = gamma
         self.beta_city           = beta_city
-        self.workers_share       = beta_firm # lambda
         self.z                   = z
+
+        self.workers_share       = beta_F # lambda
 
         # Manage initial population. TODO could make density a matrix.
         self.seed_population     = seed_population # TODO - need?
@@ -151,7 +153,7 @@ class City(Model):
         self.unique_id        = 1
         firm_cost_of_capital  = r_prime
         self.firm             = Firm(self.unique_id, self, self.center, init_wage_premium,
-                                     alpha_firm, beta_firm,
+                                     A_F, alpha_F, beta_F,
                                      price_of_output, firm_cost_of_capital,
                                      wage_adjust_coeff_new_workers, 
                                      wage_adjust_coeff_exist_workers)
@@ -345,7 +347,7 @@ class City(Model):
     # def get_workers_share(self):
     #     """Share of wage premium that goes to workers, omega """
     #     psi     = self.subsistence_wage
-    #     lambda  = self.workers_share # now beta_firm
+    #     lambda  = self.workers_share # now beta_F
     #     agglom  = self.agglomeration_ratio
     #     return lambda * agglom * psi
 
