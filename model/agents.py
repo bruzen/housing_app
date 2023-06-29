@@ -3,7 +3,6 @@ from collections import defaultdict
 from scipy.spatial import distance
 import numpy as np
 import pandas as pd
-# from pympler import tracker
 
 from mesa import Agent
 
@@ -13,9 +12,6 @@ logging.basicConfig(filename='logfile.log',
                     format='%(asctime)s %(name)s %(levelname)s:%(message)s')
 logger = logging.getLogger(__name__)
 
-# Create a MemoryTracker instance TODO remove all 'tracker' lines
-# mem_tracker = tracker.SummaryTracker()
-# mem_tracker.print_diff()
 class Land(Agent):
     """Land parcel.
 
@@ -30,22 +26,6 @@ class Land(Agent):
     # TODO do we update warranted rent and prices in the LAND STEP?
     @property
     def warranted_rent(self):
-        """
-        Calculate the warranted rent for a land parcel. 
-        Summed and discounted.
-
-        Calculation:
-        warranted_rent = (omega - cd + a * psi) * sum_delta
-
-        where:
-        - omega: urban wage premium obtained from the firm model
-        - psi: subsistence wage from the model
-        - a: share of housing services determined by the model
-        - cd: transportation cost associated with the land parcel
-
-        Returns:
-        The calculated warranted rent for the land parcel.
-        """
         omega     = self.model.firm.wage_premium
         psi       = self.model.subsistence_wage
         a         = self.model.housing_services_share
@@ -55,83 +35,22 @@ class Land(Agent):
 
     @property 
     def market_rent(self):
-        """
-        Get the market rent for a land parcel.
-
-        Note:
-        - Could try scenarios where market_rent deviates from warranted_rent.
-
-        Returns:
-        The market rent for the land parcel.
-        """
         return self.warranted_rent
 
     @property
     def net_rent(self):
-        """
-        Compute the net rent for a land parcel. 
-        Summed and discounted.
-
-        The net rent represents what someone could afford to pay to 
-        live at the land parcel. It is calculated based on the 
-        warranted rent, maintenance costs, and property tax.
-
-        Formula: warranted_rent - maintenance - property_tax or
-
-        Note:
-        - Applies with a single wage. Could adjust for differential urban wages.
-
-        Returns:
-        The net rent for the land parcel.
-        """
         return self.warranted_rent - self.maintenance - self.property_tax
 
     @property
     def warranted_price(self):
-        """
-        Calculate the warranted price of the land parcel.
-
-        The warranted price is calculated by dividing the 
-        warranted rent by the r_prime value.
-
-        Formula: warranted_rent / r_prime
-
-        Note:
-        - Used as an initial value in starting the housing market 
-          near a reasonable value.
-
-        Returns:
-        The warranted price of the land parcel.
-        """
         return self.warranted_rent / self.model.r_prime
     
     @property
     def appraised_price(self):
-        """
-        Get the appraised price of the land parcel used for taxation purposes.
-
-        Note:
-        - Apraised price for taxation may actually be a fraction of the lagged
-          market price.
-
-        Returns:
-        The appraised price of the land parcel.
-        """
         return self.warranted_price
 
     @property
     def property_tax(self):
-        """
-        Calculate the annual property tax of the land parcel.
-        Summed and discounted.
-
-        The property tax is computed by multiplying the property tax rate by the appraised price.
-
-        Formula: property_tax_rate * appraised_price * sum_delta
-
-        Returns:
-        The annual property tax of the land parcel.
-        """
         tau              = self.property_tax_rate
         appraised_price  = self.appraised_price
         sum_delta        = self.model.discount_factor
@@ -139,18 +58,6 @@ class Land(Agent):
 
     @property
     def maintenance(self):
-        """
-        Calculate the maintenance cost for the land parcel.
-        Summed and discounted.
-
-        The maintenance cost is determined by the share of housing services, the maintenance share,
-        and the subsistence wage.
-
-        Formula: a * b * psi * sum_delta
-        
-        Returns:
-        The maintenance cost for the land parcel.
-        """
         a         = self.model.housing_services_share
         b         = self.model.maintenance_share
         psi       = self.model.subsistence_wage
@@ -189,15 +96,6 @@ class Land(Agent):
         self.model.step_price_data.append(price_data)
 
     def calculate_distance_from_center(self, method='euclidean'):
-        """
-        Calculate the Euclidean distance between a position and the center.
-
-        Parameters:
-        - method: The distance calculation method ('euclidean' or 'cityblock').
-
-        Returns:
-        The distance between the position and the center.
-        """
         if method == 'euclidean':
             return distance.euclidean(self.pos, self.model.center)
         elif method == 'cityblock':
@@ -207,35 +105,10 @@ class Land(Agent):
                             "Supported methods are 'euclidean' and 'cityblock'.")
 
     def calculate_transport_cost(self):
-        """
-        Calculate the transport cost based on the distance and cost per unit distance.
-
-        Returns:
-        The total transport cost.
-        """
         cost = self.distance_from_center * self.model.transport_cost_per_dist
         return cost
 
 class Person(Agent):
-    """Person.
-
-    Represents an individual person in the city model.
-
-    :param unique_id: An integer identifier for the person.
-    :type unique_id: int.
-    :param model: The main city model.
-    :type model: CityModel.
-    :param pos: The person's location on the spatial grid.
-    :type pos: tuple.
-    :param init_working_period: The initial working period, between 0 and the retirement age. Defaults to 0.
-    :type init_working_period: int, optional.
-    :param savings: The amount of money the person has in savings. Defaults to 0.0.
-    :type savings: float, optional.
-    :param debt: The amount of money the person owes. Defaults to 0.0.
-    :type debt: float, optional.
-    :param residence_owned: The land parcel where the person lives. Defaults to None.
-    :type residence_owned: Land, optional.
-    """
     @property
     def borrowing_rate(self):
         """Borrowing rate of the person.
@@ -526,29 +399,6 @@ class Bank(Agent):
         #     max_mortgage = None 
 
     def get_max_desired_bid(self, property, bidder): # ADD downpayment , downpayment):
-        """Compute the perceived investment value of a property for
-        a particular agent.
-
-        The investor can charge rent and capture a growing stream of rents
-        as the city grows. They may borrow money at a given interest rate and
-        incur maintenance costs, fees, and taxes. 
-
-        The value of a property depends on the individual's individual cost 
-        benefit analysis as well as on perceived risks and individual's
-        risk aversion.
-
-        Investors who will live in a property also benefit from it's 
-        use value, which may be compared against the cost of renting.
-
-        R / (r - p_dot)
-        R rent today
-        r discount rate, roughly equivalent to the interest rate for banks
-        p_dot rate of rental price growth
-
-        :param property: the land parcel to evaluate.
-        :param investor: the agent considering purchasing in a property.
-
-        """
         net_rent = property.net_rent
         r        = self.model.r_prime # self.get_mortgage_interest_rate(investor)
         r_target = self.model.r_target
@@ -567,7 +417,6 @@ class Bank(Agent):
         # rA             = self.model.r_target
         # rM             = self.get_mortgage_interest_rate(buyer)
         # return forecast_price * (p_dot - rA + net_revenue) / (1 + rM*m)
-
 
 class Realtor(Agent):
     """Realtor agents connect sellers, buyers, and renters."""
