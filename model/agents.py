@@ -1,3 +1,4 @@
+import math
 import logging
 from collections import defaultdict
 from scipy.spatial import distance
@@ -214,7 +215,7 @@ class Person(Agent):
             else:
                 self.is_working     = 0
                 # TODO: check same calc as city_extent. Remove redundancy.
-                premium = self.model.firm.wage - self.model.subsistence_wage
+                premium = self.model.firm.wage_premium
                 if (premium > self.residence.transport_cost):
                     self.is_working = 1
 
@@ -285,51 +286,81 @@ class Firm(Agent):
     #     """agglomeration_population"""
     #     return self.total_no_workers * self.model.density + self.model.seed_population
 
+    @property
+    def wage(self):
+        return self.wage_premium + self.model.subsistence_wage
+
     def __init__(self, unique_id, model, pos, init_wage_premium,
-                 A_F, alpha_F, beta_F, price_of_output, cost_of_capital,
+                 A_F, alpha_F, beta_F, Z,
+                 price_of_output, cost_of_capital,
                  wage_adjust_coeff_new_workers, 
                  wage_adjust_coeff_exist_workers):
         super().__init__(unique_id, model)
         self.pos             = pos
         self.wage_premium    = init_wage_premium # omega
-        self.wage            = init_wage_premium + self.model.subsistence_wage
         self.A_F             = A_F
         self.alpha_F         = alpha_F
         self.beta_F          = beta_F
+        self.Z               = Z
+
         self.price_of_output = price_of_output
-        self.cost_of_capital = cost_of_capital
+        self.r               = cost_of_capital
         self.wage_adjust_coeff_new_workers   = wage_adjust_coeff_new_workers
         self.wage_adjust_coeff_exist_workers = wage_adjust_coeff_exist_workers
 
         self.n        = self.model.workforce_rural_firm # workforce_urban_firm
-        self.k        = 0 # TODO INITIALIZE
+        self.k        = 1. # TODO INITIALIZE, DIVIDE BY 0 CHECKS
+        self.F        = 1. # TODO INITIALIZE
 
         self.no_firms = self.model.baseline_population/self.model.workforce_rural_firm
 
-
+        # Initial values
+        # MPK = self.alpha_F * y / self.k
 
     # TODO Fix Firm wage update totaly and move to model
     def step(self):
 
+        self.n = self.N/self.F
+        y = self.output(self.N, self.k, self.n)
 
-        y_t = self.output(self.N, self.k, self.n)
+        MPL = self.beta_F  * y / self.n
+
+        n_target = self.beta_F * y / self.wage
+
+        y_target = self.output(self.N, self.k, n_target) # TODO ok to use old capital, k?
+        k_target = self.alpha_F * y_target / self.r
+
+        # N_target_exist = n_target/self.n * self.N
+
+        # TODO adjustment value should be a parameter
+        # F_next = 0.25 * n_target/self.n * self.F # DOESNT MAKE SENSE
+
+        N_target_total = 1.25 * n_target/self.n * self.N
+
+
+        N_target_new = n_target * self.Z * (MPL - self.wage)/self.wage * self.F # TODO - CHECK IS THIS F-NEXT?
+
+        F_total = N_target_total / n_target
+
+        c = self.model.transport_cost_per_dist
+        wage_premium_target = c * math.sqrt(N_target_total/(2*self.model.density))
+        # wage_premium_target = 0.5
+        adj = 0.5 # TODO MAKE A PARAMETER adustment parameter
+        self.wage_premium = (1-adj)*self.wage_premium + adj * wage_premium_target
+        
 
         # agglom     = self.model.agglomeration_ratio
         # N = self.N # agglomeration_population
         # workers_share = self.model.workers_share  # lambda - TODO fix
         # wage_premium = workers_share * (agglom-1) * prefactor * population**agglom # omega # ****** 
-        # self.wage = wage_premium + self.model.psi
 
         # k thought # self.wage_premium = (workers_share * prefactor * population**agglom)/ population # omega    
         # note surplus is: (beta - 1) * (prefactor * population**agglom)        
-        self.wage_premium += 0.01
-        self.wage += 1 
+        # self.wage_premium += 0.01
         # self.wage_premium   = wage_premium # **** TODO UPDATE URBAN WAGE PREMIUM
-        # logger.error(f'Wage {self.wage}') # TODO Temp
 
-        # self.N
-        # self.n
-        # self.k
+        self.k = k_target # TODO ADD ADJUSTMENT - DO WE GO ALL THE WAY HERE OR PART WAY HERE?
+        self.F = F_total # OR use F_total
 
     def output(self, N, k, n):
         A_F     = self.A_F

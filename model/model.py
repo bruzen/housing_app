@@ -69,7 +69,7 @@ class City(Model):
                  mortgage_period          = 5.0,  # T, in years
                  housing_services_share   = 0.3,  # a
                  maintenance_share        = 0.2,  # b
-                 seed_population          = 0,
+                 seed_population          = 10,
                  density                  = 100,
                  max_mortgage_share       = 0.9,
                  ability_to_carry_mortgage       = 0.28,
@@ -82,7 +82,7 @@ class City(Model):
                  beta_city                = 1.12,
                  beta_F                   = 0.72, # beta and was lambda, workers_share of aglom surplus
                  alpha_F                  = 0.18,
-                 z                        = 0.5,  # Scales # new entrants
+                 Z                        = 0.5,  # Scales # new entrants
                  init_wage_premium_ratio  = 0.2,
                  init_city_extent         = 10.,  # f
                  ):
@@ -120,7 +120,6 @@ class City(Model):
         # Production function parameters
         self.gamma               = gamma
         self.beta_city           = beta_city
-        self.z                   = z
 
         self.workers_share       = beta_F # lambda
 
@@ -138,7 +137,7 @@ class City(Model):
         self.unique_id        = 1
         firm_cost_of_capital  = r_prime
         self.firm             = Firm(self.unique_id, self, self.center, init_wage_premium,
-                                     A_F, alpha_F, beta_F,
+                                     A_F, alpha_F, beta_F, Z,
                                      price_of_output, firm_cost_of_capital,
                                      wage_adjust_coeff_new_workers, 
                                      wage_adjust_coeff_exist_workers)
