@@ -328,25 +328,29 @@ class Firm(Agent):
         MPK = self.alpha_F * y / self.k
 
         n_target = self.beta_F * y / self.wage
-        y_target = self.output(self.N, self.k, n_target) # TODO ok to use old capital, k?
+        y_target = self.output(self.N, self.k, n_target)
         k_target = self.alpha_F * y_target / self.r
 
         # N_target_exist = n_target/self.n * self.N
-        # adj_j = 0.25 # TODO self.firm_adjustment_parameter # 0.25
-        # F_next = adj_j * n_target/self.n * self.F # DOESNT MAKE SENSE
+        adj_f = 0.25 # TODO self.firm_adjustment_parameter # 0.25
+        F_target = n_target/self.n * self.F
+        F_next = (1 - adj_f) * self.F + adj_f * F_target
+        N_target_total = F_next * n_target
+        F_next_total = N_target_total / n_target
 
-        adj_l = 1.25 # TODO self.labor_adjustment_parameter
-        N_target_total = adj_l * n_target/self.n * self.N
-        N_target_new = n_target * self.Z * (MPL - self.wage)/self.wage * self.F # TODO - CHECK IS THIS F-NEXT?
-        F_total = N_target_total / n_target
+        # adj_l = 1.25 # TODO self.labor_adjustment_parameter
+        # N_target_total = adj_l * n_target/self.n * self.N
+        # N_target_new = n_target * self.Z * (MPL - self.wage)/self.wage * self.F # TODO - CHECK IS THIS F-NEXT?
 
         c = self.model.transport_cost_per_dist
         wage_premium_target = c * math.sqrt(N_target_total/(2*self.model.density))        
-        adj = 0.5 # TODO self.wage_adjustment_parameter
+        adj_w = 0.5 # TODO self.wage_adjustment_parameter
 
-        self.wage_premium = (1-adj)*self.wage_premium + adj * wage_premium_target
+        # k next equation
+
+        self.wage_premium = (1-adj_w)*self.wage_premium + adj_w * wage_premium_target
         self.k = k_target # TODO ADD ADJUSTMENT - DO WE GO ALL THE WAY HERE OR PART WAY HERE?
-        self.F = F_total # OR use F_total
+        self.F = F_next_total # OR use F_total
 
         # OLD 
         # agglom     = self.model.agglomeration_ratio

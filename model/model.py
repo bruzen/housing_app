@@ -119,11 +119,11 @@ class City(Model):
         self.r_prime                = r_prime
         self.r_margin               = r_margin
         self.discount_factor        = self.get_discount_factor() # sum_delta # TODO - depends on wealth?
-        self.max_mortgage_share        = max_mortgage_share
+        self.max_mortgage_share     = max_mortgage_share
         self.ability_to_carry_mortgage = ability_to_carry_mortgage
-        self.wealth_sensitivity        = wealth_sensitivity
-        self.p_dot            = 0. # Price adjustment rate. TODO fix here? rename?
-        self.price_model      = 0. # TODO need to fix type?
+        self.wealth_sensitivity     = wealth_sensitivity
+        self.p_dot                  = 0. # Price adjustment rate. TODO fix here? rename?
+        self.price_model            = 0. # TODO need to fix type?
 
         # Add firm, bank, and realtor
         self.unique_id        = 1
@@ -147,8 +147,8 @@ class City(Model):
         for cell in self.grid.coord_iter():
             pos              = (cell[1], cell[2])
 
-            land               = Land(self.unique_id, self, pos, 
-                                      property_tax_rate)
+            land             = Land(self.unique_id, self, pos, 
+                                    property_tax_rate)
             self.grid.place_agent(land, pos)
             self.schedule.add(land)
 

@@ -28,7 +28,17 @@ def run_model(num_steps, subsistence_wage, working_periods, savings_rate, r_prim
     fig, axes = plt.subplots(2, 2, figsize=(10, 8))
     fig.suptitle('Model Output', fontsize=16)
 
-    # Plot 1: Workers vs Wage
+    # Plot 1: Workers vs Time
+    axes[0, 0].plot(time, workers, label='Workers', color='blue')
+    axes[0, 0].plot(time, wage, label='Wage', linestyle='--', color='red')
+    #  axes[0, 0].plot(time, city_extent, label='City Extent', linestyle='dotted', color='red')
+    axes[0, 0].set_xlabel('Time')
+    axes[0, 0].set_ylabel('Number of Workers')
+    # axes[0, 0].set_title('Workers vs Wage')
+    axes[0, 0].legend(loc='upper right')
+    axes[0, 0].grid(True)
+
+  # Plot 2: Wage vs Time
     axes[0, 0].plot(time, workers, label='Workers', color='blue')
     axes[0, 0].plot(time, wage, label='Wage', linestyle='--', color='green')
     axes[0, 0].plot(time, city_extent, label='City Extent', linestyle='dotted', color='red')
@@ -37,22 +47,22 @@ def run_model(num_steps, subsistence_wage, working_periods, savings_rate, r_prim
     axes[0, 0].set_title('Workers vs Wage')
     axes[0, 0].legend(loc='upper right')
     axes[0, 0].grid(True)
-
-    # Plot 2: Workers vs Wage (subplot 2)
+    
+    # Plot 3: Wage vs Workers
     axes[0, 1].plot(workers, wage, color='purple')
     axes[0, 1].set_title('Subplot 2')
     axes[0, 1].set_xlabel('Workers')
     axes[0, 1].set_ylabel('Wage')
     axes[0, 1].grid(True)
 
-    # Plot 3: Workers vs City Extent (subplot 3)
-    axes[1, 0].plot(workers, city_extent, color='magenta')
+    # Plot 4: City Extent vs time
+    axes[1, 0].plot(city_extent, time, color='magenta')
     axes[1, 0].set_title('Subplot 3')
     axes[1, 0].set_xlabel('Workers')
     axes[1, 0].set_ylabel('City Extent')
     axes[1, 0].grid(True)
 
-    # Plot 4: Workers vs Wage (subplot 4)
+    # Plot 5: Workers vs Wage (subplot 4)
     axes[1, 1].plot(workers, wage, color='brown')
     axes[1, 1].set_title('Subplot 4')
     axes[1, 1].set_xlabel('Workers')
