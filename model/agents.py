@@ -291,31 +291,33 @@ class Firm(Agent):
         return self.wage_premium + self.model.subsistence_wage
 
     def __init__(self, unique_id, model, pos, init_wage_premium,
-                 A_F, alpha_F, beta_F, Z,
-                 price_of_output, cost_of_capital,
-                 wage_adjust_coeff_new_workers, 
-                 wage_adjust_coeff_exist_workers):
+                 alpha_F, beta_F, Z,
+                 price_of_output, cost_of_capital):
         super().__init__(unique_id, model)
         self.pos             = pos
         self.wage_premium    = init_wage_premium # omega
-        self.A_F             = A_F
         self.alpha_F         = alpha_F
         self.beta_F          = beta_F
         self.Z               = Z
 
         self.price_of_output = price_of_output
         self.r               = cost_of_capital
-        self.wage_adjust_coeff_new_workers   = wage_adjust_coeff_new_workers
-        self.wage_adjust_coeff_exist_workers = wage_adjust_coeff_exist_workers
 
-        self.n        = self.model.workforce_rural_firm # workforce_urban_firm
-        self.k        = 1. # TODO INITIALIZE, DIVIDE BY 0 CHECKS
-        self.F        = 1. # TODO INITIALIZE
+        n_R           = self.model.workforce_rural_firm
+        self.n        = n_R # workforce_urban_firm is initally same as urban firm
 
-        self.no_firms = self.model.baseline_population/self.model.workforce_rural_firm
+        self.F        = 1. # TODO INITIALIZE, CHECK IN OVERLEAF
+        # self.no_firms = self.model.baseline_population/self.model.workforce_rural_firm
 
-        # Initial values
-
+        # Calculate scale factor A for a typical urban firm
+        # TODO what variables do we want to track?
+        # TODO check rural firm values belong with firm too
+        psi = self.model.subsistence_wage
+        Y_R = n_R * psi / beta_F
+        Y_U = self.n * self.wage / beta_F
+        k_R    = alpha_F * Y_R / self.r # TODO SHOULD BE ALPHA_R? SAME FIRM COST OF CAPITAL? - LARGER FIRMS MORE CAPITAL? 
+        self.k = alpha_F * Y_U / self.r
+        self.A_F = Y_R/(k_R**alpha_F * n_R * psi**beta_F)
 
     def step(self):
         # Calculate wage, capital, and firm count given number of urban workers

@@ -56,35 +56,35 @@ class City(Model):
     def __init__(self, 
                  width                    = 50, 
                  height                   = 1,
+                 seed_population          = 10,
+                 density                  = 100,
                  subsistence_wage         = 40000., # psi
                  working_periods          = 40,     # in years
                  savings_rate             = 0.3,
                  r_prime                  = 0.05, # 0.03
                  r_margin                 = 0.01,
                 #  prefactor              = 250,  # CUT, this is A_city? maybe 251, larger than .2
-                 agglomeration_ratio      = 0.12, # was agglomeration_ratio 1.2,  # CUT? was scaling_factor
-                 A_F                      = 53,   # 53.34721 # scale factor for the firm
-                 A_city                   = 50,   # prefactor for city
+                #  agglomeration_ratio      = 0.12, # was agglomeration_ratio 1.2,  # CUT? was scaling_factor
+                #  A_F                      = 53,   # 53.34721 # scale factor for the firm
+                #  A_city                   = 50,   # prefactor for city
                  property_tax_rate        = 0.04, # tau, annual rate, was c
                  mortgage_period          = 5.0,  # T, in years
                  housing_services_share   = 0.3,  # a
                  maintenance_share        = 0.2,  # b
-                 seed_population          = 10,
-                 density                  = 100,
                  max_mortgage_share       = 0.9,
                  ability_to_carry_mortgage       = 0.28,
                  wealth_sensitivity              = 0.1,
-                 wage_adjust_coeff_new_workers   = 0.5,
-                 wage_adjust_coeff_exist_workers = 0.5,
+                #  wage_adjust_coeff_new_workers   = 0.5,
+                #  wage_adjust_coeff_exist_workers = 0.5,
                  workforce_rural_firm     = 100,
-                 price_of_output          = 1.,
+                 price_of_output          = 1., # TODO CUT?
                  gamma                    = 0.02, # FIX random number
                  beta_city                = 1.12,
                  beta_F                   = 0.72, # beta and was lambda, workers_share of aglom surplus
                  alpha_F                  = 0.18,
-                 Z                        = 0.5,  # Scales # new entrants
+                 Z                        = 0.5,  # Scales new entrants
                  init_wage_premium_ratio  = 0.2,
-                 init_city_extent         = 10.,  # f
+                 init_city_extent         = 10.,  # f CUT?
                  ):
         super().__init__()
         self.time_step        = 1.
@@ -106,7 +106,7 @@ class City(Model):
         self.newcomers        = []
         self.retiring_agents  = []
 
-        self.agglomeration_ratio    = agglomeration_ratio
+        # self.agglomeration_ratio    = agglomeration_ratio
         self.mortgage_period        = mortgage_period         
         self.housing_services_share = housing_services_share # a
         self.maintenance_share      = maintenance_share      # b
@@ -126,7 +126,7 @@ class City(Model):
         # Manage initial population. TODO could make density a matrix.
         self.seed_population     = seed_population # TODO - need?
         self.density             = density # For coarse graining population
-        self.baseline_population = density*width*height + self.seed_population       
+        # self.baseline_population = density*width*height + self.seed_population       
         init_city_extent         = init_city_extent
 
         self.max_mortgage_share        = max_mortgage_share
@@ -137,10 +137,8 @@ class City(Model):
         self.unique_id        = 1
         firm_cost_of_capital  = r_prime
         self.firm             = Firm(self.unique_id, self, self.center, init_wage_premium,
-                                     A_F, alpha_F, beta_F, Z,
-                                     price_of_output, firm_cost_of_capital,
-                                     wage_adjust_coeff_new_workers, 
-                                     wage_adjust_coeff_exist_workers)
+                                     alpha_F, beta_F, Z,
+                                     price_of_output, firm_cost_of_capital)
         self.grid.place_agent(self.firm, self.center)
         self.schedule.add(self.firm)
 
