@@ -315,52 +315,43 @@ class Firm(Agent):
         self.no_firms = self.model.baseline_population/self.model.workforce_rural_firm
 
         # Initial values
-        # MPK = self.alpha_F * y / self.k
 
-    # TODO Fix Firm wage update totaly and move to model
+
     def step(self):
-
+        # Calculate wage, capital, and firm count given number of urban workers
         self.n = self.N/self.F
         y = self.output(self.N, self.k, self.n)
 
         MPL = self.beta_F  * y / self.n
+        MPK = self.alpha_F * y / self.k
 
         n_target = self.beta_F * y / self.wage
-
         y_target = self.output(self.N, self.k, n_target) # TODO ok to use old capital, k?
         k_target = self.alpha_F * y_target / self.r
 
         # N_target_exist = n_target/self.n * self.N
+        # adj_j = 0.25 # TODO self.firm_adjustment_parameter # 0.25
+        # F_next = adj_j * n_target/self.n * self.F # DOESNT MAKE SENSE
 
-        # TODO adjustment value should be a parameter
-        # F_next = 0.25 * n_target/self.n * self.F # DOESNT MAKE SENSE
-
-        N_target_total = 1.25 * n_target/self.n * self.N
-
-
+        adj_l = 1.25 # TODO self.labor_adjustment_parameter
+        N_target_total = adj_l * n_target/self.n * self.N
         N_target_new = n_target * self.Z * (MPL - self.wage)/self.wage * self.F # TODO - CHECK IS THIS F-NEXT?
-
         F_total = N_target_total / n_target
 
         c = self.model.transport_cost_per_dist
-        wage_premium_target = c * math.sqrt(N_target_total/(2*self.model.density))
-        # wage_premium_target = 0.5
-        adj = 0.5 # TODO MAKE A PARAMETER adustment parameter
+        wage_premium_target = c * math.sqrt(N_target_total/(2*self.model.density))        
+        adj = 0.5 # TODO self.wage_adjustment_parameter
+
         self.wage_premium = (1-adj)*self.wage_premium + adj * wage_premium_target
-        
-
-        # agglom     = self.model.agglomeration_ratio
-        # N = self.N # agglomeration_population
-        # workers_share = self.model.workers_share  # lambda - TODO fix
-        # wage_premium = workers_share * (agglom-1) * prefactor * population**agglom # omega # ****** 
-
-        # k thought # self.wage_premium = (workers_share * prefactor * population**agglom)/ population # omega    
-        # note surplus is: (beta - 1) * (prefactor * population**agglom)        
-        # self.wage_premium += 0.01
-        # self.wage_premium   = wage_premium # **** TODO UPDATE URBAN WAGE PREMIUM
-
         self.k = k_target # TODO ADD ADJUSTMENT - DO WE GO ALL THE WAY HERE OR PART WAY HERE?
         self.F = F_total # OR use F_total
+
+        # OLD 
+        # agglom     = self.model.agglomeration_ratio
+        # workers_share = self.model.workers_share  # lambda - TODO fix
+        # wage_premium = workers_share * (agglom-1) * prefactor * population**agglom # omega # ****** 
+        # k thought # self.wage_premium = (workers_share * prefactor * population**agglom)/ population # omega    
+        # note surplus is: (beta - 1) * (prefactor * population**agglom)  
 
     def output(self, N, k, n):
         A_F     = self.A_F
