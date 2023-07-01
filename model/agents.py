@@ -315,13 +315,11 @@ class Firm(Agent):
         # self.no_firms = self.model.baseline_population/self.model.workforce_rural_firm
 
         # Calculate scale factor A for a typical urban firm
-        # TODO what variables do we want to track?
-        # TODO check rural firm values belong with firm too
-        psi = self.model.subsistence_wage
-        Y_R = n_R * psi / beta_F
-        Y_U = self.n * self.wage / beta_F
-        k_R    = alpha_F * Y_R / self.r # TODO SHOULD BE ALPHA_R? SAME FIRM COST OF CAPITAL? - LARGER FIRMS MORE CAPITAL? 
-        self.k = alpha_F * Y_U / self.r
+        psi      = self.model.subsistence_wage
+        Y_R      = n_R * psi / beta_F
+        Y_U      = self.n * self.wage / beta_F
+        k_R      = alpha_F * Y_R / self.r
+        self.k   = alpha_F * Y_U / self.r
         self.A_F = Y_R/(k_R**alpha_F * n_R * psi**beta_F)
 
     def step(self):
