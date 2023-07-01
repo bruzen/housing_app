@@ -68,6 +68,8 @@ class City(Model):
                  beta_city                 = 1.12,
                  gamma                     = 0.02, # FIX random number
                  Z                         = 0.5,  # Scales new entrants
+                 firm_adjustment_parameter = 0.25,
+                 wage_adjustment_parameter = 0.5,
                 #  wage_adjust_coeff_new_workers   = 0.5,
                 #  wage_adjust_coeff_exist_workers = 0.5,
                 #  prefactor              = 250,  # CUT, this is A_city? maybe 251, larger than .2
@@ -130,7 +132,9 @@ class City(Model):
         firm_cost_of_capital  = r_prime
         self.firm             = Firm(self.unique_id, self, self.center, init_wage_premium,
                                      alpha_F, beta_F, Z,
-                                     price_of_output, firm_cost_of_capital)
+                                     price_of_output, firm_cost_of_capital,
+                                     wage_adjustment_parameter,
+                                     firm_adjustment_parameter)
         self.grid.place_agent(self.firm, self.center)
         self.schedule.add(self.firm)
 

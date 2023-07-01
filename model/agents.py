@@ -292,7 +292,9 @@ class Firm(Agent):
 
     def __init__(self, unique_id, model, pos, init_wage_premium,
                  alpha_F, beta_F, Z,
-                 price_of_output, cost_of_capital):
+                 price_of_output, cost_of_capital,
+                 firm_adjustment_parameter,
+                 wage_adjustment_parameter):
         super().__init__(unique_id, model)
         self.pos             = pos
         self.wage_premium    = init_wage_premium # omega
@@ -302,6 +304,9 @@ class Firm(Agent):
 
         self.price_of_output = price_of_output
         self.r               = cost_of_capital
+
+        self.firm_adjustment_parameter = firm_adjustment_parameter
+        self.wage_adjustment_parameter = wage_adjustment_parameter
 
         n_R           = self.model.workforce_rural_firm
         self.n        = n_R # workforce_urban_firm is initally same as urban firm
@@ -332,7 +337,7 @@ class Firm(Agent):
         k_target = self.alpha_F * y_target / self.r
 
         # N_target_exist = n_target/self.n * self.N
-        adj_f = 0.25 # TODO self.firm_adjustment_parameter # 0.25
+        adj_f = self.firm_adjustment_parameter
         F_target = n_target/self.n * self.F
         F_next = (1 - adj_f) * self.F + adj_f * F_target
         N_target_total = F_next * n_target
@@ -344,12 +349,13 @@ class Firm(Agent):
 
         c = self.model.transport_cost_per_dist
         wage_premium_target = c * math.sqrt(N_target_total/(2*self.model.density))        
-        adj_w = 0.5 # TODO self.wage_adjustment_parameter
+        
 
-        # k next equation
+        k_next = k_target # TODO fix
 
+        adj_w = self.wage_adjustment_parameter
         self.wage_premium = (1-adj_w)*self.wage_premium + adj_w * wage_premium_target
-        self.k = k_target # TODO ADD ADJUSTMENT - DO WE GO ALL THE WAY HERE OR PART WAY HERE?
+        self.k = k_next
         self.F = F_next_total # OR use F_total
 
         # OLD 
