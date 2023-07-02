@@ -12,7 +12,7 @@ from mesa import Model
 from mesa.space import MultiGrid
 from mesa.datacollection import DataCollector
 
-from model.agents import Land, Person, Firm, Bank, Realtor
+from model.agents import Land, Person, Firm, Investor, Bank, Realtor
 from model.schedule import RandomActivationByBreed
 
 logging.basicConfig(filename='logfile.log',
@@ -66,8 +66,8 @@ class City(Model):
                  alpha_F                   = 0.18,
                  beta_F                    = 0.72, # beta and was lambda, workers_share of aglom surplus
                  beta_city                 = 1.12,
-                 gamma                     = 0.02, # FIX random number
-                 Z                         = 0.5,  # Scales new entrants
+                 gamma                     = 0.02, # FIX value
+                 Z                         = 0.5,  # CUT? Scales new entrants
                  firm_adjustment_parameter = 0.25,
                  wage_adjustment_parameter = 0.5,
                 #  wage_adjust_coeff_new_workers   = 0.5,
@@ -127,27 +127,33 @@ class City(Model):
         self.p_dot                  = 0. # Price adjustment rate. TODO fix here? rename?
         self.price_model            = 0. # TODO need to fix type?
 
-        # Add firm, bank, and realtor
-        self.unique_id        = 1
-        firm_cost_of_capital  = r_prime
-        self.firm             = Firm(self.unique_id, self, self.center, init_wage_premium,
-                                     alpha_F, beta_F, Z,
-                                     price_of_output, firm_cost_of_capital,
-                                     wage_adjustment_parameter,
-                                     firm_adjustment_parameter)
+        # Add bank, firm, investor, and realtor
+        self.unique_id       = 1
+        
+        self.bank            = Bank(self.unique_id, self, self.center, r_prime)
+        self.grid.place_agent(self.bank, self.center)
+        self.schedule.add(self.bank)
+        
+        firm_cost_of_capital = r_prime
+        self.firm            = Firm(self.unique_id, self, self.center, 
+                                    init_wage_premium,
+                                    alpha_F, beta_F, Z,
+                                    price_of_output, firm_cost_of_capital,
+                                    wage_adjustment_parameter,
+                                    firm_adjustment_parameter)
         self.grid.place_agent(self.firm, self.center)
         self.schedule.add(self.firm)
 
-        self.bank = Bank(self.unique_id, self, self.center, r_prime)
-        self.grid.place_agent(self.bank, self.center)
-        self.schedule.add(self.bank)
+        self.investor        = Investor(self.unique_id, self, self.center)
+        self.grid.place_agent(self.investor, self.center)
+        self.schedule.add(self.investor)
 
-        self.realtor          = Realtor(self.unique_id, self, self.center)
+        self.realtor         = Realtor(self.unique_id, self, self.center)
         self.grid.place_agent(self.realtor, self.center)
         self.schedule.add(self.realtor)
 
         # Add land and people to each cell
-        self.unique_id       += 1
+        self.unique_id      += 1
         for cell in self.grid.coord_iter():
             pos              = (cell[1], cell[2])
 
@@ -246,8 +252,8 @@ class City(Model):
             person = self.create_newcomer()
             person.bid()
 
-        # Banks invest
-        self.schedule.step_breed(Bank, step_name='bid')
+        # Investors bid on properties
+        self.schedule.step_breed(Investor)
 
         # Realtors sell homes
         self.schedule.step_breed(Realtor, step_name='sell_homes')

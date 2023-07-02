@@ -173,11 +173,6 @@ class Person(Agent):
         # Count time step and track whether agent is working
         self.count               = 0
         self.is_working          = 0
-
-    # @property
-    # def wealth(self):
-    #     self.saving - self.mortgage # TODO fix wealth is a function of assets and income
-    #     return -1
     
     # @property
     # def r(self):
@@ -221,6 +216,7 @@ class Person(Agent):
 
             # Update savings
             self.savings += self.model.savings_per_step # TODO debt, wealth
+            self.wealth  = self.get_wealth()
 
             # TODO pay costs for any properties owned
             # if self.residence in self.properties_owned:
@@ -253,6 +249,11 @@ class Person(Agent):
                         if val is positive.')
             if bid.price > 0:
                 sale_property.offers.append(bid)
+
+    # FIX. THIS IS A PLACEHOLDER
+    def get_wealth(self):
+        # self.saving - self.mortgage # TODO fix wealth is a function of assets and income
+        return self.savings
 
     def remove_agent(self):
         if self in self.model.newcomers:
@@ -372,31 +373,8 @@ class Firm(Agent):
         return A_F * N**gamma * k**alpha_F * n**beta_F
 
 class Bank(Agent):
-    """Bank.
-
-    :param unique_id: An integer identifier.
-    :param model: The main city model.
-    :param pos: The bank's location on the spatial grid.
-    :param r_prime interest_rate: The prime interest rate offered by the bank.
-    # OLD :param borrowing_ratio: The borrowing ratio permitted by the bank.
-    # TODO change
-    :param properties_owned: Properties owned by the bank initially. 
-    # TODO owned by bank will not be initialized to 0, 
-    # TODO do what we did with the bank
-    #:param property_management_costs: TODO fix/replace with several terms for 
-    taxes/maintenance/etc
-    # :param savings: TODO fix/replace this may not be necessary
-    # :param debt: TODO fix/replace
-    # :param loans: Loans owned to the bank 
-    # TODO loans may be objects with a borrower, amount, rate, term etc
-    # :param rent_ratio: rent per period as a share of the rent paid, always 1
-    # :param opperations_ratio: opperating costs as a share of rent paid
-    # :param tax_ratio: taxes as a share of rent paid
-    """
-
     def __init__(self, unique_id, model, pos,
                  r_prime = 0.05, max_mortgage_share = 0.9,
-                 properties_owned = [],
                  # savings = 0., # debt = 0., loans = 0.,
                  ):
         super().__init__(unique_id, model)
@@ -404,30 +382,14 @@ class Bank(Agent):
 
         # property_management_costs = -1.
         # Properties for bank as a lender
-        self.r_prime             = r_prime
-        self.max_mortgage_share  = max_mortgage_share
+        self.r_prime               = r_prime 
+        self.max_mortgage_share    = max_mortgage_share
         self.min_downpayment_share = 0.2
 
-        # Properties for bank as an asset holder
-        # self.property_management_costs = property_management_costs # TODO 
-        self.properties_owned    = properties_owned
-        # self.savings             = savings # TODO do banks have savings?
-        # self.debt                = debt
-        # self.loans               = loans
-
-    def bid(self):
-        """Banks bid on investment properties."""
-        for sale_property in self.model.realtor.sale_listing:
-            max_desired_bid = self.model.bank.get_max_desired_bid(sale_property, self)
-            bid = Bid(bidder=self, property=sale_property, price=max_desired_bid)
-            logger.debug(f'Bank {self.unique_id} bids {bid.price} for \
-                        property {sale_property.unique_id}, if val is positive.')
-            if bid.price > 0:
-                sale_property.offers.append(bid)
 
     def get_max_allowed_bid(self, applicant):
         savings = applicant.savings 
-        return savings # TODO placeholder - fix 
+        return savings # TODO placeholderx  x 
         # REPLACES GET MAX MORTGAGE
         # FIX min_downpayment = self.bank.min_down_payment_share * max_mortgage
         # self.bank.max_mortgage_share
@@ -469,6 +431,28 @@ class Bank(Agent):
         # rM             = self.get_mortgage_interest_rate(buyer)
         # return forecast_price * (p_dot - rA + net_revenue) / (1 + rM*m)
 
+class Investor(Agent):
+    def __init__(self, unique_id, model, pos, properties_owned = []):
+        super().__init__(unique_id, model)
+        self.pos = pos
+
+        # Properties for bank as an asset holder
+        # self.property_management_costs = property_management_costs # TODO 
+        self.properties_owned      = properties_owned
+
+    def step(self):
+        self.bid()
+
+    def bid(self):
+        """Investors bid on investment properties."""
+        for sale_property in self.model.realtor.sale_listing:
+            max_desired_bid = self.model.bank.get_max_desired_bid(sale_property, self)
+            bid = Bid(bidder=self, property=sale_property, price=max_desired_bid)
+            logger.debug(f'Bank {self.unique_id} bids {bid.price} for \
+                        property {sale_property.unique_id}, if val is positive.')
+            if bid.price > 0:
+                sale_property.offers.append(bid)
+    
 class Realtor(Agent):
     """Realtor agents connect sellers, buyers, and renters."""
     def __init__(self, unique_id, model, pos):
@@ -526,12 +510,12 @@ class Realtor(Agent):
 
             self.transfer_property(seller, buyer, allocation.property)
 
-            if isinstance(buyer, Bank):
-                self.handle_bank_purchase(buyer, allocation.property)
+            if isinstance(buyer, Investor):
+                self.handle_investor_purchase(buyer, allocation.property)
             elif isinstance(buyer, Person):
                 self.handle_person_purchase(buyer, allocation.property, final_price)
             else:
-                logger.warning('Buyer was neither a person nor a bank.')
+                logger.warning('Buyer was neither a person nor an investor.')
 
             if isinstance(seller, Person):
                 self.handle_seller_departure(seller)
@@ -544,9 +528,9 @@ class Realtor(Agent):
         seller.properties_owned.remove(sale_property)
         sale_property.owner = buyer
 
-    def handle_bank_purchase(self, buyer, sale_property):
-        """Handles the purchase of a property by a bank."""
-        logger.debug('Property %s sold to bank.', sale_property.unique_id)
+    def handle_investor_purchase(self, buyer, sale_property):
+        """Handles the purchase of a property by an investor."""
+        logger.debug('Property %s sold to investor.', sale_property.unique_id)
         self.rental_listing.append(sale_property)
 
     def handle_person_purchase(self, buyer, sale_property, final_price):
@@ -567,7 +551,7 @@ class Realtor(Agent):
             logger.warning('Seller was not retiring, so was not removed from the model.')
 
     def rent_homes(self):
-        """Rent homes listed by banks to newcomers."""
+        """Rent homes listed by investors    to newcomers."""
         logger.debug(f'{len(self.rental_listing)} properties to rent.')
         for rental in self.rental_listing:
             renter = self.model.create_newcomer()
