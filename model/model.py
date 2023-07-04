@@ -63,6 +63,7 @@ class City(Model):
 
         # Default parameter values
         default_parameters = {
+            'run_notes': 'Debugging model.',
             'width': 50,
             'height': 1,
             'init_city_extent': 10.,  # f CUT OR CHANGE?
@@ -104,9 +105,15 @@ class City(Model):
         else:
             self.params = default_parameters
 
-        # TODO do we want to do this, or just remove self variables and access params
+        # TODO put model name etc. in params
+        # TODO maybe remove .self and access params
 
-        # City
+        # Model
+        self.model_name        = 'Housing Market'
+        self.model_version     = '0.0.1'
+        self.model_description = 'Agent-based housing market model with rent and urban aglomeration.'
+        self.run_id    = self.get_run_id(self.model_name, self.model_version)
+        self.subfolder = 'output_data' 
         self.time_step = 1.
         self.center = (0, 0) # (width//2, height//2) # TODO make center
         self.grid = MultiGrid(self.params['width'], self.params['height'], torus=False)
@@ -221,30 +228,24 @@ class City(Model):
 
         self.step_price_data = [] # for forecasting
         self.price_data = pd.DataFrame(
-             columns=['id', 'warranted_price', 'time_step', 'transport_cost', 'wage'])
+             columns=['id', 'warranted_price', 'time_step', 'transport_cost', 'wage'])   
 
-        # TODO pass in metadata as part of param input structure?
-        self.model_name        = 'Housing Market'
-        self.model_version     = '0.0.1'
-        self.model_description = 'Agent-based housing market model with rent and urban aglomeration.'
-        self.run_notes = 'Debugging model.'
-        self.run_id    = self.get_run_id(self.model_name, self.model_version)
-        self.subfolder = 'output_data'    
+        self.record_model_data()
 
-        self.store_model_output_data()
-
-    def store_model_output_data(self):
+    def record_model_data(self):
         # Create the 'output_data' subfolder if it doesn't exist
         if not os.path.exists(self.subfolder):
             os.makedirs(self.subfolder)
 
-        output_filename         = self.run_id + '.csv'
-        self.output_file_path   = os.path.join(self.subfolder, output_filename)
+        agent_filename         = self.run_id + '_agent' + '.csv'
+        model_filename         = self.run_id + '_model' + '.csv'
+        self.agent_file_path   = os.path.join(self.subfolder, agent_filename)
+        self.model_file_path   = os.path.join(self.subfolder, model_filename)
         self.metadata_file_path = os.path.join(self.subfolder, 'metadata.yaml')
 
         metadata = {
             'model_description': self.model_description,
-            'run_notes': self.run_notes,
+            'run_notes': self.params['run_notes'],
             'simulation_parameters': self.params
         }
 
@@ -337,20 +338,29 @@ class City(Model):
         # Advance model time
         self.schedule.step_time()
 
-        # Record model output
+        self.record_step_data()
+
+    def record_step_data(self):
+
+        # Retrieve data
         self.datacollector.collect(self)
+        model_out = self.datacollector.get_model_vars_dataframe()
+        agent_out = self.datacollector.get_agent_vars_dataframe()
 
-        # Retrieve the collected data
-        data = self.datacollector.get_model_vars_dataframe()
-        
-        if data is not None:
-            data.to_csv(self.output_file_path, index=False)
-        else:
-            print(data) # TODO log error
+        # Save agent data
+        if agent_out is not None:
+            try:
+                agent_out.to_csv(self.agent_file_path, index=False)
+            except Exception as e:
+                logging.error("Error saving agent data: %s", str(e))
 
-        logger.debug(f'Agglomeration population: \
-                     {self.firm.N}.') # was agglomeration_population
-        logger.debug('\n')
+        # Save model data
+        if model_out is not None:
+            try:
+                model_out.to_csv(self.model_file_path, index=False)
+            except Exception as e:
+                logging.error("Error saving model data: %s", str(e))
+
 
     def create_newcomer(self):
         """Create newcomer at the center with no residence or property."""
