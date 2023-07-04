@@ -1,5 +1,10 @@
 import logging
-import math
+import os
+import yaml
+# import functools
+import datetime
+# import subprocess
+# import math
 import pandas as pd
 from scipy.spatial import distance
 
@@ -207,6 +212,73 @@ class City(Model):
         self.price_data = pd.DataFrame(
              columns=['id', 'warranted_price', 'time_step', 'transport_cost', 'wage'])
 
+        # TODO pass in metadata as part of param input structure?
+        self.model_name        = 'Housing Market'
+        self.model_version     = '0.0.1'
+        self.model_description = 'Agent-based model for simulation.'
+        self.subfolder         = 'output_data'
+
+        self.run_id    = self.get_run_id(self.model_name, self.model_version)
+        self.run_notes = 'Debugging model.'
+
+        self.store_model_output_data()
+
+    def store_model_output_data(self):
+        # Create the 'output_data' subfolder if it doesn't exist
+        if not os.path.exists(self.subfolder):
+            os.makedirs(self.subfolder)
+
+        
+        output_filename       = self.run_id + '.csv'
+        output_data_file_path = os.path.join(self.subfolder, output_filename)
+        metadata_file_path    = os.path.join(self.subfolder, 'metadata.yaml')
+
+        # TODO pass in parameters as a dictionary then I can just append it.
+        self.params = {
+            'param1': 'value1',
+            'param2': 'value2',
+            'param3': 'value3'
+        }
+
+        metadata = {
+            'model_description': self.model_description,
+            'run_notes': self.run_notes,
+            'simulation_parameters': self.params
+        }
+
+        self.record_metadata(metadata, metadata_file_path)
+
+    def record_metadata(self, metadata, metadata_file_path):
+        """Append metadata for each experiment to a metadata file."""
+
+        # Check if the file exists
+        file_exists = os.path.isfile(metadata_file_path)
+
+        # If the file exists, load the existing metadata; otherwise, create an empty dictionary
+        if file_exists:
+            with open(metadata_file_path, 'r') as file:
+                existing_metadata = yaml.safe_load(file)
+        else:
+            existing_metadata = {}
+
+        # Append the metadata for the current experiment to the existing metadata dictionary
+        existing_metadata[self.run_id] = metadata
+
+        # Write the updated metadata back to the file
+        with open(metadata_file_path, 'w') as file:
+            yaml.safe_dump(existing_metadata, file)
+
+    def get_run_id(self, model_name, model_version):
+        # Format the current date and time
+        current_date = datetime.datetime.now().strftime("%Y-%m-%d_%H%M%S")
+
+        # Adapt the model name to lowercase and replace spaces with underscores
+        formatted_model_name = model_name.lower().replace(" ", "_")
+
+        # Create the run_id
+        return f"{formatted_model_name}_{current_date}_v{model_version.replace('.', '_')}"
+
+
     def step(self):
         """ The model step function runs in each time step when the model
         is executed. It calls the agent functions, then records results
@@ -266,6 +338,16 @@ class City(Model):
 
         # Record model output
         self.datacollector.collect(self)
+
+        # Retrieve the collected data
+        data = self.datacollector.get_model_vars_dataframe()
+        
+        if data is not None:
+            # Save the data to a CSV file
+            file_path = os.path.join(self.subfolder, 'output_data.csv')
+            data.to_csv(file_path, index=False)
+        else:
+            print(data)
 
         logger.debug(f'Agglomeration population: \
                      {self.firm.N}.') # was agglomeration_population
