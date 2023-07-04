@@ -215,11 +215,10 @@ class City(Model):
         # TODO pass in metadata as part of param input structure?
         self.model_name        = 'Housing Market'
         self.model_version     = '0.0.1'
-        self.model_description = 'Agent-based model for simulation.'
-        self.subfolder         = 'output_data'
-
-        self.run_id    = self.get_run_id(self.model_name, self.model_version)
+        self.model_description = 'Agent-based housing market model with rent and urban aglomeration.'
         self.run_notes = 'Debugging model.'
+        self.run_id    = self.get_run_id(self.model_name, self.model_version)
+        self.subfolder = 'output_data'    
 
         self.store_model_output_data()
 
@@ -229,9 +228,9 @@ class City(Model):
             os.makedirs(self.subfolder)
 
         
-        output_filename       = self.run_id + '.csv'
-        output_data_file_path = os.path.join(self.subfolder, output_filename)
-        metadata_file_path    = os.path.join(self.subfolder, 'metadata.yaml')
+        output_filename         = self.run_id + '.csv'
+        self.output_file_path   = os.path.join(self.subfolder, output_filename)
+        self.metadata_file_path = os.path.join(self.subfolder, 'metadata.yaml')
 
         # TODO pass in parameters as a dictionary then I can just append it.
         self.params = {
@@ -246,7 +245,7 @@ class City(Model):
             'simulation_parameters': self.params
         }
 
-        self.record_metadata(metadata, metadata_file_path)
+        self.record_metadata(metadata, self.metadata_file_path)
 
     def record_metadata(self, metadata, metadata_file_path):
         """Append metadata for each experiment to a metadata file."""
@@ -343,11 +342,9 @@ class City(Model):
         data = self.datacollector.get_model_vars_dataframe()
         
         if data is not None:
-            # Save the data to a CSV file
-            file_path = os.path.join(self.subfolder, 'output_data.csv')
-            data.to_csv(file_path, index=False)
+            data.to_csv(self.output_file_path, index=False)
         else:
-            print(data)
+            print(data) # TODO log error
 
         logger.debug(f'Agglomeration population: \
                      {self.firm.N}.') # was agglomeration_population
