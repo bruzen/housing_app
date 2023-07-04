@@ -1,3 +1,5 @@
+import os
+import yaml
 import numpy as np
 import pandas as pd
 import streamlit as st
@@ -71,10 +73,93 @@ def run_model(parameters, num_steps):
     st.title("Housing Market Model Output")
     st.pyplot(fig)
 
+
+
+    # # Get the current directory
+    # current_dir = os.path.dirname(os.path.abspath(__file__))
+
+    # # Path to the output_data subfolder
+    # output_dir = os.path.join(current_dir, "output_data")
+
+    # # Get the list of CSV files in the output_data subfolder
+    # files = [file for file in os.listdir(output_dir) if file.endswith(".csv")]
+
+    # # Display the list of files using st.multiselect
+    # selected_files = st.multiselect("Select Files", files)
+
+    # # Process the selected files as needed
+    # for file in selected_files:
+    #     # Load and analyze the selected file
+    #     file_path = os.path.join(output_dir, file)
+    #     # Add your code here to load and process the file
+
+    # Function to load agent and model data based on selected ID
+
+
+
     st.markdown("---")
 
     st.header("Explore Existing Data")
-    st.pyplot(fig)
+
+    # Get the list of run IDs
+    folder_path = "output_data"
+    run_ids = get_run_ids(folder_path   )
+
+    # Display dropdown to select run ID
+    selected_run_id = st.selectbox("Select Run ID", run_ids)
+
+    # Load data based on selected run ID
+    run_metadata           = load_metadata(selected_run_id, folder_path)
+    agent_out2, model_out2 = load_data(selected_run_id)
+
+    # Display the metadata
+    st.subheader("Metadata")
+    st.write(run_metadata)
+
+    # TODO what does this do?
+    if agent_out2 is not None and model_out2 is not None:
+        # Display loaded data
+        st.subheader("Agent Data")
+        st.dataframe(agent_out2)
+
+        st.subheader("Model Data")  
+        st.dataframe(model_out2)
+
+
+def load_data(run_id):
+    agent_file = f"{run_id}_agent.csv"
+    model_file = f"{run_id}_model.csv"
+
+    print("Agent File Path:", agent_file)
+    print("Model File Path:", model_file)
+
+    if os.path.exists(agent_file) and os.path.exists(model_file):
+        agent_data = pd.read_csv(agent_file)
+        model_data = pd.read_csv(model_file)
+        return agent_data, model_data
+    else:
+        # st.error(f"Data files not found for run ID: {run_id}")
+        return None, None
+
+def load_metadata(run_id, folder_path):
+    metadata_file = folder_path + "/metadata.yaml"
+
+    with open(metadata_file, "r") as file:
+        metadata = yaml.safe_load(file)
+
+    run_metadata = metadata.get(run_id)
+    return run_metadata
+
+def get_run_ids(folder_path):
+    file_names = os.listdir(folder_path)
+    run_ids = set()
+
+    for file_name in file_names:
+        if file_name.endswith("_agent.csv"):
+            run_id = file_name.replace("_agent.csv", "")
+            run_ids.add(run_id)
+
+    return list(run_ids)
 
 def main():
     num_steps = st.sidebar.slider("Number of Steps", min_value=1, max_value=100, value=50)

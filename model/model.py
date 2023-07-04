@@ -245,7 +245,6 @@ class City(Model):
 
         metadata = {
             'model_description': self.model_description,
-            'run_notes': self.params['run_notes'],
             'simulation_parameters': self.params
         }
 
