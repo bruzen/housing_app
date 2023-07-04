@@ -58,94 +58,105 @@ class City(Model):
     def r_target(self):
         return self.r_prime + self.r_margin
 
-    def __init__(self, 
-                 width                     = 50, 
-                 height                    = 1,
-                 init_city_extent          = 10.,  # f CUT OR CHANGE?
-                 seed_population           = 10,
-                 density                   = 100,               
-                 subsistence_wage          = 40000., # psi
-                 init_wage_premium_ratio   = 0.2,
-                 workforce_rural_firm      = 100,
-                 price_of_output           = 1., # TODO CUT?
-                 alpha_F                   = 0.18,
-                 beta_F                    = 0.72, # beta and was lambda, workers_share of aglom surplus
-                 beta_city                 = 1.12,
-                 gamma                     = 0.02, # FIX value
-                 Z                         = 0.5,  # CUT? Scales new entrants
-                 firm_adjustment_parameter = 0.25,
-                 wage_adjustment_parameter = 0.5,
-                #  wage_adjust_coeff_new_workers   = 0.5,
-                #  wage_adjust_coeff_exist_workers = 0.5,
-                #  prefactor              = 250,  # CUT, this is A_city? maybe 251, larger than .2
-                #  agglomeration_ratio      = 0.12, # was agglomeration_ratio 1.2,  # CUT? was scaling_factor
-                #  A_F                      = 53,   # 53.34721 # scale factor for the firm
-                #  A_city                   = 50,   # prefactor for city
-                 mortgage_period           = 5.0,  # T, in years
-                 working_periods           = 40,     # in years
-                 savings_rate              = 0.3,
-                 r_prime                   = 0.05, # 0.03
-                 r_margin                  = 0.01,
-                 property_tax_rate         = 0.04, # tau, annual rate, was c
-                 housing_services_share    = 0.3,  # a
-                 maintenance_share         = 0.2,  # b
-                 max_mortgage_share        = 0.9,
-                 ability_to_carry_mortgage = 0.28,
-                 wealth_sensitivity        = 0.1,
-                 ):
+    def __init__(self, parameters=None):
         super().__init__()
 
+        # Default parameter values
+        default_parameters = {
+            'width': 50,
+            'height': 1,
+            'init_city_extent': 10.,  # f CUT OR CHANGE?
+            'seed_population': 10,
+            'density': 100,
+            'subsistence_wage': 40000.,  # psi
+            'init_wage_premium_ratio': 0.2,
+            'workforce_rural_firm': 100,
+            'price_of_output': 1.,  # TODO CUT?
+            'alpha_F': 0.18,
+            'beta_F': 0.72,  # beta and was lambda, workers_share of aglom surplus
+            'beta_city': 1.12,
+            'gamma': 0.02,  # FIX value
+            'Z': 0.5,  # CUT? Scales new entrants
+            'firm_adjustment_parameter': 0.25,
+            'wage_adjustment_parameter': 0.5,
+            #  'wage_adjust_coeff_new_workers': 0.5,
+            #  'wage_adjust_coeff_exist_workers': 0.5,
+            #  'prefactor': 250,  # CUT, this is A_city? maybe 251, larger than .2
+            #  'agglomeration_ratio': 0.12,  # was agglomeration_ratio 1.2,  # CUT? was scaling_factor
+            #  'A_F': 53,  # 53.34721 # scale factor for the firm
+            #  'A_city': 50,  # prefactor for city
+            'mortgage_period': 5.0,  # T, in years
+            'working_periods': 40,  # in years
+            'savings_rate': 0.3,
+            'r_prime': 0.05,  # 0.03
+            'r_margin': 0.01,
+            'property_tax_rate': 0.04,  # tau, annual rate, was c
+            'housing_services_share': 0.3,  # a
+            'maintenance_share': 0.2,  # b
+            'max_mortgage_share': 0.9,
+            'ability_to_carry_mortgage': 0.28,
+            'wealth_sensitivity': 0.1,
+        }
+
+        # Merge default parameters with provided parameters
+        if parameters is not None:
+            self.params = {**default_parameters, **parameters}
+        else:
+            self.params = default_parameters
+
+        # TODO do we want to do this, or just remove self variables and access params
+
         # City
-        self.time_step        = 1.
-        self.center           = (0,0) # (width//2, height//2) # TODO make center
-        self.grid             = MultiGrid(width, height, torus=False)
-        self.schedule         = RandomActivationByBreed(self)
-        self.seed_population     = seed_population
-        self.density             = density # Coarse grained population
+        self.time_step = 1.
+        self.center = (0, 0) # (width//2, height//2) # TODO make center
+        self.grid = MultiGrid(self.params['width'], self.params['height'], torus=False)
+        self.schedule = RandomActivationByBreed(self)
+        self.seed_population = self.params['seed_population']
+        self.density = self.params['density'] # Coarse grain population
+        self.transport_cost_per_dist = self.params['init_wage_premium_ratio'] * self.params['subsistence_wage'] / self.params['init_city_extent'] # c
         # self.baseline_population = density*width*height + self.seed_population 
-        self.transport_cost_per_dist = init_wage_premium_ratio * subsistence_wage / init_city_extent # c
 
         # People
-        self.working_periods  = working_periods 
-        self.savings_per_step = subsistence_wage * savings_rate
-        self.newcomers        = []
-        self.retiring_agents  = []
+        self.working_periods = self.params['working_periods']
+        self.savings_per_step = self.params['subsistence_wage'] * self.params['savings_rate']
+        self.newcomers = []
+        self.retiring_agents = []
 
         # Production model
-        self.subsistence_wage = subsistence_wage # psi
-        init_wage_premium     = init_wage_premium_ratio * subsistence_wage # omega
-        self.workforce_rural_firm   = workforce_rural_firm
-        self.gamma                  = gamma
-        self.beta_city              = beta_city
-        self.workers_share          = beta_F # lambda
+        self.subsistence_wage = self.params['subsistence_wage'] # psi
+        self.workforce_rural_firm = self.params['workforce_rural_firm']
+        self.gamma = self.params['gamma']
+        self.beta_city = self.params['beta_city']
+        self.workers_share = self.params['beta_F'] # lambda
 
         # Housing market model
-        self.mortgage_period        = mortgage_period         
-        self.housing_services_share = housing_services_share # a
-        self.maintenance_share      = maintenance_share      # b
-        self.r_prime                = r_prime
-        self.r_margin               = r_margin
-        self.discount_factor        = self.get_discount_factor() # sum_delta # TODO - depends on wealth?
-        self.max_mortgage_share     = max_mortgage_share
-        self.ability_to_carry_mortgage = ability_to_carry_mortgage
-        self.wealth_sensitivity     = wealth_sensitivity
-        self.p_dot                  = 0. # Price adjustment rate. TODO fix here? rename?
-        self.price_model            = 0. # TODO need to fix type?
+        self.mortgage_period = self.params['mortgage_period']
+        self.housing_services_share = self.params['housing_services_share'] # a
+        self.maintenance_share = self.params['maintenance_share'] # b
+        self.r_prime = self.params['r_prime']
+        self.r_margin = self.params['r_margin']
+        self.discount_factor = self.get_discount_factor()  # sum_delta # TODO - depends on wealth?
+        self.max_mortgage_share = self.params['max_mortgage_share']
+        self.ability_to_carry_mortgage = self.params['ability_to_carry_mortgage']
+        self.wealth_sensitivity = self.params['wealth_sensitivity']
+        self.p_dot       = 0. # Price adjustment rate. TODO fix here? rename?
+        self.price_model = 0. # TODO need to fix type?
 
         # Add bank, firm, investor, and realtor
         self.unique_id       = 1
         
-        self.bank            = Bank(self.unique_id, self, self.center, r_prime)
+        self.bank            = Bank(self.unique_id, self, self.center, self.r_prime)
         self.grid.place_agent(self.bank, self.center)
         self.schedule.add(self.bank)
         
-        firm_cost_of_capital = r_prime
+        init_wage_premium = self.params['init_wage_premium_ratio'] * self.params['subsistence_wage'] # omega
+        firm_cost_of_capital = self.r_prime
         self.firm            = Firm(self.unique_id, self, self.center, 
                                     init_wage_premium,
-                                    alpha_F, beta_F, Z,
-                                    price_of_output, firm_cost_of_capital,
-                                    wage_adjustment_parameter,
-                                    firm_adjustment_parameter)
+                                    self.params['alpha_F'], self.params['beta_F'], self.params['Z'],
+                                    self.params['price_of_output'], firm_cost_of_capital,
+                                    self.params['wage_adjustment_parameter'],
+                                    self.params['firm_adjustment_parameter'])
         self.grid.place_agent(self.firm, self.center)
         self.schedule.add(self.firm)
 
@@ -163,7 +174,7 @@ class City(Model):
             pos              = (cell[1], cell[2])
 
             land             = Land(self.unique_id, self, pos, 
-                                    property_tax_rate)
+                                    self.params['property_tax_rate'])
             self.grid.place_agent(land, pos)
             self.schedule.add(land)
 
@@ -227,17 +238,9 @@ class City(Model):
         if not os.path.exists(self.subfolder):
             os.makedirs(self.subfolder)
 
-        
         output_filename         = self.run_id + '.csv'
         self.output_file_path   = os.path.join(self.subfolder, output_filename)
         self.metadata_file_path = os.path.join(self.subfolder, 'metadata.yaml')
-
-        # TODO pass in parameters as a dictionary then I can just append it.
-        self.params = {
-            'param1': 'value1',
-            'param2': 'value2',
-            'param3': 'value3'
-        }
 
         metadata = {
             'model_description': self.model_description,
@@ -276,7 +279,6 @@ class City(Model):
 
         # Create the run_id
         return f"{formatted_model_name}_{current_date}_v{model_version.replace('.', '_')}"
-
 
     def step(self):
         """ The model step function runs in each time step when the model
@@ -361,7 +363,7 @@ class City(Model):
         return person
 
     def get_distance_to_center(self, pos):
-        return distance.euclidean(pos, self.center) 
+        return distance.euclidean(pos, self.center)
 
 # OLD alternative to get_price_model
 # def get_rent_growth(self, property):

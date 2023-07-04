@@ -10,6 +10,39 @@ def run_model(num_steps, subsistence_wage, working_periods, savings_rate, r_prim
     width = 50
     height = 1
 
+
+    # parameters = {
+    #     'width': 50,
+    #     'height': 1,
+    #     'init_city_extent': 10.,
+    #     'seed_population': 10,
+    #     'density': 100,
+    #     'subsistence_wage': 40000.,
+    #     'init_wage_premium_ratio': 0.2,
+    #     'workforce_rural_firm': 100,
+    #     'price_of_output': 1.,
+    #     'alpha_F': 0.18,
+    #     'beta_F': 0.72,
+    #     'beta_city': 1.12,
+    #     'gamma': 0.02,
+    #     'Z': 0.5,
+    #     'firm_adjustment_parameter': 0.25,
+    #     'wage_adjustment_parameter': 0.5,
+    #     'mortgage_period': 5.0,
+    #     'working_periods': 40,
+    #     'savings_rate': 0.3,
+    #     'r_prime': 0.05,
+    #     'r_margin': 0.01,
+    #     'property_tax_rate': 0.04,
+    #     'housing_services_share': 0.3,
+    #     'maintenance_share': 0.2,
+    #     'max_mortgage_share': 0.9,
+    #     'ability_to_carry_mortgage': 0.28,
+    #     'wealth_sensitivity': 0.1,
+    # }
+
+    # city = City(parameters)
+
     # Create and run the model
     city = City(width=width, height=height, subsistence_wage=subsistence_wage, working_periods=working_periods,
                 savings_rate=savings_rate, r_prime=r_prime)
@@ -72,8 +105,14 @@ def run_model(num_steps, subsistence_wage, working_periods, savings_rate, r_prim
     plt.tight_layout()
 
     # Display the plots using Streamlit
-    st.title("Agent-Based Model Visualization")
+    st.title("Housing Market Model Output")
     st.pyplot(fig)
+
+    st.markdown("---")
+
+    st.header("Explore Existing Data")
+    st.pyplot(fig)
+
 
 def main():
     num_steps = st.sidebar.slider("Number of Steps", min_value=1, max_value=100, value=50)
