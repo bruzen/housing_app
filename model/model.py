@@ -213,18 +213,35 @@ class City(Model):
             )
         }
         agent_reporters      = {
+            "agent_class":    lambda a: type(a),
+            "id":             lambda a: a.unique_id,
             "x":              lambda a: a.pos[0],
             "y":              lambda a: a.pos[1],
-            "agent_class":    lambda a: type(a),
             "is_working":     lambda a: getattr(a, "is_working", None),
-            "wage":           lambda a: getattr(a, "wage", None),
-            # "rent":           lambda a: getattr(a, "rent", None),
-            "transport_cost": lambda a: getattr(a, "transport_cost", None),
-            "no_workers":     lambda a: getattr(a, "firm_no_workers", None),
-            "working_year":   lambda a: getattr(a, "working_year", None),
+            "working_period": lambda a: getattr(a, "working_period", None),
+            "property_tax_rate": lambda a: getattr(a, "property_tax_rate", None),
         }
+
+        #     # "wage_premium":   lambda a: getattr(a, "wage_premium", None),
+        #     # "rent":         lambda a: getattr(a, "rent", None),
+        #     "transport_cost": lambda a: getattr(a, "transport_cost", None),
+        #     # "no_workers":     lambda a: getattr(a, "firm_no_workers", None),
+        #     "warranted_rent":  lambda a: getattr(a, "warranted_rent", None),
+        #     "warranted_price": lambda a: getattr(a, "warranted_price", None),
+        #     "net_rent":        lambda a: getattr(a, "net_rent", None),            
+        # }
         self.datacollector  = DataCollector(model_reporters = model_reporters,
                                             agent_reporters = agent_reporters)
+
+        # print(vars(self.datacollector))
+        # print(dir(self.datacollector))
+
+        # # Check if "Firm" is in the agent types recorded by the data collector
+        # if "Firm" in self.datacollector.agent_vars.keys():
+        #     print("Init - Firm agent type is recorded in the data collector.")
+        # else:
+        #     print("InitFirm agent type is not recorded in the data collector.")
+
 
         self.step_price_data = [] # for forecasting
         self.price_data = pd.DataFrame(
@@ -299,9 +316,6 @@ class City(Model):
 
         self.price_model = self.get_price_model()
         self.p_dot       = self.get_p_dot()
-        
-        # print(self.p_dot)
-        # print('\n')
 
         # TODO: if firms hire, should they hire after agents apply, 
         # do they need a seperate function to update wages first?

@@ -130,9 +130,6 @@ def load_data(run_id):
     agent_file = f"{run_id}_agent.csv"
     model_file = f"{run_id}_model.csv"
 
-    print("Agent File Path:", agent_file)
-    print("Model File Path:", model_file)
-
     if os.path.exists(agent_file) and os.path.exists(model_file):
         agent_data = pd.read_csv(agent_file)
         model_data = pd.read_csv(model_file)
