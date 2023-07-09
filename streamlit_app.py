@@ -9,18 +9,20 @@ import matplotlib.pyplot as plt
 from model.model import City
 
 def run_model(parameters, num_steps):
-
     city = City(parameters)
-
     for t in range(num_steps):
         city.step()
 
     # Get output data
     model_out = city.datacollector.get_model_vars_dataframe()
+    return model_out
+    
+def plot_model_output(model_out):
     workers = np.array(model_out['workers'])
     wage = np.array(model_out['wage'])
     city_extent = np.array(model_out['city_extent'])
-    time = np.arange(num_steps)
+    time = np.arange(len(workers))
+    # time = np.arange(num_steps)
 
     # Set up the figure and axes
     fig, axes = plt.subplots(2, 2, figsize=(10, 8))
@@ -73,32 +75,7 @@ def run_model(parameters, num_steps):
     st.title("Housing Market Model Output")
     st.pyplot(fig)
 
-
-
-    # # Get the current directory
-    # current_dir = os.path.dirname(os.path.abspath(__file__))
-
-    # # Path to the output_data subfolder
-    # output_dir = os.path.join(current_dir, "output_data")
-
-    # # Get the list of CSV files in the output_data subfolder
-    # files = [file for file in os.listdir(output_dir) if file.endswith(".csv")]
-
-    # # Display the list of files using st.multiselect
-    # selected_files = st.multiselect("Select Files", files)
-
-    # # Process the selected files as needed
-    # for file in selected_files:
-    #     # Load and analyze the selected file
-    #     file_path = os.path.join(output_dir, file)
-    #     # Add your code here to load and process the file
-
-    # Function to load agent and model data based on selected ID
-
-
-
-    st.markdown("---")
-
+def display_files():
     st.header("Explore Existing Data")
 
     # Get the list of run IDs
@@ -170,7 +147,10 @@ def main():
         'r_prime': st.sidebar.slider("R Prime", min_value=0.03, max_value=0.07, value=0.05, step=0.01)
     }
 
-    run_model(parameters, num_steps) # num_steps, subsistence_wage, working_periods, savings_rate, r_prime)
+    model_out = run_model(parameters, num_steps) # num_steps, subsistence_wage, working_periods, savings_rate, r_prime)
+    plot_model_output(model_out)
+    st.markdown("---")
+    display_files()
 
 if __name__ == "__main__":
     main()
