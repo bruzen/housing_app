@@ -80,12 +80,6 @@ class City(Model):
             'Z': 0.5,  # CUT? Scales new entrants
             'firm_adjustment_parameter': 0.25,
             'wage_adjustment_parameter': 0.5,
-            #  'wage_adjust_coeff_new_workers': 0.5,
-            #  'wage_adjust_coeff_exist_workers': 0.5,
-            #  'prefactor': 250,  # CUT, this is A_city? maybe 251, larger than .2
-            #  'agglomeration_ratio': 0.12,  # was agglomeration_ratio 1.2,  # CUT? was scaling_factor
-            #  'A_F': 53,  # 53.34721 # scale factor for the firm
-            #  'A_city': 50,  # prefactor for city
             'mortgage_period': 5.0,  # T, in years
             'working_periods': 40,  # in years
             'savings_rate': 0.3,
@@ -106,7 +100,6 @@ class City(Model):
         else:
             self.params = default_parameters
 
-        # TODO put model name etc. in params
         # TODO maybe remove .self and access params
 
         # Model
@@ -200,7 +193,6 @@ class City(Model):
             self.unique_id  += 1
 
         # Define what data the model will collect in each time step
-        # TODO record interest rate, number of sales, etc.
         model_reporters      = {
 #             "rents":          capture_rents,
             "companies":      lambda m: m.schedule.get_breed_count(Firm),
@@ -223,25 +215,8 @@ class City(Model):
             "property_tax_rate": lambda a: getattr(a, "property_tax_rate", None),
         }
 
-        #     # "wage_premium":   lambda a: getattr(a, "wage_premium", None),
-        #     # "rent":         lambda a: getattr(a, "rent", None),
-        #     "transport_cost": lambda a: getattr(a, "transport_cost", None),
-        #     # "no_workers":     lambda a: getattr(a, "firm_no_workers", None),
-        #     "warranted_rent":  lambda a: getattr(a, "warranted_rent", None),
-        #     "warranted_price": lambda a: getattr(a, "warranted_price", None),
-        #     "net_rent":        lambda a: getattr(a, "net_rent", None),            
-        # }
         self.datacollector  = DataCollector(model_reporters = model_reporters,
                                             agent_reporters = agent_reporters)
-
-        # print(vars(self.datacollector))
-        # print(dir(self.datacollector))
-
-        # # Check if "Firm" is in the agent types recorded by the data collector
-        # if "Firm" in self.datacollector.agent_vars.keys():
-        #     print("Init - Firm agent type is recorded in the data collector.")
-        # else:
-        #     print("InitFirm agent type is not recorded in the data collector.")
 
 
         self.step_price_data = [] # for forecasting
@@ -318,19 +293,8 @@ class City(Model):
         self.price_model = self.get_price_model()
         self.p_dot       = self.get_p_dot()
 
-        # TODO: if firms hire, should they hire after agents apply, 
-        # do they need a seperate function to update wages first?
         # Firms update wages
-        
         self.schedule.step_breed(Firm)
-
-        # TODO To speed up, we could calculate rent_growth/history once for 
-        # each grid location not each property
-        # TODO Or could consider making a land object that has rent, distinct
-        # from owned properties
-        # for cell in self.grid.coord_iter():
-        #     pos              = (cell[1], cell[2])
-        #     distance = self.get_distance_to_center(pos)
     
         # People work, retire, and list homes to sell
         self.schedule.step_breed(Person)
@@ -389,19 +353,8 @@ class City(Model):
     def get_distance_to_center(self, pos):
         return distance.euclidean(pos, self.center)
 
-# OLD alternative to get_price_model
-# def get_rent_growth(self, property):
-#     y = np.array(property.rent_history)
-#         # Consider the last 5 entries from rent history
-#         if len(y) > 5:
-#             y = y[-5:]
-#         x = np.arange(0,len(y))
-#         slope, intercept = np.polyfit(x,y,1)
-#         growth_rate = slope 
-
-    # TODO: put in bank?
     def get_price_model(self):
-        # TODO 2 models? use realized price, not just warranted
+        # TODO use realized price, not just warranted
         # Independent variables
         # x = self.price_data[['time_step','transport_cost','wage']]
         x = self.price_data[['time_step']]
@@ -411,14 +364,8 @@ class City(Model):
         # with sklearn
         regr = linear_model.LinearRegression()
         regr.fit(x, y)
-
-        # print('Intercept: \n', regr.intercept_)
-        # print('Coefficients: \n', regr.coef_)
-        # TODO: control for neighbourhood, distance from center, etc.
-    
         # # with statsmodels
         # x = sm.add_constant(x) # adding a constant
-        
         # model = sm.OLS(y, x).fit()
         # predictions = model.predict(x)   
         return(regr)
@@ -432,28 +379,3 @@ class City(Model):
             # self.p_dot = regr.coef_[0] # slope
             p_dot = self.price_model.coef_[0] # slope
         return p_dot
-
-    # Workers share is lambda- workers share of the surplus. DO NOT USE THIS. JUST COMPUTE A VALUE FOR LAMBRA - MAYBE 0.8
-    # def get_workers_share(self):
-    #     """Share of wage premium that goes to workers, omega """
-    #     psi     = self.subsistence_wage
-    #     lambda  = self.workers_share # now beta_F
-    #     agglom  = self.agglomeration_ratio
-    #     return lambda * agglom * psi
-
-
-
-    # DELETE
-    # # TODO could vary with wealth
-    # def get_discount_factor(self):
-    #     """
-    #     The discount factor gives the present value of one dollar received at particular point in the future, given the date of receipt and the discount rate.
-    #     Delta is the subjective individual discount rate for agent
-    #     after one year. This will be close to the prime interest rate, r_i.
-    #     """    
-    #     delta = self.r_prime
-    #     delta_period_1 = 1 / (1 + delta) 
-    #     delta_mortgage_period = delta_period_1**self.mortgage_period
-    #     sum_delta = (1 - delta_mortgage_period)/delta
-    #     return sum_delta
-    #     # sum_delta = delta_mortgage_period * (1 - delta_mortgage_period) # Old

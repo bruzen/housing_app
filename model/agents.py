@@ -24,15 +24,13 @@ class Land(Agent):
     # :param rent_history: The history of rent values for the land parcel.
     """
 
-    # TODO do we update warranted rent and prices in the LAND STEP?
     @property
     def warranted_rent(self):
         omega     = self.model.firm.wage_premium
         psi       = self.model.subsistence_wage
         a         = self.model.housing_services_share
         cd        = self.transport_cost
-        # sum_delta = self.model.discount_factor
-        return omega - cd + a * psi # * sum_delta
+        return omega - cd + a * psi
 
     @property 
     def market_rent(self):
@@ -54,16 +52,14 @@ class Land(Agent):
     def property_tax(self):
         tau              = self.property_tax_rate
         appraised_price  = self.appraised_price
-        # sum_delta        = self.model.discount_factor
-        return tau * appraised_price # * sum_delta
+        return tau * appraised_price
 
     @property
     def maintenance(self):
         a         = self.model.housing_services_share
         b         = self.model.maintenance_share
         psi       = self.model.subsistence_wage
-        # sum_delta = self.model.discount_factor
-        return a * b * psi # * sum_delta
+        return a * b * psi
 
     def __init__(self, unique_id, model, pos, 
                  property_tax_rate = 0., 
@@ -74,15 +70,11 @@ class Land(Agent):
         self.resident             = resident
         self.owner                = owner
 
-        # TODO: want warranted price history? 
-        # self.rent_history       = [] 
         self.offers               = []
         self.distance_from_center = self.calculate_distance_from_center()
         self.transport_cost       = self.calculate_transport_cost()
 
     def step(self): 
-        # TODO: How to handle realized prices?
-        # self.rent_history.append(self.net_rent)
 
         # Prepare price data for the current step
         price_data = {
@@ -174,11 +166,6 @@ class Person(Agent):
         # Count time step and track whether agent is working
         self.count               = 0
         self.is_working          = 0
-    
-    # @property
-    # def r(self):
-    #     # TODO fix r should be a function of wealth
-    #     return self.bank.r_prime
 
     def step(self):
         self.count              += 1
@@ -218,12 +205,6 @@ class Person(Agent):
             # Update savings
             self.savings += self.model.savings_per_step # TODO debt, wealth
             self.wealth  = self.get_wealth()
-
-            # TODO pay costs for any properties owned
-            # if self.residence in self.properties_owned:
-            #   ...
-            # else:
-            #     self.savings -= self.rent # TODO check this is right rent
 
         elif self in self.model.retiring_agents:
             logger.debug(f'Retiring agent {self.unique_id} still in model.')
@@ -306,11 +287,6 @@ class Firm(Agent):
         )
         return total_no_workers * self.model.density + self.model.seed_population
 
-    # @property
-    # def agglomeration_population(self):
-    #     """agglomeration_population"""
-    #     return self.total_no_workers * self.model.density + self.model.seed_population
-
     @property
     def wage(self):
         return self.wage_premium + self.model.subsistence_wage
@@ -381,13 +357,6 @@ class Firm(Agent):
         self.k = k_next
         self.F = F_next_total # OR use F_total
 
-        # OLD 
-        # agglom     = self.model.agglomeration_ratio
-        # workers_share = self.model.workers_share  # lambda - TODO fix
-        # wage_premium = workers_share * (agglom-1) * prefactor * population**agglom # omega # ****** 
-        # k thought # self.wage_premium = (workers_share * prefactor * population**agglom)/ population # omega    
-        # note surplus is: (beta - 1) * (prefactor * population**agglom)  
-
     def output(self, N, k, n):
         A_F     = self.A_F
         alpha_F = self.alpha_F
@@ -409,51 +378,6 @@ class Bank(Agent):
         self.r_prime               = r_prime 
         self.max_mortgage_share    = max_mortgage_share
         self.min_downpayment_share = 0.2
-
-
-    # def get_max_allowed_bid(self, applicant):
-    #     savings = applicant.savings 
-    #     return savings # TODO placeholderx  x 
-        # REPLACES GET MAX MORTGAGE
-        # FIX min_downpayment = self.bank.min_down_payment_share * max_mortgage
-        # self.bank.max_mortgage_share
-        # downpayment = min(min_downpayment, self.savings)
-        # max_allowed_bid = max_mortgage + downpayment
-        # if applicant in self.model.schedule.get_breed_agents(Person):
-        #     wage = self.model.firm.wage
-        #     i    = self.get_mortgage_interest_rate(applicant)
-        #     if i > 0:
-        #         # TODO mortgage should be based on savings not just wage.
-        #         max_mortgage = self.borrowing_ratio * wage / i 
-        #     else:
-        #         logger.warning(f'Max_mortgage calculation requires greater  \
-        #                        than zero interest rate, but interest is {i} \
-        #                        for agent {applicant.unique_id}.')
-        #         max_mortgage = None
-        # else:
-        #     logger.warning(f'Max_mortgage calculation applies for a person. \
-        #                    Applicant {applicant.unique_id} is not one.')
-        #     max_mortgage = None 
-
-    # def get_max_desired_bid(self, property, bidder): # ADD downpayment , downpayment):
-    #     net_rent = property.net_rent
-    #     r        = self.model.r_prime # self.get_mortgage_interest_rate(investor)
-    #     r_target = self.model.r_target
-    #     m        = self.model.max_mortgage_share # if it is a bank # 0.8 # TODO FIX - ADD WEALTH mortgage share. depends on price.
-    #     # m is the downpayment they are proposing to make (downpayment share?)
-    #     delta    = self.model.discount_factor 
-    #     p_dot    = self.model.p_dot # Rate of price change
-    #     return net_rent / ((1 - m)*r_target - delta*(1 + p_dot - (1 + r)*m))
-    
-        # TODO the investor must be a person or a bank initially
-        # TODO Consider alternative discount rates for individuals    
-        # TODO make sure demoninator for the value is not zero
-        # OLD CALCULATIONS
-        # value = rent / (r - p_dot)
-        # net_revenue    = self.get_net_revenue()
-        # rA             = self.model.r_target
-        # rM             = self.get_mortgage_interest_rate(buyer)
-        # return forecast_price * (p_dot - rA + net_revenue) / (1 + rM*m)
 
 class Investor(Agent):
     def __init__(self, unique_id, model, pos, properties_owned = []):
