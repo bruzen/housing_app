@@ -90,6 +90,7 @@ class City(Model):
             'working_periods': 40,  # in years
             'savings_rate': 0.3,
             'r_prime': 0.05,  # 0.03
+            'discount_rate': 0.07, # 1/delta
             'r_margin': 0.01,
             'property_tax_rate': 0.04,  # tau, annual rate, was c
             'housing_services_share': 0.3,  # a
@@ -140,9 +141,9 @@ class City(Model):
         self.mortgage_period = self.params['mortgage_period']
         self.housing_services_share = self.params['housing_services_share'] # a
         self.maintenance_share = self.params['maintenance_share'] # b
-        self.r_prime = self.params['r_prime']
+        self.r_prime  = self.params['r_prime']
         self.r_margin = self.params['r_margin']
-        self.discount_factor = self.get_discount_factor()  # sum_delta # TODO - depends on wealth?
+        self.delta    = 1/self.params['discount_rate'] # TODO divide by zero error checking
         self.max_mortgage_share = self.params['max_mortgage_share']
         self.ability_to_carry_mortgage = self.params['ability_to_carry_mortgage']
         self.wealth_sensitivity = self.params['wealth_sensitivity']
@@ -398,6 +399,7 @@ class City(Model):
 #         slope, intercept = np.polyfit(x,y,1)
 #         growth_rate = slope 
 
+    # TODO: put in bank?
     def get_price_model(self):
         # TODO 2 models? use realized price, not just warranted
         # Independent variables
@@ -439,16 +441,19 @@ class City(Model):
     #     agglom  = self.agglomeration_ratio
     #     return lambda * agglom * psi
 
-    # TODO could vary with wealth
-    def get_discount_factor(self):
-        """
-        The discount factor gives the present value of one dollar received at particular point in the future, given the date of receipt and the discount rate.
-        Delta is the subjective individual discount rate for agent
-        after one year. This will be close to the prime interest rate, r_i.
-        """    
-        delta = self.r_prime
-        delta_period_1 = 1 / (1 + delta) 
-        delta_mortgage_period = delta_period_1**self.mortgage_period
-        sum_delta = (1 - delta_mortgage_period)/delta
-        return sum_delta
-        # sum_delta = delta_mortgage_period * (1 - delta_mortgage_period) # Old
+
+
+    # DELETE
+    # # TODO could vary with wealth
+    # def get_discount_factor(self):
+    #     """
+    #     The discount factor gives the present value of one dollar received at particular point in the future, given the date of receipt and the discount rate.
+    #     Delta is the subjective individual discount rate for agent
+    #     after one year. This will be close to the prime interest rate, r_i.
+    #     """    
+    #     delta = self.r_prime
+    #     delta_period_1 = 1 / (1 + delta) 
+    #     delta_mortgage_period = delta_period_1**self.mortgage_period
+    #     sum_delta = (1 - delta_mortgage_period)/delta
+    #     return sum_delta
+    #     # sum_delta = delta_mortgage_period * (1 - delta_mortgage_period) # Old

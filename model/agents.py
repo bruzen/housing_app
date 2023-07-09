@@ -31,8 +31,8 @@ class Land(Agent):
         psi       = self.model.subsistence_wage
         a         = self.model.housing_services_share
         cd        = self.transport_cost
-        sum_delta = self.model.discount_factor
-        return (omega - cd + a*psi) * sum_delta
+        # sum_delta = self.model.discount_factor
+        return omega - cd + a * psi # * sum_delta
 
     @property 
     def market_rent(self):
@@ -54,16 +54,16 @@ class Land(Agent):
     def property_tax(self):
         tau              = self.property_tax_rate
         appraised_price  = self.appraised_price
-        sum_delta        = self.model.discount_factor
-        return tau * appraised_price * sum_delta
+        # sum_delta        = self.model.discount_factor
+        return tau * appraised_price # * sum_delta
 
     @property
     def maintenance(self):
         a         = self.model.housing_services_share
         b         = self.model.maintenance_share
         psi       = self.model.subsistence_wage
-        sum_delta = self.model.discount_factor
-        return a * b * psi * sum_delta
+        # sum_delta = self.model.discount_factor
+        return a * b * psi # * sum_delta
 
     def __init__(self, unique_id, model, pos, 
                  property_tax_rate = 0., 
@@ -133,9 +133,9 @@ class Person(Agent):
         Returns:
         The individual wealth adjustment value.
         """
-        r_target = self.model.r_target
-        K        = self.model.wealth_sensitivity
-        W        = self.wealth 
+        # r_target = self.model.r_target
+        # K        = self.model.wealth_sensitivity
+        # W        = self.get_wealth() 
         # W_min
         # W_mean
         return 0.0002
@@ -154,6 +154,7 @@ class Person(Agent):
         self.residence           = residence_owned
 
         self.bank                = self.model.bank 
+
 
         # If the agent initially owns a property, set residence and owners
         if self.residence:
@@ -229,31 +230,54 @@ class Person(Agent):
 
         else:
             logger.debug(f'Agent {self.unique_id} has no residence.')
-    
+
     def bid(self):
         """Newcomers bid on properties for use or investment value."""
-        # TODO add a percentage downpayment
-        # TODO the lower bound on the bid price is approved financing
-        # TODO make a parameter for downpayment requirement, 
-        # eg 20% for all initially
-        # TODO: FIX/THINK ABOUT bid. Some people will pay 
-        # down more than the min from their savings.
-        # TODO confirm they have enough savings
-        max_allowed_bid = self.bank.get_max_allowed_bid(self)
+        T = self.model.mortgage_period
+        W = self.get_wealth() # TODO use wealth in mortgage share and borrowing rate
+        S = self.savings
+        r = self.borrowing_rate
+        m = self.get_max_mortgage_share()
+        M = self.get_max_mortgage()
+        delta = self.model.delta
+        r_target = self.model.r_target # TODO this is personal but uses same as bank. Clarify.
+        p_dot = self.model.get_p_dot()
+
         for sale_property in self.model.realtor.sale_listing:
-            max_desired_bid = self.model.bank.get_max_desired_bid(sale_property, self)
-            max_bid = min(max_allowed_bid, max_desired_bid)
-            bid = Bid(bidder=self, property=sale_property, price=max_bid)
+
+            # P_max_bid = get_max_bid(R_N, r, r_target, m, T,)
+            R_N = sale_property.net_rent
+            R_NT   = ((1 + r)**T - 1) / r * R_N
+            P_max_bid = R_NT / ((1 - m) * r_target/(delta**T) - p_dot)
+
+            if m * P_max_bid < m:
+                mortgage = m * P_max_bid
+                P_bid = min(m * P_max_bid + S, P_max_bid)
+
+            else:
+                mortgage = M
+                P_bid = min(M + S, P_max_bid)
+
+            bid = Bid(bidder=self, property=sale_property, price=P_bid, mortgage=mortgage)
             logger.debug(f'Person {self.unique_id} bids {bid.price} \
                         for property {sale_property.unique_id}, \
                         if val is positive.')
             if bid.price > 0:
                 sale_property.offers.append(bid)
 
-    # FIX. THIS IS A PLACEHOLDER
     def get_wealth(self):
-        # self.saving - self.mortgage # TODO fix wealth is a function of assets and income
+        # TODO Wealth is properties owned, minuse mortgages owed, plus savings.
         return self.savings
+
+    def get_max_mortgage_share(self):
+        return 0.8
+    
+    def get_max_mortgage(self):
+        S        = self.savings
+        r        = self.borrowing_rate
+        r_prime  = self.model.r_prime
+        wage     = self.model.firm.wage
+        return 0.28 * (wage + r * S) / r_prime
 
     def remove_agent(self):
         if self in self.model.newcomers:
@@ -387,9 +411,9 @@ class Bank(Agent):
         self.min_downpayment_share = 0.2
 
 
-    def get_max_allowed_bid(self, applicant):
-        savings = applicant.savings 
-        return savings # TODO placeholderx  x 
+    # def get_max_allowed_bid(self, applicant):
+    #     savings = applicant.savings 
+    #     return savings # TODO placeholderx  x 
         # REPLACES GET MAX MORTGAGE
         # FIX min_downpayment = self.bank.min_down_payment_share * max_mortgage
         # self.bank.max_mortgage_share
@@ -411,15 +435,15 @@ class Bank(Agent):
         #                    Applicant {applicant.unique_id} is not one.')
         #     max_mortgage = None 
 
-    def get_max_desired_bid(self, property, bidder): # ADD downpayment , downpayment):
-        net_rent = property.net_rent
-        r        = self.model.r_prime # self.get_mortgage_interest_rate(investor)
-        r_target = self.model.r_target
-        m        = self.model.max_mortgage_share # if it is a bank # 0.8 # TODO FIX - ADD WEALTH mortgage share. depends on price.
-        # m is the downpayment they are proposing to make (downpayment share?)
-        delta    = self.model.discount_factor 
-        p_dot    = self.model.p_dot # Rate of price change
-        return net_rent / ((1 - m)*r_target - delta*(1 + p_dot - (1 + r)*m))
+    # def get_max_desired_bid(self, property, bidder): # ADD downpayment , downpayment):
+    #     net_rent = property.net_rent
+    #     r        = self.model.r_prime # self.get_mortgage_interest_rate(investor)
+    #     r_target = self.model.r_target
+    #     m        = self.model.max_mortgage_share # if it is a bank # 0.8 # TODO FIX - ADD WEALTH mortgage share. depends on price.
+    #     # m is the downpayment they are proposing to make (downpayment share?)
+    #     delta    = self.model.discount_factor 
+    #     p_dot    = self.model.p_dot # Rate of price change
+    #     return net_rent / ((1 - m)*r_target - delta*(1 + p_dot - (1 + r)*m))
     
         # TODO the investor must be a person or a bank initially
         # TODO Consider alternative discount rates for individuals    
@@ -444,14 +468,15 @@ class Investor(Agent):
         self.bid()
 
     def bid(self):
-        """Investors bid on investment properties."""
-        for sale_property in self.model.realtor.sale_listing:
-            max_desired_bid = self.model.bank.get_max_desired_bid(sale_property, self)
-            bid = Bid(bidder=self, property=sale_property, price=max_desired_bid)
-            logger.debug(f'Bank {self.unique_id} bids {bid.price} for \
-                        property {sale_property.unique_id}, if val is positive.')
-            if bid.price > 0:
-                sale_property.offers.append(bid)
+        pass
+        # """Investors bid on investment properties."""
+        # for sale_property in self.model.realtor.sale_listing:
+        #     max_desired_bid = self.model.bank.get_max_desired_bid(sale_property, self)
+        #     bid = Bid(bidder=self, property=sale_property, price=max_desired_bid)
+        #     logger.debug(f'Bank {self.unique_id} bids {bid.price} for \
+        #                 property {sale_property.unique_id}, if val is positive.')
+        #     if bid.price > 0:
+        #         sale_property.offers.append(bid)
     
 class Realtor(Agent):
     """Realtor agents connect sellers, buyers, and renters."""
@@ -564,14 +589,15 @@ class Realtor(Agent):
         self.rental_listing.clear()
 
 class Bid:
-    def __init__(self, bidder, property, price):
-        self.bidder = bidder
+    def __init__(self, bidder, property, price, mortgage):
+        self.bidder   = bidder
         self.property = property
-        self.price = price
+        self.price    = price
+        self.mortgage = mortgage
 
 class Allocation:
     def __init__(self, property, successful_bidder, bid_price, final_price):
-        self.property = property
+        self.property          = property
         self.successful_bidder = successful_bidder
-        self.bid_price = bid_price
-        self.final_price = final_price
+        self.bid_price         = bid_price
+        self.final_price       = final_price
