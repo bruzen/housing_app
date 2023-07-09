@@ -8,6 +8,7 @@ import matplotlib.pyplot as plt
 
 from model.model import City
 
+@st.cache_data()
 def run_model(parameters, num_steps):
     city = City(parameters)
     for t in range(num_steps):
@@ -71,13 +72,9 @@ def plot_model_output(model_out):
 
     plt.tight_layout()
 
-    # Display the plots using Streamlit
-    st.title("Housing Market Model Output")
-    st.pyplot(fig)
+    return fig
 
 def display_files():
-    st.header("Explore Existing Data")
-
     # Get the list of run IDs
     folder_path = "output_data"
     run_ids = get_run_ids(folder_path   )
@@ -148,8 +145,13 @@ def main():
     }
 
     model_out = run_model(parameters, num_steps) # num_steps, subsistence_wage, working_periods, savings_rate, r_prime)
-    plot_model_output(model_out)
+    
+    st.title("Housing Market Model Output")
+    fig = plot_model_output(model_out)
+    # Display the plots using Streamlit
+    st.pyplot(fig)    
     st.markdown("---")
+    st.header("Explore Existing Data")
     display_files()
 
 if __name__ == "__main__":
