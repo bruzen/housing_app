@@ -8,6 +8,7 @@ import seaborn as sns
 import matplotlib.pyplot as plt
 
 
+import plotly.offline as po
 import plotly.graph_objects as go
 from plotly.subplots import make_subplots
 
@@ -33,8 +34,6 @@ def plot_output(agent_out, model_out):
     land_out = agent_out.query("agent_type == 'Land'")
 
 
-    # land_out.to_csv('land_out.csv', index=True)
-
 
     # Prepare the data for visualization
     df = land_out.reset_index()
@@ -43,11 +42,13 @@ def plot_output(agent_out, model_out):
     figs = []
     for step in df['Step'].unique():
         temp_df = df[df['Step'] == step]
+        hover_text = 'Warranted Price: ' + temp_df['warranted_price'].astype(str) + '<br>ID: ' + temp_df['id'].astype(str)
         fig = go.Figure(data=go.Heatmap(
             z=temp_df['warranted_price'],
             x=temp_df['x'],
             y=temp_df['y'],
-            hovertext=temp_df['net_rent'],
+            hovertext=hover_text,
+            colorscale='viridis',
             colorbar=dict(title='Warranted Price', titleside='right')
         ))
         fig.update_layout(title=f'Step: {step}', xaxis_nticks=20, yaxis_nticks=20)
@@ -65,6 +66,7 @@ def plot_output(agent_out, model_out):
                     x=trace['x'],
                     y=trace['y'],
                     hovertext=trace['hovertext'],
+                    colorscale=trace['colorscale'],
                     colorbar=trace.colorbar,
                     visible=(i==1)  # only the first trace is visible
                 )
@@ -82,101 +84,9 @@ def plot_output(agent_out, model_out):
 
     final_fig.show()
 
-
-
-    # # Create the heatmap using Seaborn
-    # fig = sns.heatmap(agent_out.pivot('y', 'x', 'warranted_price'), annot=True, fmt=".2f", cmap="YlGnBu")
-
-    # # Display the heatmap using Streamlit
-    # st.pyplot(fig.figure)
-
-    # # Has slider but maps to a grid
-    # # Create a range of time steps from the land_out DataFrame
-    # time_steps = land_out.index.get_level_values('Step').unique()
-
-    # # Set Seaborn color palette and style
-    # sns.set_palette("YlGnBu", n_colors=10)
-    # sns.set_style("white")
-
-    # # Create an empty list to store the heatmap charts
-    # heatmap_charts = []
-
-    # # Iterate over each time step
-    # for time_step in time_steps:
-    #     # Filter land_out for the current time step
-    #     data = land_out.xs(time_step, level='Step')
-        
-    #     # Generate x and y coordinates for the grid
-    #     grid_size = int(np.sqrt(len(data))) + 1
-    #     x = np.arange(grid_size)
-    #     y = np.arange(grid_size)
-        
-    #     # Create the meshgrid
-    #     X, Y = np.meshgrid(x, y)
-        
-    #     # Prepare the data for the heatmap
-    #     df = pd.DataFrame({'x': X.flatten()[:len(data)], 'y': Y.flatten()[:len(data)], 'value': data['warranted_price']})
-        
-    #     # Create the heatmap using Altair and Vega-Lite
-    #     heatmap = alt.Chart(df).mark_rect().encode(
-    #         x=alt.X('x:O', axis=alt.Axis(format=".0f")),
-    #         y=alt.Y('y:O', axis=alt.Axis(format=".0f")),
-    #         color='value:Q',
-    #         tooltip=['x:O', 'y:O', 'value:Q']
-    #     ).properties(
-    #         width=500,
-    #         height=500,
-    #         title=f"Time Step: {time_step}"
-    #     )
-        
-    #     # Add the heatmap chart to the list
-    #     heatmap_charts.append(heatmap)
-
-    # # Create a slider to adjust the time step
-    # time_step = st.slider('Time Step', min_value=min(time_steps), max_value=max(time_steps))
-
-    # # Select the corresponding heatmap chart based on the selected time step
-    # selected_heatmap = heatmap_charts[time_steps.get_loc(time_step)]
-
-    # # Display the selected heatmap using Streamlit
-    # st.altair_chart(selected_heatmap, use_container_width=True)
-
-
-    # # Shows up
-    # # Determine the grid size based on the number of land agents in land_out
-    # grid_size = int(np.sqrt(len(land_out))) + 1
-
-    # # Generate x and y coordinates for the grid
-    # x = np.arange(grid_size)
-    # y = np.arange(grid_size)
-
-    # # Create the meshgrid
-    # X, Y = np.meshgrid(x, y)
-
-    # # Prepare the data for the heatmap
-    # data = land_out.reset_index()
-    # df = pd.DataFrame({'x': X.flatten()[:len(data)], 'y': Y.flatten()[:len(data)], 'value': data['warranted_price']})
-
-    # # Set Seaborn color palette and style
-    # sns.set_palette("YlGnBu", n_colors=10)
-    # sns.set_style("white")
-
-    # # Create the heatmap using Altair and Vega-Lite
-    # heatmap = alt.Chart(df).mark_rect().encode(
-    #     x=alt.X('x:O', axis=alt.Axis(format=".0f")),
-    #     y=alt.Y('y:O', axis=alt.Axis(format=".0f")),
-    #     color='value:Q',
-    #     tooltip=['x:O', 'y:O', 'value:Q']
-    # ).properties(
-    #     width=500,
-    #     height=500
-    # )
-
-    # # Set the aspect ratio to make it square
-    # heatmap = heatmap.configure_view(stroke=None)
-
-    # # Display the heatmap using Streamlit
-    # st.altair_chart(heatmap, use_container_width=True)
+    # # Show the plot in streamlit
+    # plot_html = po.plot(final_fig, output_type='div', include_plotlyjs=False)
+    # st.write(plot_html, unsafe_allow_html=True)
 
 
 
