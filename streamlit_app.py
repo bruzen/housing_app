@@ -33,10 +33,12 @@ def plot_output(agent_out, model_out):
 
     land_out = agent_out.query("agent_type == 'Land'")
 
-
-
     # Prepare the data for visualization
     df = land_out.reset_index()
+
+    # Define the color scale limits based on the minimum and maximum 'warranted_price' across all steps
+    z_min = df['warranted_price'].min()
+    z_max = df['warranted_price'].max()
 
     # Create a list of figures for each step
     figs = []
@@ -49,6 +51,8 @@ def plot_output(agent_out, model_out):
             y=temp_df['y'],
             hovertext=hover_text,
             colorscale='viridis',
+            zmin=z_min,
+            zmax=z_max,
             colorbar=dict(title='Warranted Price', titleside='right')
         ))
         fig.update_layout(title=f'Step: {step}', xaxis_nticks=20, yaxis_nticks=20)
@@ -67,6 +71,8 @@ def plot_output(agent_out, model_out):
                     y=trace['y'],
                     hovertext=trace['hovertext'],
                     colorscale=trace['colorscale'],
+                    zmin=z_min,
+                    zmax=z_max,
                     colorbar=trace.colorbar,
                     visible=(i==1)  # only the first trace is visible
                 )
@@ -82,11 +88,8 @@ def plot_output(agent_out, model_out):
 
     final_fig.update_layout(height=600, width=800, title_text="Warranted Price Heatmap Over Steps", sliders=sliders)
 
-    final_fig.show()
-
-    # # Show the plot in streamlit
-    # plot_html = po.plot(final_fig, output_type='div', include_plotlyjs=False)
-    # st.write(plot_html, unsafe_allow_html=True)
+    # Show the plot in streamlit
+    st.plotly_chart(final_fig)
 
 
 
