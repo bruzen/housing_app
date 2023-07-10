@@ -305,7 +305,7 @@ class City(Model):
             person.bid()
 
         # Investors bid on properties
-        self.schedule.step_breed(Investor)
+        self.schedule.step_breed(Investor, step_name='bid')
 
         # Realtors sell homes
         self.schedule.step_breed(Realtor, step_name='sell_homes')

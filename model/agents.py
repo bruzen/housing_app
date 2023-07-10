@@ -214,22 +214,20 @@ class Person(Agent):
 
     def bid(self):
         """Newcomers bid on properties for use or investment value."""
-        T = self.model.mortgage_period
+        
         W = self.get_wealth() # TODO use wealth in mortgage share and borrowing rate
         S = self.savings
         r = self.borrowing_rate
         m = self.get_max_mortgage_share()
         M = self.get_max_mortgage()
-        delta = self.model.delta
+        
         r_target = self.model.r_target # TODO this is personal but uses same as bank. Clarify.
-        p_dot = self.model.get_p_dot()
+        
 
         for sale_property in self.model.realtor.sale_listing:
 
-            # P_max_bid = get_max_bid(R_N, r, r_target, m, T,)
             R_N = sale_property.net_rent
-            R_NT   = ((1 + r)**T - 1) / r * R_N
-            P_max_bid = R_NT / ((1 - m) * r_target/(delta**T) - p_dot)
+            P_max_bid = self.model.bank.get_max_bid(R_N, r, r_target, m)
 
             if m * P_max_bid < m:
                 mortgage = m * P_max_bid
@@ -368,18 +366,36 @@ class Firm(Agent):
 class Bank(Agent):
     def __init__(self, unique_id, model, pos,
                  r_prime = 0.05, max_mortgage_share = 0.9,
-                 # savings = 0., # debt = 0., loans = 0.,
                  ):
         super().__init__(unique_id, model)
         self.pos = pos
 
-        # property_management_costs = -1.
-        # Properties for bank as a lender
-        self.r_prime               = r_prime 
-        self.max_mortgage_share    = max_mortgage_share
-        self.min_downpayment_share = 0.2
+    def get_max_bid(self, R_N, r, r_target, m):
+        T      = self.model.mortgage_period
+        delta  = self.model.delta
+        p_dot  = self.model.get_p_dot()
+
+        # if R_N is None:
+        #     print("Value R_N is None.")
+        # if r is None:
+        #     print("Value r is None.")
+        # if r_target is None:
+        #     print("Value r_target is None.")
+        # if m is None:
+        #     print("Value m is None.")
+        # if p_dot is None:
+        #     print("Value p_dot is None.")
+
+        # if R_N is not None and r is not None and r_target is not None and m is not None and p_dot is not None:
+        R_NT   = ((1 + r)**T - 1) / r * R_N
+        return R_NT / ((1 - m) * r_target/(delta**T) - p_dot)
 
 class Investor(Agent):
+
+    @property
+    def borrowing_rate(self):
+        self.model.r_target
+    
     def __init__(self, unique_id, model, pos, properties_owned = []):
         super().__init__(unique_id, model)
         self.pos = pos
@@ -388,15 +404,22 @@ class Investor(Agent):
         # self.property_management_costs = property_management_costs # TODO 
         self.properties_owned      = properties_owned
 
-    def step(self):
-        self.bid()
+    # def step(self):
+    #     self.bid()
 
     def bid(self):
-        pass
         # """Investors bid on investment properties."""
+        pass
+        # m = 0.9 # TODO fix
+        # r = self.borrowing_rate
+        # r_target = self.model.r_target
+        
         # for sale_property in self.model.realtor.sale_listing:
-        #     max_desired_bid = self.model.bank.get_max_desired_bid(sale_property, self)
-        #     bid = Bid(bidder=self, property=sale_property, price=max_desired_bid)
+        #     R_N = sale_property.net_rent
+        #     print(R_N)
+        #     P_max_bid = self.model.bank.get_max_bid(R_N, r, r_target, m)
+        #     mortgage = m * P_max_bid
+        #     bid = Bid(bidder=self, property=sale_property, price=P_max_bid, mortgage=mortgage)
         #     logger.debug(f'Bank {self.unique_id} bids {bid.price} for \
         #                 property {sale_property.unique_id}, if val is positive.')
         #     if bid.price > 0:
@@ -513,7 +536,7 @@ class Realtor(Agent):
         self.rental_listing.clear()
 
 class Bid:
-    def __init__(self, bidder, property, price, mortgage):
+    def __init__(self, bidder, property, price, mortgage=0.):
         self.bidder   = bidder
         self.property = property
         self.price    = price
