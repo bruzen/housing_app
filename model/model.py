@@ -68,7 +68,7 @@ class City(Model):
             'height': 1,
             'init_city_extent': 10.,  # f CUT OR CHANGE?
             'seed_population': 10,
-            'density': 100,
+            'density': 300,
             'subsistence_wage': 40000.,  # psi
             'init_wage_premium_ratio': 0.2,
             'workforce_rural_firm': 100,
@@ -144,12 +144,12 @@ class City(Model):
         self.price_model = 0. # TODO need to fix type?
 
         # Add bank, firm, investor, and realtor
-        self.unique_id       = 1
-        
+        self.unique_id       = 1        
         self.bank            = Bank(self.unique_id, self, self.center, self.r_prime)
         self.grid.place_agent(self.bank, self.center)
         self.schedule.add(self.bank)
         
+        self.unique_id      += 1
         init_wage_premium = self.params['init_wage_premium_ratio'] * self.params['subsistence_wage'] # omega
         firm_cost_of_capital = self.r_prime
         self.firm            = Firm(self.unique_id, self, self.center, 
@@ -161,10 +161,12 @@ class City(Model):
         self.grid.place_agent(self.firm, self.center)
         self.schedule.add(self.firm)
 
+        self.unique_id      += 1
         self.investor        = Investor(self.unique_id, self, self.center)
         self.grid.place_agent(self.investor, self.center)
         self.schedule.add(self.investor)
 
+        self.unique_id      += 1
         self.realtor         = Realtor(self.unique_id, self, self.center)
         self.grid.place_agent(self.realtor, self.center)
         self.schedule.add(self.realtor)
@@ -179,6 +181,7 @@ class City(Model):
             self.grid.place_agent(land, pos)
             self.schedule.add(land)
 
+            self.unique_id      += 1
             init_working_period = self.random.randint(0, 
                                         self.working_periods - 1)
             savings = init_working_period * self.savings_per_step 
@@ -206,13 +209,17 @@ class City(Model):
             )
         }
         agent_reporters      = {
-            "agent_class":    lambda a: type(a),
-            "id":             lambda a: a.unique_id,
-            "x":              lambda a: a.pos[0],
-            "y":              lambda a: a.pos[1],
-            "is_working":     lambda a: getattr(a, "is_working", None),
-            "working_period": lambda a: getattr(a, "working_period", None),
+            "agent_class":       lambda a: type(a),
+            "agent_type":        lambda a: type(a).__name__,
+            "id":                lambda a: a.unique_id,
+            "x":                 lambda a: a.pos[0],
+            "y":                 lambda a: a.pos[1],
+            "wage":              lambda a: getattr(a, "wage", None) if isinstance(a, Land) else None,
+            "is_working":        lambda a: getattr(a, "is_working", None),
+            "working_period":    lambda a: getattr(a, "working_period", None),
             "property_tax_rate": lambda a: getattr(a, "property_tax_rate", None),
+            "net_rent":          lambda a: getattr(a, "net_rent", None) if isinstance(a, Land) else None,
+            "warranted_price":   lambda a: getattr(a, "warranted_price", None) if isinstance(a, Land) else None,
         }
 
         self.datacollector  = DataCollector(model_reporters = model_reporters,
