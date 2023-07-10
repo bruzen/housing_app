@@ -7,7 +7,6 @@ import altair as alt
 import seaborn as sns
 import matplotlib.pyplot as plt
 
-
 import plotly.offline as po
 import plotly.graph_objects as go
 from   plotly.subplots import make_subplots
@@ -24,6 +23,7 @@ def run_model(parameters, num_steps):
     model_out = city.datacollector.get_model_vars_dataframe()
     return agent_out, model_out
 
+@st.cache_data()
 def plot_output(agent_out, model_out):
     workers = np.array(model_out['workers'])
     wage = np.array(model_out['wage'])
@@ -139,10 +139,8 @@ def plot_output(agent_out, model_out):
     axes[1, 1].grid(True)
 
     plt.tight_layout()
-
-    return fig
-
-
+    st.pyplot(fig)    
+    # return fig
 
 
 def display_files():
@@ -170,15 +168,16 @@ def display_files():
         st.subheader("Model Data")  
         st.dataframe(model_out)
 
+    return agent_out, model_out
 
 def load_data(run_id):
     agent_file = f"{run_id}_agent.csv"
     model_file = f"{run_id}_model.csv"
 
     if os.path.exists(agent_file) and os.path.exists(model_file):
-        agent_data = pd.read_csv(agent_file)
-        model_data = pd.read_csv(model_file)
-        return agent_data, model_data
+        agent_out = pd.read_csv(agent_file)
+        model_out = pd.read_csv(model_file)
+        return agent_out, model_out
     else:
         # st.error(f"Data files not found for run ID: {run_id}")
         return None, None
@@ -218,13 +217,11 @@ def main():
     agent_out, model_out = run_model(parameters, num_steps) # num_steps, subsistence_wage, working_periods, savings_rate, r_prime)
     
     st.title("Housing Market Model Output")
-    fig = plot_output(agent_out, model_out)
-    # Display the plots using Streamlit
-    st.pyplot(fig)    
+    plot_output(agent_out, model_out)
     
     st.markdown("---")
     st.header("Explore Existing Data")
-    display_files()
+    agent_out, model_out = display_files()
 
 if __name__ == "__main__":
     main()
