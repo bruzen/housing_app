@@ -10,7 +10,7 @@ import matplotlib.pyplot as plt
 
 import plotly.offline as po
 import plotly.graph_objects as go
-from plotly.subplots import make_subplots
+from   plotly.subplots import make_subplots
 
 from model.model import City
 
@@ -156,20 +156,20 @@ def display_files():
 
     # Load data based on selected run ID
     run_metadata           = load_metadata(selected_run_id, folder_path)
-    agent_out2, model_out2 = load_data(selected_run_id)
+    agent_out, model_out   = load_data(selected_run_id)
 
     # Display the metadata
     st.subheader("Metadata")
     st.write(run_metadata)
 
     # TODO what does this do?
-    if agent_out2 is not None and model_out2 is not None:
+    if agent_out is not None and model_out is not None:
         # Display loaded data
         st.subheader("Agent Data")
-        st.dataframe(agent_out2)
+        st.dataframe(agent_out)
 
         st.subheader("Model Data")  
-        st.dataframe(model_out2)
+        st.dataframe(model_out)
 
 
 def load_data(run_id):
@@ -208,8 +208,8 @@ def main():
     num_steps = st.sidebar.slider("Number of Steps", min_value=1, max_value=100, value=10)
 
     parameters = {
-        'width': 20,
-        'height': 3,
+        'width':  10,
+        'height': 10,
         'subsistence_wage': st.sidebar.slider("Subsistence Wage", min_value=30000., max_value=50000., value=40000., step=1000.),
         'working_periods': st.sidebar.slider("Working Periods", min_value=30, max_value=50, value=40),
         'savings_rate': st.sidebar.slider("Savings Rate", min_value=0.1, max_value=0.5, value=0.3, step=0.05),
