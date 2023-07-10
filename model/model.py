@@ -11,7 +11,7 @@ from scipy.spatial import distance
 from sklearn import linear_model
 # from scikit-learn import linear_model
 import statsmodels.api as sm
-from pysal.model import spreg
+# from pysal.model import spreg
 
 from mesa import Model
 from mesa.space import MultiGrid
