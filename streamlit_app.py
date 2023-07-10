@@ -16,9 +16,8 @@ from model.model import City
 
 @st.cache_data()
 def run_model(parameters, num_steps):
-    city = City(parameters)
-    for t in range(num_steps):
-        city.step()
+    city = City(parameters, num_steps)
+    city.run_simulation()
 
     # Get output data
     agent_out = city.datacollector.get_agent_vars_dataframe()

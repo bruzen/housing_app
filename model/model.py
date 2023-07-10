@@ -58,7 +58,7 @@ class City(Model):
     def r_target(self):
         return self.r_prime + self.r_margin
 
-    def __init__(self, parameters=None):
+    def __init__(self, parameters=None, num_steps=10):
         super().__init__()
 
         # Default parameter values
@@ -106,6 +106,7 @@ class City(Model):
         self.model_name        = 'Housing Market'
         self.model_version     = '0.0.1'
         self.model_description = 'Agent-based housing market model with rent and urban aglomeration.'
+        self.num_steps = num_steps
         self.run_id    = self.get_run_id(self.model_name, self.model_version)
         self.subfolder = 'output_data' 
         self.time_step = 1.
@@ -244,7 +245,8 @@ class City(Model):
         self.metadata_file_path = os.path.join(self.subfolder, 'metadata.yaml')
 
         metadata = {
-            'model_description': self.model_description,
+            'model_description':     self.model_description,
+            'num_steps':             self.num_steps,
             'simulation_parameters': self.params
         }
 
@@ -324,6 +326,10 @@ class City(Model):
         self.schedule.step_time()
 
         self.record_step_data()
+
+    def run_simulation(self):
+        for t in range(self.num_steps):
+            self.step()
 
     def record_step_data(self):
 
