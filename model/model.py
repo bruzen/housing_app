@@ -58,7 +58,7 @@ class City(Model):
     def r_target(self):
         return self.r_prime + self.r_margin
 
-    def __init__(self, parameters=None, num_steps=10):
+    def __init__(self,  num_steps=10, **parameters):
         super().__init__()
 
         # Default parameter values
@@ -327,7 +327,7 @@ class City(Model):
 
         self.record_step_data()
 
-    def run_simulation(self):
+    def run_model(self):
         for t in range(self.num_steps):
             self.step()
 

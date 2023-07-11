@@ -14,9 +14,9 @@ from   plotly.subplots import make_subplots
 from model.model import City
 
 @st.cache_data()
-def run_model(parameters, num_steps):
-    city = City(parameters, num_steps)
-    city.run_simulation()
+def run_simulation(num_steps, parameters):
+    city = City(num_steps, **parameters)
+    city.run_model()
 
     # Get output data
     agent_out = city.datacollector.get_agent_vars_dataframe()
@@ -214,7 +214,7 @@ def main():
         'r_prime': st.sidebar.slider("R Prime", min_value=0.03, max_value=0.07, value=0.05, step=0.01)
     }
 
-    agent_out, model_out = run_model(parameters, num_steps) # num_steps, subsistence_wage, working_periods, savings_rate, r_prime)
+    agent_out, model_out = run_simulation(num_steps, parameters) # num_steps, subsistence_wage, working_periods, savings_rate, r_prime)
     
     st.title("Housing Market Model Output")
     plot_output(agent_out, model_out)
