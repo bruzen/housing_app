@@ -233,55 +233,6 @@ class City(Model):
 
         self.record_model_data()
 
-    def record_model_data(self):
-        # Create the 'output_data' subfolder if it doesn't exist
-        if not os.path.exists(self.subfolder):
-            os.makedirs(self.subfolder)
-
-        agent_filename         = self.run_id + '_agent' + '.csv'
-        model_filename         = self.run_id + '_model' + '.csv'
-        self.agent_file_path   = os.path.join(self.subfolder, agent_filename)
-        self.model_file_path   = os.path.join(self.subfolder, model_filename)
-        self.metadata_file_path = os.path.join(self.subfolder, 'metadata.yaml')
-
-        metadata = {
-            'model_description':     self.model_description,
-            'num_steps':             self.num_steps,
-            'simulation_parameters': self.params
-        }
-
-        self.record_metadata(metadata, self.metadata_file_path)
-
-    def record_metadata(self, metadata, metadata_file_path):
-        """Append metadata for each experiment to a metadata file."""
-
-        # Check if the file exists
-        file_exists = os.path.isfile(metadata_file_path)
-
-        # If the file exists, load the existing metadata; otherwise, create an empty dictionary
-        if file_exists:
-            with open(metadata_file_path, 'r') as file:
-                existing_metadata = yaml.safe_load(file)
-        else:
-            existing_metadata = {}
-
-        # Append the metadata for the current experiment to the existing metadata dictionary
-        existing_metadata[self.run_id] = metadata
-
-        # Write the updated metadata back to the file
-        with open(metadata_file_path, 'w') as file:
-            yaml.safe_dump(existing_metadata, file)
-
-    def get_run_id(self, model_name, model_version):
-        # Format the current date and time
-        current_date = datetime.datetime.now().strftime("%Y-%m-%d_%H%M%S")
-
-        # Adapt the model name to lowercase and replace spaces with underscores
-        formatted_model_name = model_name.lower().replace(" ", "_")
-
-        # Create the run_id
-        return f"{formatted_model_name}_{current_date}_v{model_version.replace('.', '_')}"
-
     def step(self):
         """ The model step function runs in each time step when the model
         is executed. It calls the agent functions, then records results
@@ -330,6 +281,55 @@ class City(Model):
     def run_model(self):
         for t in range(self.num_steps):
             self.step()
+
+    def record_model_data(self):
+        # Create the 'output_data' subfolder if it doesn't exist
+        if not os.path.exists(self.subfolder):
+            os.makedirs(self.subfolder)
+
+        agent_filename         = self.run_id + '_agent' + '.csv'
+        model_filename         = self.run_id + '_model' + '.csv'
+        self.agent_file_path   = os.path.join(self.subfolder, agent_filename)
+        self.model_file_path   = os.path.join(self.subfolder, model_filename)
+        self.metadata_file_path = os.path.join(self.subfolder, 'metadata.yaml')
+
+        metadata = {
+            'model_description':     self.model_description,
+            'num_steps':             self.num_steps,
+            'simulation_parameters': self.params
+        }
+
+        self.record_metadata(metadata, self.metadata_file_path)
+
+    def record_metadata(self, metadata, metadata_file_path):
+        """Append metadata for each experiment to a metadata file."""
+
+        # Check if the file exists
+        file_exists = os.path.isfile(metadata_file_path)
+
+        # If the file exists, load the existing metadata; otherwise, create an empty dictionary
+        if file_exists:
+            with open(metadata_file_path, 'r') as file:
+                existing_metadata = yaml.safe_load(file)
+        else:
+            existing_metadata = {}
+
+        # Append the metadata for the current experiment to the existing metadata dictionary
+        existing_metadata[self.run_id] = metadata
+
+        # Write the updated metadata back to the file
+        with open(metadata_file_path, 'w') as file:
+            yaml.safe_dump(existing_metadata, file)
+
+    def get_run_id(self, model_name, model_version):
+        # Format the current date and time
+        current_date = datetime.datetime.now().strftime("%Y-%m-%d_%H%M%S")
+
+        # Adapt the model name to lowercase and replace spaces with underscores
+        formatted_model_name = model_name.lower().replace(" ", "_")
+
+        # Create the run_id
+        return f"{formatted_model_name}_{current_date}_v{model_version.replace('.', '_')}"
 
     def record_step_data(self):
 
