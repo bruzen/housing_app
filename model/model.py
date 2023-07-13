@@ -3,6 +3,7 @@ import os
 import yaml
 # import functools
 import datetime
+from contextlib import contextmanager
 # import subprocess
 # import math
 import pandas as pd
@@ -110,19 +111,19 @@ class City(Model):
         self.run_id    = self.get_run_id(self.model_name, self.model_version)
         self.subfolder = 'output_data' 
         self.time_step = 1.
-        self.center = (0, 0) # (width//2, height//2) # TODO make center
+        self.center    = (0, 0) # (width//2, height//2) # TODO make center
         self.grid = MultiGrid(self.params['width'], self.params['height'], torus=False)
         self.schedule = RandomActivationByBreed(self)
-        self.seed_population = self.params['seed_population']
-        self.density = self.params['density'] # Coarse grain population
+        self.seed_population         = self.params['seed_population']
+        self.density                 = self.params['density'] # Coarse grain population
         self.transport_cost_per_dist = self.params['init_wage_premium_ratio'] * self.params['subsistence_wage'] / self.params['init_city_extent'] # c
-        # self.baseline_population = density*width*height + self.seed_population 
+        # self.baseline_population   = density*width*height + self.seed_population 
 
         # People
-        self.working_periods = self.params['working_periods']
+        self.working_periods  = self.params['working_periods']
         self.savings_per_step = self.params['subsistence_wage'] * self.params['savings_rate']
-        self.newcomers = []
-        self.retiring_agents = []
+        self.newcomers        = []
+        self.retiring_agents  = []
 
         # Production model
         self.subsistence_wage = self.params['subsistence_wage'] # psi
@@ -132,15 +133,15 @@ class City(Model):
         self.workers_share = self.params['beta_F'] # lambda
 
         # Housing market model
-        self.mortgage_period = self.params['mortgage_period']
+        self.mortgage_period        = self.params['mortgage_period']
         self.housing_services_share = self.params['housing_services_share'] # a
-        self.maintenance_share = self.params['maintenance_share'] # b
+        self.maintenance_share      = self.params['maintenance_share'] # b
         self.r_prime  = self.params['r_prime']
         self.r_margin = self.params['r_margin']
         self.delta    = 1/self.params['discount_rate'] # TODO divide by zero error checking
-        self.max_mortgage_share = self.params['max_mortgage_share']
+        self.max_mortgage_share        = self.params['max_mortgage_share']
         self.ability_to_carry_mortgage = self.params['ability_to_carry_mortgage']
-        self.wealth_sensitivity = self.params['wealth_sensitivity']
+        self.wealth_sensitivity        = self.params['wealth_sensitivity']
         self.p_dot       = 0. # Price adjustment rate. TODO fix here? rename?
         self.price_model = 0. # TODO need to fix type?
 
@@ -392,3 +393,31 @@ class City(Model):
             # self.p_dot = regr.coef_[0] # slope
             p_dot = self.price_model.coef_[0] # slope
         return p_dot
+    
+
+
+if __name__ == '__main__':
+    # model = City()  # Create an instance of your City model
+    # model.run_model()
+
+    print('hi')
+    # variable_parameters = {
+    #     'density': [1, 100],
+    #     'subsistence_wage': [10000, 30000]
+    # }
+
+    # agent_reporters = {
+    #     'x': lambda a: a.pos[0],
+    #     'y': lambda a: a.pos[1],
+    # }
+
+    # fixed_parameters = {}
+
+    # # Define the default values for other parameters
+    # other_parameters = {
+    #     'data_collection_period': 2,
+    #     'iterations': 1,
+    #     'max_steps': 30
+    # }
+
+    # batch_run_model(City, variable_parameters, fixed_parameters, **other_parameters)
