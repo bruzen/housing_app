@@ -108,8 +108,6 @@ class City(Model):
         self.model_version     = '0.0.1'
         self.model_description = 'Agent-based housing market model with rent and urban aglomeration.'
         self.num_steps = num_steps
-        self.run_id    = self.get_run_id(self.model_name, self.model_version)
-        self.subfolder = 'output_data' 
         self.time_step = 1.
         self.center    = (0, 0) # (width//2, height//2) # TODO make center
         self.grid = MultiGrid(self.params['width'], self.params['height'], torus=False)
@@ -197,42 +195,7 @@ class City(Model):
 
             self.unique_id  += 1
 
-        # Define what data the model will collect in each time step
-        model_reporters      = {
-#             "rents":          capture_rents,
-            "companies":      lambda m: m.schedule.get_breed_count(Firm),
-            "people":         lambda m: m.schedule.get_breed_count(Person),
-            "wage":           lambda m: m.firm.wage,
-            "city_extent":    lambda m: m.city_extent,
-            "population":     lambda m: m.firm.N,
-            "workers":        lambda m: len(
-                [a for a in self.schedule.agents_by_breed[Person].values()
-                         if a.is_working == 1]
-            )
-        }
-        agent_reporters      = {
-            "agent_class":       lambda a: type(a),
-            "agent_type":        lambda a: type(a).__name__,
-            "id":                lambda a: a.unique_id,
-            "x":                 lambda a: a.pos[0],
-            "y":                 lambda a: a.pos[1],
-            "wage":              lambda a: getattr(a, "wage", None) if isinstance(a, Land) else None,
-            "is_working":        lambda a: getattr(a, "is_working", None),
-            "working_period":    lambda a: getattr(a, "working_period", None),
-            "property_tax_rate": lambda a: getattr(a, "property_tax_rate", None),
-            "net_rent":          lambda a: getattr(a, "net_rent", None) if isinstance(a, Land) else None,
-            "warranted_price":   lambda a: getattr(a, "warranted_price", None) if isinstance(a, Land) else None,
-        }
-
-        self.datacollector  = DataCollector(model_reporters = model_reporters,
-                                            agent_reporters = agent_reporters)
-
-
-        self.step_price_data = [] # for forecasting
-        self.price_data = pd.DataFrame(
-             columns=['id', 'warranted_price', 'time_step', 'transport_cost', 'wage'])   
-
-        self.record_model_data()
+        self.setup_data_collection ()
 
     def step(self):
         """ The model step function runs in each time step when the model
@@ -283,7 +246,46 @@ class City(Model):
         for t in range(self.num_steps):
             self.step()
 
-    def record_model_data(self):
+    def setup_data_collection (self):
+        
+        self.run_id    = self.get_run_id(self.model_name, self.model_version)
+        self.subfolder = self.get_subfolder()
+
+        # Define what data the model will collect in each time step
+        model_reporters      = {
+#             "rents":          capture_rents,
+            "companies":      lambda m: m.schedule.get_breed_count(Firm),
+            "people":         lambda m: m.schedule.get_breed_count(Person),
+            "wage":           lambda m: m.firm.wage,
+            "city_extent":    lambda m: m.city_extent,
+            "population":     lambda m: m.firm.N,
+            "workers":        lambda m: len(
+                [a for a in self.schedule.agents_by_breed[Person].values()
+                         if a.is_working == 1]
+            )
+        }
+        agent_reporters      = {
+            "agent_class":       lambda a: type(a),
+            "agent_type":        lambda a: type(a).__name__,
+            "id":                lambda a: a.unique_id,
+            "x":                 lambda a: a.pos[0],
+            "y":                 lambda a: a.pos[1],
+            "wage":              lambda a: getattr(a, "wage", None) if isinstance(a, Land) else None,
+            "is_working":        lambda a: getattr(a, "is_working", None),
+            "working_period":    lambda a: getattr(a, "working_period", None),
+            "property_tax_rate": lambda a: getattr(a, "property_tax_rate", None),
+            "net_rent":          lambda a: getattr(a, "net_rent", None) if isinstance(a, Land) else None,
+            "warranted_price":   lambda a: getattr(a, "warranted_price", None) if isinstance(a, Land) else None,
+        }
+
+        self.datacollector  = DataCollector(model_reporters = model_reporters,
+                                            agent_reporters = agent_reporters)
+
+
+        self.step_price_data = [] # for forecasting
+        self.price_data = pd.DataFrame(
+             columns=['id', 'warranted_price', 'time_step', 'transport_cost', 'wage'])   
+
         # Create the 'output_data' subfolder if it doesn't exist
         if not os.path.exists(self.subfolder):
             os.makedirs(self.subfolder)
@@ -322,16 +324,6 @@ class City(Model):
         with open(metadata_file_path, 'w') as file:
             yaml.safe_dump(existing_metadata, file)
 
-    def get_run_id(self, model_name, model_version):
-        # Format the current date and time
-        current_date = datetime.datetime.now().strftime("%Y-%m-%d_%H%M%S")
-
-        # Adapt the model name to lowercase and replace spaces with underscores
-        formatted_model_name = model_name.lower().replace(" ", "_")
-
-        # Create the run_id
-        return f"{formatted_model_name}_{current_date}_v{model_version.replace('.', '_')}"
-
     def record_step_data(self):
 
         # Retrieve data
@@ -353,6 +345,18 @@ class City(Model):
             except Exception as e:
                 logging.error("Error saving model data: %s", str(e))
 
+    def get_run_id(self, model_name, model_version):
+        # Format the current date and time
+        current_date = datetime.datetime.now().strftime("%Y-%m-%d_%H%M%S")
+
+        # Adapt the model name to lowercase and replace spaces with underscores
+        formatted_model_name = model_name.lower().replace(" ", "_")
+
+        # Create the run_id
+        return f"{formatted_model_name}_{current_date}_v{model_version.replace('.', '_')}"
+
+    def get_subfolder(self):
+        return 'output_data'
 
     def create_newcomer(self):
         """Create newcomer at the center with no residence or property."""
@@ -393,31 +397,3 @@ class City(Model):
             # self.p_dot = regr.coef_[0] # slope
             p_dot = self.price_model.coef_[0] # slope
         return p_dot
-    
-
-
-if __name__ == '__main__':
-    # model = City()  # Create an instance of your City model
-    # model.run_model()
-
-    print('hi')
-    # variable_parameters = {
-    #     'density': [1, 100],
-    #     'subsistence_wage': [10000, 30000]
-    # }
-
-    # agent_reporters = {
-    #     'x': lambda a: a.pos[0],
-    #     'y': lambda a: a.pos[1],
-    # }
-
-    # fixed_parameters = {}
-
-    # # Define the default values for other parameters
-    # other_parameters = {
-    #     'data_collection_period': 2,
-    #     'iterations': 1,
-    #     'max_steps': 30
-    # }
-
-    # batch_run_model(City, variable_parameters, fixed_parameters, **other_parameters)
