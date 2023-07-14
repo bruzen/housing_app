@@ -3,6 +3,7 @@ import os
 import yaml
 # import functools
 import datetime
+import random
 from contextlib import contextmanager
 # import subprocess
 # import math
@@ -59,12 +60,13 @@ class City(Model):
     def r_target(self):
         return self.r_prime + self.r_margin
 
-    def __init__(self,  num_steps=10, **parameters):
+    def __init__(self, num_steps=10, **parameters):
         super().__init__()
 
         # Default parameter values
         default_parameters = {
             'run_notes': 'Debugging model.',
+            'subfolder': None,
             'width': 50,
             'height': 1,
             'init_city_extent': 10.,  # f CUT OR CHANGE?
@@ -195,7 +197,7 @@ class City(Model):
 
             self.unique_id  += 1
 
-        self.setup_data_collection ()
+        self.setup_data_collection()
 
     def step(self):
         """ The model step function runs in each time step when the model
@@ -247,9 +249,20 @@ class City(Model):
             self.step()
 
     def setup_data_collection (self):
-        
-        self.run_id    = self.get_run_id(self.model_name, self.model_version)
-        self.subfolder = self.get_subfolder()
+        # Setup data collection
+        if 'timestamp' in self.params and self.params['timestamp'] is not None:
+            timestamp = self.params['timestamp']
+        else:
+            timestamp = datetime.datetime.now().strftime("%Y-%m-%d_%H%M%S")
+        self.timestamp = timestamp
+
+        if 'subfolder' in self.params and self.params['subfolder'] is not None:
+            subfolder = self.params['subfolder']
+        else:
+            subfolder = self.get_subfolder()
+        self.subfolder = subfolder    
+
+        self.run_id    = self.get_run_id(self.model_name, self.timestamp, self.model_version)
 
         # Define what data the model will collect in each time step
         model_reporters      = {
@@ -345,18 +358,24 @@ class City(Model):
             except Exception as e:
                 logging.error("Error saving model data: %s", str(e))
 
-    def get_run_id(self, model_name, model_version):
-        # Format the current date and time
-        current_date = datetime.datetime.now().strftime("%Y-%m-%d_%H%M%S")
-
+    def get_run_id(self, model_name, timestamp, model_version):
         # Adapt the model name to lowercase and replace spaces with underscores
         formatted_model_name = model_name.lower().replace(" ", "_")
+        formatted_number = f"{random.randint(1, 999):03d}"
 
         # Create the run_id
-        return f"{formatted_model_name}_{current_date}_v{model_version.replace('.', '_')}"
+        return f"{formatted_model_name}_{timestamp}_{formatted_number}_v{model_version.replace('.', '_')}"
 
     def get_subfolder(self):
-        return 'output_data'
+        # Create the subfolder path
+        output_data_folder = "output_data"
+        runs_folder = "runs"
+        subfolder = os.path.join(output_data_folder, runs_folder)
+        
+        # Create the subfolder if it doesn't exist
+        os.makedirs(subfolder, exist_ok=True)
+        
+        return subfolder
 
     def create_newcomer(self):
         """Create newcomer at the center with no residence or property."""

@@ -1,5 +1,6 @@
 import sys
 import yaml
+import datetime
 import pandas as pd
 import os
 from contextlib import contextmanager
@@ -89,6 +90,7 @@ def get_subfolder():
 if __name__ == '__main__':
     subfolder = get_subfolder()
     fixed_parameters['subfolder'] = subfolder
+    fixed_parameters['timestamp'] = timestamp = datetime.datetime.now().strftime("%Y-%m-%d_%H%M%S")
     model_parameters = {**fixed_parameters, **variable_parameters}
     with metadata_recorder(model_parameters, batch_parameters):
         run_batch_simulation()
