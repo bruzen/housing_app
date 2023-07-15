@@ -140,8 +140,6 @@ def plot_output(agent_out, model_out):
 
     plt.tight_layout()
     st.pyplot(fig)    
-    # return fig
-
 
 def display_files():
     # Get the list of run IDs
@@ -203,6 +201,53 @@ def get_run_ids(folder_path):
 
     return list(run_ids)
 
+def create_plots_for_folders(folder_path):
+    # Get the list of subfolders in the batch run folder
+    subfolders = [name for name in os.listdir(folder_path) if os.path.isdir(os.path.join(folder_path, name))]
+
+    # Iterate over each subfolder
+    for subfolder in subfolders:
+        subfolder_path = os.path.join(folder_path, subfolder)
+
+        # Load the folder name
+        folder_name = os.path.basename(subfolder_path)
+
+        # Extract the variable parameter keys from the folder name
+        variable_parameter_keys = folder_name.split("_")[2:]
+
+        # Create an empty legend list
+        legend = []
+
+        # Load data from the model CSV files in the folder
+        for file_name in os.listdir(subfolder_path):
+            if file_name.endswith("_model.csv"):
+                file_path = os.path.join(subfolder_path, file_name)
+                df = pd.read_csv(file_path)
+
+                # Extract Step and wage columns from the data
+                steps = df["Step"]
+                wages = df["wage"]
+
+                # Create a time series plot for each variable parameter
+                plt.plot(steps, wages)
+
+                # Add the variable parameter key to the legend
+                variable_parameters = file_name.split("_")[2:-2]
+                parameter_values = file_name.split("_")[-2:]
+                legend_entry = ", ".join(f"{key}: {value}" for key, value in zip(variable_parameters, parameter_values))
+                legend.append(legend_entry)
+
+        # Add legend to the plot
+        plt.legend(legend)
+
+        # Set the plot title
+        plot_title = "Batch Run Folder: " + subfolder
+
+        # Create the plot in Streamlit
+        st.subheader(plot_title)
+        st.pyplot()
+
+
 def main():
     num_steps = st.sidebar.slider("Number of Steps", min_value=1, max_value=100, value=10)
 
@@ -223,6 +268,13 @@ def main():
     st.markdown("---")
     st.header("Explore Existing Run Data")
     agent_out, model_out = display_files()
+
+    st.markdown("---")
+    # Define the path to the batch run folder
+    batch_run_folder = "output_data/batch_runs"  # Replace with the actual path
+
+    # Call the function to create plots for each folder in the batch run
+    create_plots_for_folders(batch_run_folder)
 
 if __name__ == "__main__":
     main()
