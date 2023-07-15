@@ -31,7 +31,7 @@ def load_data(run_id, folder_path):
         return None
 
 def plot_data(data):
-    plt.plot(data['Step'], data['wage'])
+    plt.plot(data['time_step'], data['wage'])
     plt.xlabel('Step')
     plt.ylabel('Wage')
     plt.title('Wage vs Step')
