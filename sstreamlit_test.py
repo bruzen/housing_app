@@ -64,23 +64,20 @@ def main():
     selected_folder = st.selectbox("Select Batch Run Folder", batch_run_folders)
     folder_path = os.path.join("output_data", "batch_runs", selected_folder)
 
-    run_ids = get_batch_run_keys(folder_path)
-    selected_run_id = st.selectbox("Select Run ID", run_ids)
-
     metadata = load_metadata(folder_path)
     if metadata is not None:
-        parameters = metadata[selected_run_id]['simulation_parameters']
+        for run_id in get_batch_run_keys(folder_path):
+            parameters = metadata[run_id]['simulation_parameters']
+            variable_parameters = {}
+            # Get variable parameters from list of all parameters
+            for key, value in parameters.items():
+                if key in selected_folder:
+                    variable_parameters[key] = value
 
-        variable_parameters = {}
-        # Get variable parameters from list of all parameters
-        for key, value in parameters.items():
-            if key in selected_folder:
-                variable_parameters[key] = value
-
-        data = load_data(selected_run_id, folder_path)
-        if data is not None:
-            st.subheader("Plot")
-            plot_data(data, label=selected_run_id, variable_parameters=variable_parameters)
+            data = load_data(run_id, folder_path)
+            if data is not None:
+                st.subheader(f"Plot - Run ID: {run_id}")
+                plot_data(data, label=run_id, variable_parameters=variable_parameters)
 
 if __name__ == "__main__":
     main()
