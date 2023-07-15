@@ -7,4 +7,5 @@ scikit-learn
 statsmodels
 scipy
 pysal
+plotly
 matplotlib==3.4.3
