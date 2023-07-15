@@ -145,14 +145,15 @@ def plot_output(agent_out, model_out):
 
 def display_files():
     # Get the list of run IDs
-    folder_path = "output_data"
+    folder_path = os.path.join('output_data', 'runs')
+    file_path = "run_metadata.yaml"
     run_ids = get_run_ids(folder_path   )
 
     # Display dropdown to select run ID
     selected_run_id = st.selectbox("Select Run ID", run_ids)
 
     # Load data based on selected run ID
-    run_metadata           = load_metadata(selected_run_id, folder_path)
+    run_metadata           = load_metadata(selected_run_id, folder_path, file_path)
     agent_out, model_out   = load_data(selected_run_id)
 
     # Display the metadata
@@ -182,8 +183,8 @@ def load_data(run_id):
         # st.error(f"Data files not found for run ID: {run_id}")
         return None, None
 
-def load_metadata(run_id, folder_path):
-    metadata_file = folder_path + "/metadata.yaml"
+def load_metadata(run_id, folder_path, file_path):
+    metadata_file = os.path.join(folder_path, file_path)
 
     with open(metadata_file, "r") as file:
         metadata = yaml.safe_load(file)
@@ -220,7 +221,7 @@ def main():
     plot_output(agent_out, model_out)
     
     st.markdown("---")
-    st.header("Explore Existing Data")
+    st.header("Explore Existing Run Data")
     agent_out, model_out = display_files()
 
 if __name__ == "__main__":
