@@ -2,11 +2,13 @@ import os
 import streamlit as st
 import pandas as pd
 import matplotlib.pyplot as plt
+import yaml
 
 def get_batch_run_folders():
     output_data_folder = "output_data"
     runs_folder = "batch_runs"
     batch_run_folders = os.listdir(os.path.join(output_data_folder, runs_folder))
+    batch_run_folders = [folder for folder in batch_run_folders if folder != ".DS_Store"]
     return batch_run_folders
 
 def get_batch_run_keys(folder_path):
@@ -37,6 +39,17 @@ def plot_data(data):
     plt.title('Wage vs Step')
     st.pyplot()
 
+def load_metadata(folder_path):
+    metadata_file = os.path.join(folder_path, "run_metadata.yaml")
+
+    if os.path.exists(metadata_file):
+        with open(metadata_file, 'r') as file:
+            metadata = yaml.safe_load(file)
+        return metadata
+    else:
+        st.warning("Metadata file not found.")
+        return None
+
 def main():
     st.title("Batch Run Data Plotter")
     batch_run_folders = get_batch_run_folders()
@@ -50,6 +63,12 @@ def main():
     if data is not None:
         st.subheader("Data")
         st.dataframe(data)
+
+        metadata = load_metadata(folder_path)
+        if metadata is not None:
+            parameters = metadata[selected_run_id]['simulation_parameters']
+            st.subheader("Metadata")
+            st.write(parameters)
 
         st.subheader("Plot")
         plot_data(data)
