@@ -76,8 +76,8 @@ def get_subfolder(timestamp, variable_parameters):
     # Create the subfolder path
     output_data_folder = 'output_data'
     runs_folder = 'batch_runs'
-    parameter_names = '_'.join(variable_parameters.keys())
-    subfolder = os.path.join(output_data_folder, runs_folder, f"{timestamp}_{parameter_names}")
+    parameter_names = '-'.join(variable_parameters.keys())
+    subfolder = os.path.join(output_data_folder, runs_folder, f"{timestamp}--{parameter_names}")
 
     # Create the subfolder if it doesn't exist
     os.makedirs(subfolder, exist_ok=True)

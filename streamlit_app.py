@@ -225,7 +225,7 @@ def create_plots_for_folders(folder_path):
                 df = pd.read_csv(file_path)
 
                 # Extract Step and wage columns from the data
-                steps = df["Step"]
+                steps = df["time_step"]
                 wages = df["wage"]
 
                 # Create a time series plot for each variable parameter

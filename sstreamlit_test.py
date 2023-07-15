@@ -32,14 +32,19 @@ def load_data(run_id, folder_path):
         st.error(f"Data file not found for run ID: {run_id}")
         return None
 
-def plot_data(data, label=None):
+def plot_data(data, label=None, variable_parameters=None):
+    fig, ax = plt.subplots()
     plt.plot(data['time_step'], data['wage'], label=label)
+
+    if variable_parameters:
+        param_label = ', '.join([f"{key}: {value}" for key, value in variable_parameters.items()])
+        plt.legend([param_label])
+
     plt.xlabel('Step')
     plt.ylabel('Wage')
     plt.title('Wage vs Step')
-    if label:
-        plt.legend()
-    st.pyplot()
+
+    st.pyplot(fig)
 
 
 def load_metadata(folder_path):
@@ -61,17 +66,21 @@ def main():
 
     run_ids = get_batch_run_keys(folder_path)
     selected_run_id = st.selectbox("Select Run ID", run_ids)
-    print("Selected Run ID:", selected_run_id)
 
-    data = load_data(selected_run_id, folder_path)
-    if data is not None:
-        st.subheader("Plot")
-        plot_data(data, label=selected_run_id)
+    metadata = load_metadata(folder_path)
+    if metadata is not None:
+        parameters = metadata[selected_run_id]['simulation_parameters']
 
-        metadata = load_metadata(folder_path)
-        if metadata is not None:
-            st.subheader("Variable Parameters")
-            print(metadata[selected_run_id]['simulation_parameters'])  # Print the parameters dictionary
+        variable_parameters = {}
+        # Get variable parameters from list of all parameters
+        for key, value in parameters.items():
+            if key in selected_folder:
+                variable_parameters[key] = value
+
+        data = load_data(selected_run_id, folder_path)
+        if data is not None:
+            st.subheader("Plot")
+            plot_data(data, label=selected_run_id, variable_parameters=variable_parameters)
 
 if __name__ == "__main__":
     main()
