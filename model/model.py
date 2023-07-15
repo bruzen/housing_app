@@ -4,6 +4,7 @@ import yaml
 # import functools
 import datetime
 import random
+import string
 from contextlib import contextmanager
 # import subprocess
 # import math
@@ -361,10 +362,10 @@ class City(Model):
     def get_run_id(self, model_name, timestamp, model_version):
         # Adapt the model name to lowercase and replace spaces with underscores
         formatted_model_name = model_name.lower().replace(" ", "_")
-        formatted_number = f"{random.randint(1, 999):03d}"
+        unique_id = ''.join(random.choices(string.ascii_uppercase + string.digits, k=4))
 
         # Create the run_id
-        return f"{formatted_model_name}_{timestamp}_{formatted_number}_v{model_version.replace('.', '_')}"
+        return f"{formatted_model_name}_{timestamp}_{unique_id}_v{model_version.replace('.', '_')}"
 
     def get_subfolder(self):
         # Create the subfolder path

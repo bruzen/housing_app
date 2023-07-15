@@ -46,8 +46,6 @@ fixed_parameters = {
     'wealth_sensitivity': 0.1,
 }
 
-
-
 batch_parameters = {
     'data_collection_period': 2,
     'iterations': 1,
@@ -66,20 +64,19 @@ def metadata_recorder(model_parameters, batch_parameters):
     metadata_path = os.path.join(subfolder, 'batch_metadata.yaml')
     with open(metadata_path, 'w') as f:
         yaml.safe_dump(metadata, f)
-    
+
 # Define the function to run the batch simulation
-def run_batch_simulation():
+def run_batch_simulation():    
     # Run the batch simulations
     results = batch_run(City, model_parameters, **batch_parameters)
     df = pd.DataFrame(results)
-    # df.to_csv('batch_results.csv', index=False)
-    df.to_csv(os.path.join(subfolder, 'batch_results.csv'), index=False)
+    df.to_csv(os.path.join(subfolder, f'batch_results.csv'), index=False)
 
-def get_subfolder():
+def get_subfolder(timestamp):
     # Create the subfolder path
     output_data_folder = 'output_data'
     runs_folder = 'batch_runs'
-    subfolder = os.path.join(output_data_folder, runs_folder)
+    subfolder = os.path.join(output_data_folder, runs_folder, timestamp)
 
     # Create the subfolder if it doesn't exist
     os.makedirs(subfolder, exist_ok=True)
@@ -88,9 +85,9 @@ def get_subfolder():
 
 # Main execution
 if __name__ == '__main__':
-    subfolder = get_subfolder()
+    fixed_parameters['timestamp'] = datetime.datetime.now().strftime("%Y-%m-%d_%H%M%S")
+    subfolder = get_subfolder(fixed_parameters['timestamp'])
     fixed_parameters['subfolder'] = subfolder
-    fixed_parameters['timestamp'] = timestamp = datetime.datetime.now().strftime("%Y-%m-%d_%H%M%S")
     model_parameters = {**fixed_parameters, **variable_parameters}
     with metadata_recorder(model_parameters, batch_parameters):
         run_batch_simulation()
