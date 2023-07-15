@@ -33,9 +33,7 @@ def load_data(run_id, folder_path):
         return None
 
 def plot_data(data, label=None, variable_parameters=None):
-    fig, ax = plt.subplots()
-    plt.plot(data['time_step'], data['wage'], label=label)
-
+    plt.plot(data['time_step'], data['wage'])
     if variable_parameters:
         param_label = ', '.join([f"{key}: {value}" for key, value in variable_parameters.items()])
         plt.legend([param_label])
@@ -44,8 +42,7 @@ def plot_data(data, label=None, variable_parameters=None):
     plt.ylabel('Wage')
     plt.title('Wage vs Step')
 
-    st.pyplot(fig)
-
+    st.pyplot()
 
 def load_metadata(folder_path):
     metadata_file = os.path.join(folder_path, "run_metadata.yaml")
@@ -66,6 +63,7 @@ def main():
 
     metadata = load_metadata(folder_path)
     if metadata is not None:
+        fig, ax = plt.subplots()
         for run_id in get_batch_run_keys(folder_path):
             parameters = metadata[run_id]['simulation_parameters']
             variable_parameters = {}
@@ -76,8 +74,14 @@ def main():
 
             data = load_data(run_id, folder_path)
             if data is not None:
-                st.subheader(f"Plot - Run ID: {run_id}")
-                plot_data(data, label=run_id, variable_parameters=variable_parameters)
+                ax.plot(data['time_step'], data['wage'], label=', '.join([f"{key}: {value}" for key, value in variable_parameters.items()]))
+
+        ax.set_xlabel('Step')
+        ax.set_ylabel('Wage')
+        ax.set_title('Wage vs Step')
+        ax.legend()
+        st.set_option('deprecation.showPyplotGlobalUse', False)
+        st.pyplot(fig)
 
 if __name__ == "__main__":
     main()
