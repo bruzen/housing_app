@@ -27,5 +27,3 @@ __pycache__/
 profile_data.prof
 
 model/temp_comments.py
-
-sstreamlit_test.py
