@@ -10,7 +10,8 @@ from model.model import City
 # Define the variable and fixed parameters
 variable_parameters = {
     'density': [1, 100],
-    'subsistence_wage': [10000, 30000]
+    'subsistence_wage': [10000, 30000],
+    'gamma': [0.001, 0.02, 0.7]
 }
 
 fixed_parameters = {
