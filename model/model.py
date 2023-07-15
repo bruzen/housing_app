@@ -268,6 +268,7 @@ class City(Model):
         # Define what data the model will collect in each time step
         model_reporters      = {
 #             "rents":          capture_rents,
+            "time_step":      lambda m: m.time_step,
             "companies":      lambda m: m.schedule.get_breed_count(Firm),
             "people":         lambda m: m.schedule.get_breed_count(Person),
             "wage":           lambda m: m.firm.wage,
