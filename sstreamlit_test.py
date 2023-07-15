@@ -11,18 +11,6 @@ def get_batch_run_folders():
     batch_run_folders = [folder for folder in batch_run_folders if folder != ".DS_Store"]
     return batch_run_folders
 
-def parse_variable_parameters(folder_name):
-    folder_name = folder_name.replace(".csv", "")
-    parts = folder_name.split("_")
-    variable_parameters = {}
-
-    for i in range(1, len(parts), 2):
-        param_name = parts[i]
-        param_values = parts[i + 1].split("-")
-        variable_parameters[param_name] = [int(value) for value in param_values]
-
-    return variable_parameters
-
 def get_batch_run_keys(folder_path):
     file_names = os.listdir(folder_path)
     keys = []
@@ -44,12 +32,15 @@ def load_data(run_id, folder_path):
         st.error(f"Data file not found for run ID: {run_id}")
         return None
 
-def plot_data(data):
-    plt.plot(data['time_step'], data['wage'])
-    plt.xlabel('time_step')
+def plot_data(data, label=None):
+    plt.plot(data['time_step'], data['wage'], label=label)
+    plt.xlabel('Step')
     plt.ylabel('Wage')
-    plt.title('Wage vs time_step')
+    plt.title('Wage vs Step')
+    if label:
+        plt.legend()
     st.pyplot()
+
 
 def load_metadata(folder_path):
     metadata_file = os.path.join(folder_path, "run_metadata.yaml")
@@ -70,26 +61,17 @@ def main():
 
     run_ids = get_batch_run_keys(folder_path)
     selected_run_id = st.selectbox("Select Run ID", run_ids)
+    print("Selected Run ID:", selected_run_id)
 
     data = load_data(selected_run_id, folder_path)
     if data is not None:
+        st.subheader("Plot")
+        plot_data(data, label=selected_run_id)
+
         metadata = load_metadata(folder_path)
         if metadata is not None:
-            folder_name = selected_folder.split("_")[-1]  # Get the last part of the folder name
-            variable_parameters = parse_variable_parameters(folder_name)
             st.subheader("Variable Parameters")
-            for key, value in variable_parameters.items():
-                st.write(key, ":", value)
-
-        st.subheader("Data")
-        st.dataframe(data)
-
-        st.subheader("Plot")
-        plot_data(data)
-
-        # Print the wage vs step data for debugging
-        st.subheader("Wage vs Step Data")
-        st.write(data[['time_step', 'wage']])
+            print(metadata[selected_run_id]['simulation_parameters'])  # Print the parameters dictionary
 
 if __name__ == "__main__":
     main()
