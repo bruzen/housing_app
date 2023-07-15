@@ -1,4 +1,5 @@
 import os
+import subprocess
 import streamlit as st
 import pandas as pd
 import matplotlib.pyplot as plt
@@ -82,6 +83,13 @@ def main():
         ax.legend()
         st.set_option('deprecation.showPyplotGlobalUse', False)
         st.pyplot(fig)
+
+    st.title("Batch Run Data Plotter")
+
+    # Button to run batch_run.py
+    if st.button("Run batch_run.py"):
+        # Execute batch_run.py using subprocess
+        subprocess.run(["python", "batch_run.py"])
 
 if __name__ == "__main__":
     main()
