@@ -308,7 +308,7 @@ class City(Model):
         model_filename         = self.run_id + '_model' + '.csv'
         self.agent_file_path   = os.path.join(self.subfolder, agent_filename)
         self.model_file_path   = os.path.join(self.subfolder, model_filename)
-        self.metadata_file_path = os.path.join(self.subfolder, 'metadata.yaml')
+        self.metadata_file_path = os.path.join(self.subfolder, 'run_metadata.yaml')
 
         metadata = {
             'model_description':     self.model_description,
@@ -362,7 +362,7 @@ class City(Model):
     def get_run_id(self, model_name, timestamp, model_version):
         # Adapt the model name to lowercase and replace spaces with underscores
         formatted_model_name = model_name.lower().replace(" ", "_")
-        unique_id = ''.join(random.choices(string.ascii_uppercase + string.digits, k=4))
+        unique_id = ''.join(random.choices(string.ascii_uppercase + string.digits, k=3))
 
         # Create the run_id
         return f"{formatted_model_name}_{timestamp}_{unique_id}_v{model_version.replace('.', '_')}"
