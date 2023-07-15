@@ -72,11 +72,12 @@ def run_batch_simulation():
     df = pd.DataFrame(results)
     df.to_csv(os.path.join(subfolder, f'batch_results.csv'), index=False)
 
-def get_subfolder(timestamp):
+def get_subfolder(timestamp, variable_parameters):
     # Create the subfolder path
     output_data_folder = 'output_data'
     runs_folder = 'batch_runs'
-    subfolder = os.path.join(output_data_folder, runs_folder, timestamp)
+    parameter_names = '_'.join(variable_parameters.keys())
+    subfolder = os.path.join(output_data_folder, runs_folder, f"{timestamp}_{parameter_names}")
 
     # Create the subfolder if it doesn't exist
     os.makedirs(subfolder, exist_ok=True)
@@ -86,7 +87,7 @@ def get_subfolder(timestamp):
 # Main execution
 if __name__ == '__main__':
     fixed_parameters['timestamp'] = datetime.datetime.now().strftime("%Y-%m-%d_%H%M%S")
-    subfolder = get_subfolder(fixed_parameters['timestamp'])
+    subfolder = get_subfolder(fixed_parameters['timestamp'], variable_parameters)
     fixed_parameters['subfolder'] = subfolder
     model_parameters = {**fixed_parameters, **variable_parameters}
     with metadata_recorder(model_parameters, batch_parameters):
