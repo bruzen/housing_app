@@ -280,6 +280,7 @@ class City(Model):
             )
         }
         agent_reporters      = {
+            "time_step":         lambda a: a.model.time_step,
             "agent_class":       lambda a: type(a),
             "agent_type":        lambda a: type(a).__name__,
             "id":                lambda a: a.unique_id,

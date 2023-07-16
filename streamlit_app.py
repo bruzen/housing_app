@@ -20,21 +20,24 @@ def run_simulation(num_steps, parameters):
     model_out = city.datacollector.get_model_vars_dataframe()
     return agent_out, model_out
 
-@st.cache_data()
-def plot_agent_data(agent_out):
+
+def plot_land_data(agent_out):
     land_out = agent_out.query("agent_type == 'Land'")
 
-    # Prepare the data for visualization
-    df = land_out.reset_index()
+    # Drop columns with all NaN values
+    df = land_out.dropna(axis=1, how='all').reset_index(drop=True)
 
-    # Define the color scale limits based on the minimum and maximum 'warranted_price' across all steps
-    z_min = df['warranted_price'].min() # 200.
-    z_max = df['warranted_price'].max() # 700.
+    # Reset both the row index and column index
+    df = df.reset_index(drop=True)
 
-    # Create a list of figures for each step
+    # Define the color scale limits based on the minimum and maximum 'warranted_price' across all time steps
+    z_min = df['warranted_price'].min()
+    z_max = df['warranted_price'].max()
+
+    # Create a list of figures for each time step
     figs = []
-    for step in df['Step'].unique():
-        temp_df = df[df['Step'] == step]
+    for time_step in df['time_step'].unique():
+        temp_df = df[df['time_step'] == time_step]
         hover_text = 'Warranted Price: ' + temp_df['warranted_price'].astype(str) + '<br>ID: ' + temp_df['id'].astype(str)
         fig = go.Figure(data=go.Heatmap(
             z=temp_df['warranted_price'],
@@ -44,12 +47,12 @@ def plot_agent_data(agent_out):
             colorscale='viridis',
             zmin=z_min,
             zmax=z_max,
-            colorbar=dict(title='Warranted Price 2', titleside='right')
+            colorbar=dict(title='Warranted Price', titleside='right')
         ))
-        fig.update_layout(title=f'Step: {step}', xaxis_nticks=20, yaxis_nticks=20)
+        fig.update_layout(title=f'Time Step: {time_step}', xaxis_nticks=20, yaxis_nticks=20)
         figs.append(fig)
 
-    # Use subplot to add a slider through each step
+    # Use subplot to add a slider through each time step
     final_fig = make_subplots(rows=1, cols=1)
 
     # Add traces from each figure to the final figure
@@ -71,17 +74,85 @@ def plot_agent_data(agent_out):
                 col=1  # add the trace to the first subplot
             )
 
-    # Create frames for each step
+    # Create frames for each time step
     final_fig.frames = [go.Frame(data=[figs[i].data[0]], name=str(i)) for i in range(len(figs))]
 
-    # Create a slider to navigate through each step
+    # Create a slider to navigate through each time step
     steps = [dict(label=str(i), method="animate", args=[[str(i)], dict(frame=dict(duration=300, redraw=True))]) for i in range(len(figs))]
     sliders = [dict(active=0, pad={"t": 50}, steps=steps)]
 
-    final_fig.update_layout(height=600, width=800, title_text="Warranted Price Heatmap Over Steps", sliders=sliders)
+    final_fig.update_layout(height=600, width=800, title_text="Warranted Price Heatmap Over Time Steps", sliders=sliders)
 
-    # Show the plot in streamlit
+    # Show the plot in Streamlit
     st.plotly_chart(final_fig)
+
+@st.cache_data()
+def plot_person_data(agent_out):
+    person_out = agent_out.query("agent_type == 'Person'")
+
+    # Drop columns with all NaN values
+    df = person_out.dropna(axis=1, how='all').reset_index(drop=True)
+
+    # Reset both the row index and column index
+    df = df.reset_index(drop=True)
+
+    # Define the color scale limits based on the minimum and maximum 'working_period' across all time steps
+    z_min = df['working_period'].min()
+    z_max = df['working_period'].max()
+
+    # Create a list of figures for each time step
+    figs = []
+    for time_step in df['time_step'].unique():
+        temp_df = df[df['time_step'] == time_step]
+        hover_text = 'Working Period: ' + temp_df['working_period'].astype(str) + '<br>ID: ' + temp_df['id'].astype(str)
+        fig = go.Figure(data=go.Heatmap(
+            z=temp_df['working_period'],
+            x=temp_df['x'],
+            y=temp_df['y'],
+            hovertext=hover_text,
+            colorscale='viridis',
+            zmin=z_min,
+            zmax=z_max,
+            colorbar=dict(title='Working Period', titleside='right')
+        ))
+        fig.update_layout(title=f'Time Step: {time_step}', xaxis_nticks=20, yaxis_nticks=20)
+        figs.append(fig)
+
+    # Use subplot to add a slider through each time step
+    final_fig = make_subplots(rows=1, cols=1)
+
+    # Add traces from each figure to the final figure
+    for i, fig in enumerate(figs, start=1):
+        for trace in fig.data:
+            final_fig.add_trace(
+                go.Heatmap(
+                    z=trace['z'],
+                    x=trace['x'],
+                    y=trace['y'],
+                    hovertext=trace['hovertext'],
+                    colorscale=trace['colorscale'],
+                    zmin=z_min,
+                    zmax=z_max,
+                    colorbar=trace.colorbar,
+                    visible=(i==1)  # only the first trace is visible
+                ),
+                row=1,
+                col=1  # add the trace to the first subplot
+            )
+
+    # Create frames for each time step
+    final_fig.frames = [go.Frame(data=[figs[i].data[0]], name=str(i)) for i in range(len(figs))]
+
+    # Create a slider to navigate through each time step
+    steps = [dict(label=str(i), method="animate", args=[[str(i)], dict(frame=dict(duration=300, redraw=True))]) for i in range(len(figs))]
+    sliders = [dict(active=0, pad={"t": 50}, steps=steps)]
+
+    final_fig.update_layout(height=600, width=800, title_text="Working Period Heatmap Over Time Steps", sliders=sliders)
+
+    # Show the plot in Streamlit
+    st.plotly_chart(final_fig)
+
+
 
 @st.cache_data()
 def plot_model_data(model_out):
@@ -97,7 +168,7 @@ def plot_model_data(model_out):
     # New plot 1L: evolution of the wage  
     axes[0, 0].plot(time, wage, color='red')
     axes[0, 0].set_title('City Extent and Wage (Rises)')
-    axes[0, 0].set_title('Evolution of the wage ')
+    axes[0, 0].set_title('Evolution of the wage ')  
     axes[0, 0].set_xlabel('Time')
     axes[0, 0].set_ylabel('Wage')
     axes[0, 0].grid(True)
@@ -237,9 +308,15 @@ def main():
 
     agent_out, model_out = run_simulation(num_steps, parameters) # num_steps, subsistence_wage, working_periods, savings_rate, r_prime)
     
-    st.title("Housing Market Model Output")
+    st.title("Housing Market Model")
+    st.header("Model")
     plot_model_data(model_out)
-    plot_agent_data(agent_out)
+
+    st.header("Land")
+    plot_land_data(agent_out)
+
+    st.header("People")
+    plot_person_data(agent_out)
 
     st.markdown("---")
 
