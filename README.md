@@ -9,7 +9,9 @@ git clone https://github.com/bruzen/housing_app
 
 ### Install requirements using Conda
 conda create --name housing python=3.8
+
 conda activate housing
+
 conda install --file requirements.txt
 
 where housing is the environment_name and https://github.com/bruzen/housing_app is the branch_name, in this case the url for the Github repository page
