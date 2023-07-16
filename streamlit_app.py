@@ -245,7 +245,7 @@ def main():
     df = df.reset_index(drop=True)
 
     # Get the list of available variables in the DataFrame
-    available_variables = df.columns.tolist()
+    available_variables = [col for col in df.columns if col not in ['time_step', 'agent_class', 'agent_type', 'id', 'x', 'y']]
 
     # Create a dropdown menu to select the variable
     selected_variable = st.selectbox("Select variable to plot", available_variables, index=available_variables.index('is_working'))
@@ -260,7 +260,7 @@ def main():
     df = df.reset_index(drop=True)
 
     # Get the list of available variables in the DataFrame
-    available_variables = df.columns.tolist()
+    available_variables = [col for col in df.columns if col not in ['time_step', 'agent_class', 'agent_type', 'id', 'x', 'y']]
 
     # Create a dropdown menu to select the variable
     selected_variable = st.selectbox("Select variable to plot", available_variables, index=available_variables.index('warranted_price'))
