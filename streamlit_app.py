@@ -37,7 +37,8 @@ def plot_output(agent_out, model_out):
 
     # Define the color scale limits based on the minimum and maximum 'warranted_price' across all steps
     z_min = df['warranted_price'].min()
-    z_max = df['warranted_price'].max()
+    z_max = 700. # Temp
+    # z_max = df['warranted_price'].max()
 
     # Create a list of figures for each step
     figs = []
@@ -52,7 +53,7 @@ def plot_output(agent_out, model_out):
             colorscale='viridis',
             zmin=z_min,
             zmax=z_max,
-            colorbar=dict(title='Warranted Price', titleside='right')
+            colorbar=dict(title='Warranted Price 2', titleside='right')
         ))
         fig.update_layout(title=f'Step: {step}', xaxis_nticks=20, yaxis_nticks=20)
         figs.append(fig)
@@ -82,7 +83,6 @@ def plot_output(agent_out, model_out):
 
     # Create a slider to navigate through each step
     steps = [dict(label=str(i), method="animate", args=[[str(i)], dict(frame=dict(duration=300, redraw=True))]) for i in range(len(figs))]
-
     sliders = [dict(active=0, pad={"t": 50}, steps=steps)]
 
     final_fig.update_layout(height=600, width=800, title_text="Warranted Price Heatmap Over Steps", sliders=sliders)
@@ -90,62 +90,62 @@ def plot_output(agent_out, model_out):
     # Show the plot in streamlit
     st.plotly_chart(final_fig)
 
-
-
-
     # Set up the figure and axes
-    fig, axes = plt.subplots(2, 2, figsize=(10, 8))
+    fig, axes = plt.subplots(3, 2, figsize=(10, 15))
     fig.suptitle('Model Output', fontsize=16)
-
-    # Plot 1: Workers vs Time
-    axes[0, 0].plot(time, workers, label='Workers', color='blue')
-    axes[0, 0].plot(time, wage, label='Wage', linestyle='--', color='red')
-    #  axes[0, 0].plot(time, city_extent, label='City Extent', linestyle='dotted', color='red')
-    axes[0, 0].set_xlabel('Time')
-    axes[0, 0].set_ylabel('Number of Workers')
-    # axes[0, 0].set_title('Workers vs Wage')
-    axes[0, 0].legend(loc='upper right')
-    axes[0, 0].grid(True)
-
-  # Plot 2: Wage vs Time
-    axes[0, 0].plot(time, workers, label='Workers', color='blue')
-    axes[0, 0].plot(time, wage, label='Wage', linestyle='--', color='green')
-    axes[0, 0].plot(time, city_extent, label='City Extent', linestyle='dotted', color='red')
-    axes[0, 0].set_xlabel('Time')
-    axes[0, 0].set_ylabel('Number')
-    axes[0, 0].set_title('Workers vs Wage')
-    axes[0, 0].legend(loc='upper right')
-    axes[0, 0].grid(True)
     
-    # Plot 3: Wage vs Workers
-    axes[0, 1].plot(workers, wage, color='purple')
-    axes[0, 1].set_title('Subplot 2')
-    axes[0, 1].set_xlabel('Workers')
-    axes[0, 1].set_ylabel('Wage')
-    axes[0, 1].grid(True)
+    # New plot 1L: evolution of the wage  
+    axes[0, 0].plot(time, wage, color='red')
+    axes[0, 0].set_title('City Extent and Wage (Rises)')
+    axes[0, 0].set_title('Evolution of the wage ')
+    axes[0, 0].set_xlabel('Time')
+    axes[0, 0].set_ylabel('Wage')
+    axes[0, 0].grid(True)
 
-    # Plot 4: City Extent vs time
-    axes[1, 0].plot(city_extent, time, color='magenta')
-    axes[1, 0].set_title('Subplot 3')
-    axes[1, 0].set_xlabel('Workers')
-    axes[1, 0].set_ylabel('City Extent')
+    # New plot 3L: evolution of the city extent = l?
+    axes[0,1].plot(time, city_extent, color='red')
+    axes[0,1].set_title('Evolution of the City Extent (Rises)')
+    axes[0,1].set_xlabel('Time')
+    axes[0,1].set_ylabel('City Extent')
+    axes[0,1].grid(True)
+
+    # New plot 2R:  evolution of the workforce
+    axes[1, 0].plot(time, workers, color='purple') 
+    axes[1, 0].set_title('Evolution of the Workforce (Rises)')
+    axes[1, 0].set_xlabel('Time')
+    axes[1, 0].set_ylabel('Workers')
     axes[1, 0].grid(True)
 
-    # Plot 5: Workers vs Wage (subplot 4)
-    axes[1, 1].plot(workers, wage, color='brown')
-    axes[1, 1].set_title('Subplot 4')
-    axes[1, 1].set_xlabel('Workers')
-    axes[1, 1].set_ylabel('Wage')
-    axes[1, 1].grid(True)
+    # Plot 2L: city extent and workforce  
+    axes[1, 1].plot(city_extent, workers, color='magenta')
+    axes[1, 1].set_title('City Extent and Workforce (Curves Up)')
+    axes[1, 1].set_xlabel('City Extent')
+    axes[1, 1].set_ylabel('Workers')
+    axes[1, 1].grid(True)              
+    
+    # New plot 3L: city extent and wage
+    axes[2, 0].plot(time, city_extent, color='red')
+    # axes[2, 0].set_title('City Extent and Wage (Linear)')
+    axes[2, 0].set_title('City Extent and Wage (Curves Up)')
+    axes[2, 0].set_xlabel('Wage')
+    axes[2, 0].set_ylabel('City Extent')
+    axes[2, 0].grid(True)
 
+    # New plot 1R: workforce response to wage
+    axes[2, 1].plot(wage, workers, color='purple')
+    axes[2, 1].set_title('Workforce Response to Wage')
+    axes[2, 1].set_xlabel('Wage')
+    axes[2, 1].set_ylabel('Workers')
+    axes[2, 1].grid(True)
+    
     plt.tight_layout()
-    st.pyplot(fig)    
+    st.pyplot(fig)
 
 def display_files():
     # Get the list of run IDs
     folder_path = os.path.join('output_data', 'runs')
-    file_path = "run_metadata.yaml"
-    run_ids = get_run_ids(folder_path   )
+    file_path   = "run_metadata.yaml"
+    run_ids     = get_run_ids(folder_path   )
 
     # Display dropdown to select run ID
     selected_run_id = st.selectbox("Select Run ID", run_ids)
@@ -158,14 +158,14 @@ def display_files():
     st.subheader("Metadata")
     st.write(run_metadata)
 
-    # TODO what does this do?
-    if agent_out is not None and model_out is not None:
-        # Display loaded data
-        st.subheader("Agent Data")
-        st.dataframe(agent_out)
+    # # TODO what does this do?
+    # if agent_out is not None and model_out is not None:
+    #     # Display loaded data
+    #     st.subheader("Agent Data")
+    #     st.dataframe(agent_out)
 
-        st.subheader("Model Data")  
-        st.dataframe(model_out)
+    #     st.subheader("Model Data")  
+    #     st.dataframe(model_out)
 
     return agent_out, model_out
 
@@ -178,7 +178,6 @@ def load_data(run_id):
         model_out = pd.read_csv(model_file)
         return agent_out, model_out
     else:
-        # st.error(f"Data files not found for run ID: {run_id}")
         return None, None
 
 def load_metadata(run_id, folder_path, file_path):
@@ -192,7 +191,7 @@ def load_metadata(run_id, folder_path, file_path):
 
 def get_run_ids(folder_path):
     file_names = os.listdir(folder_path)
-    run_ids = set()
+    run_ids    = set()
 
     for file_name in file_names:
         if file_name.endswith("_agent.csv"):
@@ -201,63 +200,16 @@ def get_run_ids(folder_path):
 
     return list(run_ids)
 
-def create_plots_for_folders(folder_path):
-    # Get the list of subfolders in the batch run folder
-    subfolders = [name for name in os.listdir(folder_path) if os.path.isdir(os.path.join(folder_path, name))]
-
-    # Iterate over each subfolder
-    for subfolder in subfolders:
-        subfolder_path = os.path.join(folder_path, subfolder)
-
-        # Load the folder name
-        folder_name = os.path.basename(subfolder_path)
-
-        # Extract the variable parameter keys from the folder name
-        variable_parameter_keys = folder_name.split("_")[2:]
-
-        # Create an empty legend list
-        legend = []
-
-        # Load data from the model CSV files in the folder
-        for file_name in os.listdir(subfolder_path):
-            if file_name.endswith("_model.csv"):
-                file_path = os.path.join(subfolder_path, file_name)
-                df = pd.read_csv(file_path)
-
-                # Extract Step and wage columns from the data
-                steps = df["time_step"]
-                wages = df["wage"]
-
-                # Create a time series plot for each variable parameter
-                plt.plot(steps, wages)
-
-                # Add the variable parameter key to the legend
-                variable_parameters = file_name.split("_")[2:-2]
-                parameter_values = file_name.split("_")[-2:]
-                legend_entry = ", ".join(f"{key}: {value}" for key, value in zip(variable_parameters, parameter_values))
-                legend.append(legend_entry)
-
-        # Add legend to the plot
-        plt.legend(legend)
-
-        # Set the plot title
-        plot_title = "Batch Run Folder: " + subfolder
-
-        # Create the plot in Streamlit
-        st.subheader(plot_title)
-        st.pyplot()
-
-
 def main():
-    num_steps = st.sidebar.slider("Number of Steps", min_value=1, max_value=100, value=10)
+    num_steps  = st.sidebar.slider("Number of Steps", min_value=1, max_value=100, value=10)
 
     parameters = {
         'width':  10,
         'height': 10,
         'subsistence_wage': st.sidebar.slider("Subsistence Wage", min_value=30000., max_value=50000., value=40000., step=1000.),
-        'working_periods': st.sidebar.slider("Working Periods", min_value=30, max_value=50, value=40),
-        'savings_rate': st.sidebar.slider("Savings Rate", min_value=0.1, max_value=0.5, value=0.3, step=0.05),
-        'r_prime': st.sidebar.slider("R Prime", min_value=0.03, max_value=0.07, value=0.05, step=0.01)
+        'working_periods':  st.sidebar.slider("Working Periods", min_value=30, max_value=50, value=40),
+        'savings_rate':     st.sidebar.slider("Savings Rate", min_value=0.1, max_value=0.5, value=0.3, step=0.05),
+        'r_prime':          st.sidebar.slider("R Prime", min_value=0.03, max_value=0.07, value=0.05, step=0.01)
     }
 
     agent_out, model_out = run_simulation(num_steps, parameters) # num_steps, subsistence_wage, working_periods, savings_rate, r_prime)
@@ -268,13 +220,6 @@ def main():
     st.markdown("---")
     st.header("Explore Existing Run Data")
     agent_out, model_out = display_files()
-
-    st.markdown("---")
-    # Define the path to the batch run folder
-    batch_run_folder = "output_data/batch_runs"  # Replace with the actual path
-
-    # Call the function to create plots for each folder in the batch run
-    create_plots_for_folders(batch_run_folder)
 
 if __name__ == "__main__":
     main()
