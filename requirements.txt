@@ -1,7 +1,6 @@
 vega-datasets
 mesa
 jupyter
-pyyaml
 streamlit
 numpy
 pandas
@@ -11,3 +10,4 @@ scipy
 pysal
 plotly
 matplotlib==3.4.3
+pyyaml==5.4.1
