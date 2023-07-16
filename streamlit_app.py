@@ -4,11 +4,7 @@ import yaml
 import numpy as np
 import pandas as pd
 import streamlit as st
-import altair as alt
-import seaborn as sns
 import matplotlib.pyplot as plt
-
-import plotly.offline as po
 import plotly.graph_objects as go
 from   plotly.subplots import make_subplots
 
@@ -26,16 +22,14 @@ def run_simulation(num_steps, parameters):
 
 @st.cache_data()
 def plot_agent_data(agent_out):
-
     land_out = agent_out.query("agent_type == 'Land'")
 
     # Prepare the data for visualization
     df = land_out.reset_index()
 
     # Define the color scale limits based on the minimum and maximum 'warranted_price' across all steps
-    z_min = df['warranted_price'].min()
-    z_max = 700. # Temp
-    # z_max = df['warranted_price'].max()
+    z_min = df['warranted_price'].min() # 200.
+    z_max = df['warranted_price'].max() # 700.
 
     # Create a list of figures for each step
     figs = []
@@ -72,7 +66,9 @@ def plot_agent_data(agent_out):
                     zmax=z_max,
                     colorbar=trace.colorbar,
                     visible=(i==1)  # only the first trace is visible
-                )
+                ),
+                row=1,
+                col=1  # add the trace to the first subplot
             )
 
     # Create frames for each step
