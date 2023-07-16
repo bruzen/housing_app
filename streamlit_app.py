@@ -142,34 +142,6 @@ def plot_run_data(agent_out, model_out):
     plt.tight_layout()
     st.pyplot(fig)
 
-# def display_files():
-#     # Get the list of run IDs
-#     folder_path = os.path.join('output_data', 'runs')
-#     file_path   = "run_metadata.yaml"
-#     run_ids     = get_run_ids(folder_path   )
-
-#     # Display dropdown to select run ID
-#     selected_run_id = st.selectbox("Select Run ID", run_ids)
-
-#     # Load data based on selected run ID
-#     run_metadata           = load_metadata(selected_run_id, folder_path, file_path)
-#     agent_out, model_out   = load_data(selected_run_id)
-
-#     # Display the metadata
-#     st.subheader("Metadata")
-#     st.write(run_metadata)
-
-#     # # TODO what does this do?
-#     # if agent_out is not None and model_out is not None:
-#     #     # Display loaded data
-#     #     st.subheader("Agent Data")
-#     #     st.dataframe(agent_out)
-
-#     #     st.subheader("Model Data")  
-#     #     st.dataframe(model_out)
-
-#     return agent_out, model_out
-
 def load_run_data(run_id, folder_path):
     agent_file = os.path.join(folder_path, f"{run_id}_agent.csv")
     model_file = os.path.join(folder_path, f"{run_id}_model.csv")
@@ -191,11 +163,6 @@ def load_metadata(folder_path, file_path = "run_metadata.yaml"):
     else:
         st.warning("Metadata file not found.")
         return None
-    # with open(metadata_file, "r") as file:
-    #     metadata = yaml.safe_load(file)
-
-    # run_metadata = metadata.get(run_id)
-    # return run_metadata
 
 def get_run_ids(folder_path):
     file_names = os.listdir(folder_path)
@@ -248,8 +215,6 @@ def main():
     plot_run_data(agent_out, model_out)
     
     st.markdown("---")
-    # st.header("Explore Existing Run Data")
-    # agent_out, model_out = display_files()
 
     st.title("View Batch Run Output")
 
