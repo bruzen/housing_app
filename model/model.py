@@ -123,8 +123,6 @@ class City(Model):
         # People
         self.working_periods  = self.params['working_periods']
         self.savings_per_step = self.params['subsistence_wage'] * self.params['savings_rate']
-        self.newcomers        = []
-        self.retiring_agents  = []
 
         # Production model
         self.subsistence_wage = self.params['subsistence_wage'] # psi
@@ -145,6 +143,9 @@ class City(Model):
         self.wealth_sensitivity        = self.params['wealth_sensitivity']
         self.p_dot       = 0. # Price adjustment rate. TODO fix here? rename?
         self.price_model = 0. # TODO need to fix type?
+
+        # Add workforce manager to track workers, newcomers, retiring_agents, etc.
+        self.workforce = Workforce()
 
         # Add bank, firm, investor, and realtor
         self.unique_id       = 1        
@@ -419,3 +420,48 @@ class City(Model):
             # self.p_dot = regr.coef_[0] # slope
             p_dot = self.price_model.coef_[0] # slope
         return p_dot
+
+class Workforce:
+    """Manages a dictionary of working agents."""
+
+    def __init__(self):
+        self.workers:   dict[int, Agent] = {}
+        self.retiring:  dict[int, Agent] = {}
+        self.newcomers: dict[int, Agent] = {}
+
+    def add_agent(self, agent: Agent, dict: dict) -> None:
+        if agent.unique_id in self.working_agents:
+            raise ValueError(f"Agent with unique id {agent.unique_id!r} already added to manager")
+
+        self.working_agents[agent.unique_id] = agent
+
+    def remove_agent(self, agent: Agent) -> None:
+        if agent.unique_id not in self.working_agents:
+            raise ValueError(f"Agent with unique id {agent.unique_id!r} not found in manager")
+
+        del self.working_agents[agent.unique_id]
+
+    def get_agent_count(self) -> int:
+        """Returns the current number of working agents."""
+        return len(self.working_agents)
+
+    @property
+    def agents(self) -> list[Agent]:
+        """Returns a list of all working agents."""
+        return list(self.working_agents.values())
+
+    def do_each(self, method, shuffle_agents: bool = False) -> None:
+        """Execute a method for each working agent.
+
+        Args:
+            method: The name of the method to be executed.
+            shuffle_agents: Whether to shuffle the order of the agents.
+
+        """
+        agent_keys = list(self.working_agents.keys())
+        if shuffle_agents:
+            random.shuffle(agent_keys)
+
+        for agent_key in agent_keys:
+            agent = self.working_agents[agent_key]
+            getattr(agent, method)()
