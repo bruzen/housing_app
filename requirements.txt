@@ -1,5 +1,6 @@
 vega-datasets
 mesa
+jupyter
 pyyaml
 streamlit
 numpy

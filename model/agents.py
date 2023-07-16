@@ -75,7 +75,6 @@ class Land(Agent):
         self.transport_cost       = self.calculate_transport_cost()
 
     def step(self): 
-
         # Prepare price data for the current step
         price_data = {
             'id': self.unique_id,
@@ -146,6 +145,7 @@ class Person(Agent):
         self.residence           = residence_owned
 
         self.bank                = self.model.bank 
+        self.amenity             = 0.
 
 
         # If the agent initially owns a property, set residence and owners
