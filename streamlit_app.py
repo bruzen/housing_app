@@ -25,11 +25,7 @@ def run_simulation(num_steps, parameters):
     return agent_out, model_out
 
 @st.cache_data()
-def plot_run_data(agent_out, model_out):
-    workers = np.array(model_out['workers'])
-    wage = np.array(model_out['wage'])
-    city_extent = np.array(model_out['city_extent'])
-    time = np.arange(len(workers))
+def plot_agent_data(agent_out):
 
     land_out = agent_out.query("agent_type == 'Land'")
 
@@ -91,6 +87,13 @@ def plot_run_data(agent_out, model_out):
     # Show the plot in streamlit
     st.plotly_chart(final_fig)
 
+@st.cache_data()
+def plot_model_data(model_out):
+    workers = np.array(model_out['workers'])
+    wage = np.array(model_out['wage'])
+    city_extent = np.array(model_out['city_extent'])
+    time = np.arange(len(workers))
+
     # Set up the figure and axes
     fig, axes = plt.subplots(3, 2, figsize=(10, 15))
     fig.suptitle('Model Output', fontsize=16)
@@ -141,6 +144,33 @@ def plot_run_data(agent_out, model_out):
     
     plt.tight_layout()
     st.pyplot(fig)
+
+def plot_batch_run_data():
+    batch_run_folders = get_batch_run_folders()
+    selected_folder = st.selectbox("Select Batch Run Folder", batch_run_folders)
+    folder_path = os.path.join("output_data", "batch_runs", selected_folder)
+
+    metadata = load_metadata(folder_path)
+    if metadata is not None:
+        fig, ax = plt.subplots()
+        for run_id in get_batch_run_keys(folder_path):
+            parameters = metadata[run_id]['simulation_parameters']
+            variable_parameters = {}
+            # Get variable parameters from list of all parameters
+            for key, value in parameters.items():
+                if key in selected_folder:
+                    variable_parameters[key] = value
+
+            agent_out, model_out = load_run_data(run_id, folder_path)
+            if model_out is not None:
+                ax.plot(model_out['time_step'], model_out['wage'], label=', '.join([f"{key}: {value}" for key, value in variable_parameters.items()]))
+
+        ax.set_xlabel('Step')
+        ax.set_ylabel('Wage')
+        ax.set_title('Wage vs Step')
+        ax.legend()
+        st.set_option('deprecation.showPyplotGlobalUse', False)
+        st.pyplot(fig)
 
 def load_run_data(run_id, folder_path):
     agent_file = os.path.join(folder_path, f"{run_id}_agent.csv")
@@ -212,8 +242,9 @@ def main():
     agent_out, model_out = run_simulation(num_steps, parameters) # num_steps, subsistence_wage, working_periods, savings_rate, r_prime)
     
     st.title("Housing Market Model Output")
-    plot_run_data(agent_out, model_out)
-    
+    plot_model_data(model_out)
+    plot_agent_data(agent_out)
+
     st.markdown("---")
 
     st.title("View Batch Run Output")
@@ -223,31 +254,7 @@ def main():
         # Execute batch_run.py using subprocess
         subprocess.run(["python", "batch_run.py"])
 
-    batch_run_folders = get_batch_run_folders()
-    selected_folder = st.selectbox("Select Batch Run Folder", batch_run_folders)
-    folder_path = os.path.join("output_data", "batch_runs", selected_folder)
-
-    metadata = load_metadata(folder_path)
-    if metadata is not None:
-        fig, ax = plt.subplots()
-        for run_id in get_batch_run_keys(folder_path):
-            parameters = metadata[run_id]['simulation_parameters']
-            variable_parameters = {}
-            # Get variable parameters from list of all parameters
-            for key, value in parameters.items():
-                if key in selected_folder:
-                    variable_parameters[key] = value
-
-            agent_out, model_out = load_run_data(run_id, folder_path)
-            if model_out is not None:
-                ax.plot(model_out['time_step'], model_out['wage'], label=', '.join([f"{key}: {value}" for key, value in variable_parameters.items()]))
-
-        ax.set_xlabel('Step')
-        ax.set_ylabel('Wage')
-        ax.set_title('Wage vs Step')
-        ax.legend()
-        st.set_option('deprecation.showPyplotGlobalUse', False)
-        st.pyplot(fig)
+    plot_batch_run_data()
 
 if __name__ == "__main__":
     main()
