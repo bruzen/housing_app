@@ -234,8 +234,12 @@ def main():
         'height': 10,
         'subsistence_wage': st.sidebar.slider("Subsistence Wage", min_value=30000., max_value=50000., value=40000., step=1000.),
         'working_periods':  st.sidebar.slider("Working Periods", min_value=30, max_value=50, value=40),
-        'savings_rate':     st.sidebar.slider("Savings Rate", min_value=0.1, max_value=0.5, value=0.3, step=0.05),
-        'r_prime':          st.sidebar.slider("R Prime", min_value=0.03, max_value=0.07, value=0.05, step=0.01)
+        'r_prime':          st.sidebar.slider("R Prime", min_value=0.03, max_value=0.07, value=0.05, step=0.01),
+        'init_wage_premium_ratio': st.sidebar.slider("Initial Wage Premium Ratio", min_value=0.1, max_value=1.0, value=0.2, step=0.1),
+        'gamma':            st.sidebar.slider("Gamma", min_value=0.01, max_value=0.1, value=0.02, step=0.01),
+        'discount_rate':    st.sidebar.slider("Discount Rate", min_value=0.05, max_value=0.1, value=0.07, step=0.01),
+        'seed_population':  st.sidebar.slider("Seed Population", min_value=1, max_value=100, value=10),
+        'density':          st.sidebar.slider("Density", min_value=100, max_value=500, value=300)
     }
 
     agent_out, model_out = run_simulation(num_steps, parameters) # num_steps, subsistence_wage, working_periods, savings_rate, r_prime)
