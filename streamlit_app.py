@@ -25,7 +25,7 @@ def run_simulation(num_steps, parameters):
     return agent_out, model_out
 
 @st.cache_data()
-def plot_output(agent_out, model_out):
+def plot_run_data(agent_out, model_out):
     workers = np.array(model_out['workers'])
     wage = np.array(model_out['wage'])
     city_extent = np.array(model_out['city_extent'])
@@ -170,9 +170,9 @@ def plot_output(agent_out, model_out):
 
 #     return agent_out, model_out
 
-def load_data(run_id):
-    agent_file = f"{run_id}_agent.csv"
-    model_file = f"{run_id}_model.csv"
+def load_run_data(run_id, folder_path):
+    agent_file = os.path.join(folder_path, f"{run_id}_agent.csv")
+    model_file = os.path.join(folder_path, f"{run_id}_model.csv")
 
     if os.path.exists(agent_file) and os.path.exists(model_file):
         agent_out = pd.read_csv(agent_file)
@@ -181,14 +181,21 @@ def load_data(run_id):
     else:
         return None, None
 
-def load_metadata(run_id, folder_path, file_path):
+def load_metadata(folder_path, file_path = "run_metadata.yaml"):
     metadata_file = os.path.join(folder_path, file_path)
 
-    with open(metadata_file, "r") as file:
-        metadata = yaml.safe_load(file)
+    if os.path.exists(metadata_file):
+        with open(metadata_file, 'r') as file:
+            metadata = yaml.safe_load(file)
+        return metadata
+    else:
+        st.warning("Metadata file not found.")
+        return None
+    # with open(metadata_file, "r") as file:
+    #     metadata = yaml.safe_load(file)
 
-    run_metadata = metadata.get(run_id)
-    return run_metadata
+    # run_metadata = metadata.get(run_id)
+    # return run_metadata
 
 def get_run_ids(folder_path):
     file_names = os.listdir(folder_path)
@@ -200,6 +207,24 @@ def get_run_ids(folder_path):
             run_ids.add(run_id)
 
     return list(run_ids)
+
+def get_batch_run_folders():
+    output_data_folder = "output_data"
+    runs_folder = "batch_runs"
+    batch_run_folders = os.listdir(os.path.join(output_data_folder, runs_folder))
+    batch_run_folders = [folder for folder in batch_run_folders if folder != ".DS_Store"]
+    return batch_run_folders
+
+def get_batch_run_keys(folder_path):
+    file_names = os.listdir(folder_path)
+    keys = []
+
+    for file_name in file_names:
+        if file_name.endswith("_model.csv"):
+            key = file_name.replace("_model.csv", "")
+            keys.append(key)
+
+    return keys
 
 def main():
     num_steps  = st.sidebar.slider("Number of Steps", min_value=1, max_value=100, value=10)
@@ -216,18 +241,44 @@ def main():
     agent_out, model_out = run_simulation(num_steps, parameters) # num_steps, subsistence_wage, working_periods, savings_rate, r_prime)
     
     st.title("Housing Market Model Output")
-    plot_output(agent_out, model_out)
+    plot_run_data(agent_out, model_out)
     
     st.markdown("---")
     # st.header("Explore Existing Run Data")
     # agent_out, model_out = display_files()
 
-    st.title("Batch Run Data Plotter")
+    st.title("View Batch Run Output")
 
     # Button to run batch_run.py
     if st.button("Run batch_run.py"):
         # Execute batch_run.py using subprocess
         subprocess.run(["python", "batch_run.py"])
+
+    batch_run_folders = get_batch_run_folders()
+    selected_folder = st.selectbox("Select Batch Run Folder", batch_run_folders)
+    folder_path = os.path.join("output_data", "batch_runs", selected_folder)
+
+    metadata = load_metadata(folder_path)
+    if metadata is not None:
+        fig, ax = plt.subplots()
+        for run_id in get_batch_run_keys(folder_path):
+            parameters = metadata[run_id]['simulation_parameters']
+            variable_parameters = {}
+            # Get variable parameters from list of all parameters
+            for key, value in parameters.items():
+                if key in selected_folder:
+                    variable_parameters[key] = value
+
+            agent_out, model_out = load_run_data(run_id, folder_path)
+            if model_out is not None:
+                ax.plot(model_out['time_step'], model_out['wage'], label=', '.join([f"{key}: {value}" for key, value in variable_parameters.items()]))
+
+        ax.set_xlabel('Step')
+        ax.set_ylabel('Wage')
+        ax.set_title('Wage vs Step')
+        ax.legend()
+        st.set_option('deprecation.showPyplotGlobalUse', False)
+        st.pyplot(fig)
 
 if __name__ == "__main__":
     main()
