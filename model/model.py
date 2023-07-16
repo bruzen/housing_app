@@ -425,32 +425,35 @@ class Workforce:
     """Manages a dictionary of working agents."""
 
     def __init__(self):
-        self.workers:   dict[int, Agent] = {}
-        self.retiring:  dict[int, Agent] = {}
-        self.newcomers: dict[int, Agent] = {}
+        self.workers:   Dict[int, Person] = {}
+        self.retiring:  Dict[int, Person] = {}
+        self.newcomers: Dict[int, Person] = {}
 
-    def add_agent(self, agent: Agent, dict: dict) -> None:
-        if agent.unique_id in self.working_agents:
+    def add_agent(self, agent: Person, agents_dict: Dict[int, Person]) -> None:
+        if agent.unique_id in agents_dict:
             raise ValueError(f"Agent with unique id {agent.unique_id!r} already added to manager")
 
-        self.working_agents[agent.unique_id] = agent
+        if not isinstance(agent, Person):
+            raise TypeError(f"Agent must be of type Person")
 
-    def remove_agent(self, agent: Agent) -> None:
-        if agent.unique_id not in self.working_agents:
+        agents_dict[agent.unique_id] = agent
+
+    def remove_agent(self, agent: Person, agents_dict: Dict[int, Person]) -> None:
+        if agent.unique_id not in agents_dict:
             raise ValueError(f"Agent with unique id {agent.unique_id!r} not found in manager")
 
-        del self.working_agents[agent.unique_id]
+        del agents_dict[agent.unique_id]
 
-    def get_agent_count(self) -> int:
-        """Returns the current number of working agents."""
-        return len(self.working_agents)
+    def get_agent_count(self, agents_dict: Dict[int, Person]) -> int:
+        """Returns the current number of agents in the dictionary."""
+        return len(agents_dict)
 
     @property
-    def agents(self) -> list[Agent]:
+    def agents(self, agents_dict: Dict[int, Person]) -> List[Person]:
         """Returns a list of all working agents."""
-        return list(self.working_agents.values())
+        return list(agents_dict.values())
 
-    def do_each(self, method, shuffle_agents: bool = False) -> None:
+    def do_each(self, method, agents_dict: Dict[int, Person], shuffle_agents: bool = False) -> None:
         """Execute a method for each working agent.
 
         Args:
@@ -458,10 +461,10 @@ class Workforce:
             shuffle_agents: Whether to shuffle the order of the agents.
 
         """
-        agent_keys = list(self.working_agents.keys())
+        agent_keys = list(agents_dict.keys())
         if shuffle_agents:
             random.shuffle(agent_keys)
 
         for agent_key in agent_keys:
-            agent = self.working_agents[agent_key]
+            agent = agents_dict[agent_key]
             getattr(agent, method)()
