@@ -5,6 +5,7 @@ import yaml
 import datetime
 import random
 import string
+from typing import Dict, List
 from contextlib import contextmanager
 # import subprocess
 # import math
@@ -144,7 +145,7 @@ class City(Model):
         self.p_dot       = 0. # Price adjustment rate. TODO fix here? rename?
         self.price_model = 0. # TODO need to fix type?
 
-        # Add workforce manager to track workers, newcomers, retiring_agents, etc.
+        # Add workforce manager to track workers, newcomers, and retiring agents
         self.workforce = Workforce()
 
         # Add bank, firm, investor, and realtor
@@ -227,7 +228,7 @@ class City(Model):
         # People work, retire, and list homes to sell
         self.schedule.step_breed(Person)
 
-        for i in self.retiring_agents:
+        for i in self.workforce.retiring:
             # Add agents to replace retiring workers
             person = self.create_newcomer()
             person.bid()
@@ -266,6 +267,7 @@ class City(Model):
 
         self.run_id    = self.get_run_id(self.model_name, self.timestamp, self.model_version)
 
+        # TODO FIX TO IN WORKERS-- RECORD WORKERS, NEWCOMERS, RETIRING
         # Define what data the model will collect in each time step
         model_reporters      = {
 #             "rents":          capture_rents,
@@ -275,10 +277,11 @@ class City(Model):
             "wage":           lambda m: m.firm.wage,
             "city_extent":    lambda m: m.city_extent,
             "population":     lambda m: m.firm.N,
-            "workers":        lambda m: len(
-                [a for a in self.schedule.agents_by_breed[Person].values()
-                         if a.is_working == 1]
-            )
+            "workers":        lambda m: m.workforce.get_agent_count(m.workforce.workers),
+            # "workers":        lambda m: len(
+            #     [a for a in self.schedule.agents_by_breed[Person].values()
+            #              if a.is_working == 1]
+            # )
         }
         agent_reporters      = {
             "time_step":         lambda a: a.model.time_step,
@@ -288,7 +291,8 @@ class City(Model):
             "x":                 lambda a: a.pos[0],
             "y":                 lambda a: a.pos[1],
             "wage":              lambda a: getattr(a, "wage", None) if isinstance(a, Land) else None,
-            "is_working":        lambda a: getattr(a, "is_working", None),
+            "is_working":        lambda a: 1 if a in a.model.workforce.workers else 0,
+            # "is_working":        lambda    a: getattr(a, "is_working", None),
             "working_period":    lambda a: getattr(a, "working_period", None),
             "property_tax_rate": lambda a: getattr(a, "property_tax_rate", None),
             "net_rent":          lambda a: getattr(a, "net_rent", None) if isinstance(a, Land) else None,
@@ -388,7 +392,7 @@ class City(Model):
                                   residence_owned = None)
         self.grid.place_agent(person, self.center)
         self.schedule.add(person)
-        self.newcomers.append(person)
+        self.workforce.add(person, self.workforce.newcomers)
         return person
 
     def get_distance_to_center(self, pos):
@@ -429,20 +433,33 @@ class Workforce:
         self.retiring:  Dict[int, Person] = {}
         self.newcomers: Dict[int, Person] = {}
 
-    def add_agent(self, agent: Person, agents_dict: Dict[int, Person]) -> None:
+    def add(self, agent: Person, agent_dict: dict) -> None:
+        if agent.unique_id not in agent_dict:
+            agent_dict[agent.unique_id] = agent
+
+    def remove(self, agent: Person, agents_dict: Dict[int, Person]) -> None:
         if agent.unique_id in agents_dict:
-            raise ValueError(f"Agent with unique id {agent.unique_id!r} already added to manager")
+            del agents_dict[agent.unique_id]
 
-        if not isinstance(agent, Person):
-            raise TypeError(f"Agent must be of type Person")
+    # def add(self, agent: Person, agent_dict: dict) -> None:
+    #     if agent.unique_id in agent_dict:
+    #         logging.warning(f"Person with unique id {agent.unique_id!r} is already in the manager.")
+    #         return  # If agent is already present, simply return without adding it again.
 
-        agents_dict[agent.unique_id] = agent
+    #     agent_dict[agent.unique_id] = agent
 
-    def remove_agent(self, agent: Person, agents_dict: Dict[int, Person]) -> None:
-        if agent.unique_id not in agents_dict:
-            raise ValueError(f"Agent with unique id {agent.unique_id!r} not found in manager")
+    # def remove(self, agent: Person, agents_dict: Dict[int, Person]) -> None:
+    #     if agent.unique_id not in agents_dict:
+    #         logging.warning(f"Person with unique id {agent.unique_id!r} not found in the manager")
+    #         return  # If agent is not found, simply return without attempting to remove.
 
-        del agents_dict[agent.unique_id]
+    #     del agents_dict[agent.unique_id]
+
+    def remove_from_all(self, agent: Person) -> None:
+        # Remove the agent from each dictionary using the `remove` method.
+        self.remove(agent, self.workers)
+        self.remove(agent, self.retiring)
+        self.remove(agent, self.newcomers)
 
     def get_agent_count(self, agents_dict: Dict[int, Person]) -> int:
         """Returns the current number of agents in the dictionary."""

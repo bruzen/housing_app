@@ -2,8 +2,6 @@ import math
 import logging
 from collections import defaultdict
 from scipy.spatial import distance
-import numpy as np
-import pandas as pd
 
 from mesa import Agent
 
@@ -136,6 +134,7 @@ class Person(Agent):
                  residence_owned = None):
         super().__init__(unique_id, model)
         self.pos = pos
+        self.workforce = self.model.workforce
 
         self.init_working_period = init_working_period
         self.working_period      = init_working_period
@@ -165,7 +164,7 @@ class Person(Agent):
 
         # Count time step and track whether agent is working
         self.count               = 0
-        self.is_working          = 0
+        # self.is_working          = 0
 
     def step(self):
         self.count              += 1
@@ -173,40 +172,48 @@ class Person(Agent):
 
 
         # Newcomers, who don't find a home, leave the city
-        if (self in self.model.newcomers):
+        if (self in self.workforce.newcomers):
             if (self.residence == None):
                 if (self.count > 0):
                     logger.debug(f'Newcomer {self.unique_id} removed, who \
                                    owns {self.properties_owned}.')
-                    self.remove_agent()
+                    self.remove()
             else:
                 logger.error(f'Newcomer {self.unique_id} has a \
                                residence {self.residence.unique_id}, \
                                but was not removed from newcomer list.')
 
-        elif (self.residence) and (self not in self.model.retiring_agents):
+        elif (self.residence) and (self not in self.workforce.retiring):
             # Retire if past retirement age
             if (self.working_period > self.model.working_periods):
-                self.model.retiring_agents.append(self)
+                self.workforce.add(self, self.workforce.retiring)
                 # List homes for sale
                 if (self.residence in self.properties_owned):
                     # TODO Contact bank. Decide: sell, rent or keep empty
                     self.model.realtor.sale_listing.append(self.residence)
                     # TODO if residence is not owned, renter moves out
 
-            # Work if it is worthwhile to work
+            # # Work if it is worthwhile to work
+            # else:
+            #     self.is_working     = 0
+            #     # TODO: check same calc as city_extent. Remove redundancy.
+            #     premium = self.model.firm.wage_premium
+            #     if (premium > self.residence.transport_cost):
+            #         self.is_working = 1
             else:
-                self.is_working     = 0
-                # TODO: check same calc as city_extent. Remove redundancy.
                 premium = self.model.firm.wage_premium
-                if (premium > self.residence.transport_cost):
-                    self.is_working = 1
+                if premium > self.residence.transport_cost:
+                    # Add the person to the workforce's workers dictionary if not already present
+                    self.workforce.add(self, self.workforce.workers)
+                else:
+                    # Remove the person from the workforce's workers dictionary (if present)
+                    self.workforce.remove(self, self.workforce.workers)
 
             # Update savings
             self.savings += self.model.savings_per_step # TODO debt, wealth
             self.wealth  = self.get_wealth()
 
-        elif self in self.model.retiring_agents:
+        elif self in self.workforce.retiring:
             logger.debug(f'Retiring agent {self.unique_id} still in model.')
 
         else:
@@ -258,12 +265,9 @@ class Person(Agent):
         wage     = self.model.firm.wage
         return 0.28 * (wage + r * S) / r_prime
 
-    def remove_agent(self):
-        if self in self.model.newcomers:
-            self.model.newcomers.remove(self)
-        if self in self.model.retiring_agents:
-            self.model.retiring_agents.remove(self)
-        self.model.grid.remove_agent(self)
+    def remove(self):
+        self.workforce.remove_from_all(self)
+        self.model.grid.remove(self)
         self.model.schedule.remove(self)
 
 class Firm(Agent):
@@ -276,13 +280,15 @@ class Firm(Agent):
     """
 
     # TODO do both include seed_population?
+    # TODO USE WORKFORCE MANAGER
     @property
     def N(self):
         """total_no_workers"""
-        total_no_workers = len(
-            [a for a in self.model.schedule.agents_by_breed[Person].values()
-                     if a.is_working == 1]
-        )
+        # total_no_workers = len(
+        #     [a for a in self.model.schedule.agents_by_breed[Person].values()
+        #              if a.is_working == 1]
+        # )
+        total_no_workers = self.model.workforce.get_agent_count(self.model.workforce.workers)
         return total_no_workers * self.model.density + self.model.seed_population
 
     @property
@@ -430,6 +436,7 @@ class Realtor(Agent):
     def __init__(self, unique_id, model, pos):
         super().__init__(unique_id, model)
         self.pos = pos
+        self.workforce = self.model.workforce
 
         self.sale_listing = []
         self.rental_listing = []
@@ -512,13 +519,13 @@ class Realtor(Agent):
         self.model.grid.move_agent(buyer, sale_property.pos)
         logger.debug('Property %s sold to newcomer %s.', sale_property.unique_id, buyer.unique_id)
 
-        if buyer in self.model.newcomers:
-            self.model.newcomers.remove(buyer)
+        if buyer in self.workforce.newcomers:
+            self.workforce.remove(buyer, self.workforce.newcomers)
 
     def handle_seller_departure(self, seller):
         """Handles the departure of a selling agent."""
-        if seller in self.model.retiring_agents:
-            seller.remove_agent()
+        if seller in self.workforce.retiring:
+            seller.remove()
         else:
             logger.warning('Seller was not retiring, so was not removed from the model.')
 
@@ -529,7 +536,7 @@ class Realtor(Agent):
             renter = self.model.create_newcomer()
             rental.resident = renter
             renter.residence = rental
-            self.model.newcomers.remove(renter)
+            self.workforce.remove(renter, self.workforce.newcomers)
             logger.debug(f'Newly created renter {renter.unique_id} lives at '
                          f'property {renter.residence.unique_id} which has '
                          f'resident {rental.resident.unique_id}.')
