@@ -278,6 +278,7 @@ class City(Model):
             "city_extent":    lambda m: m.city_extent,
             "population":     lambda m: m.firm.N,
             "workers":        lambda m: m.workforce.get_agent_count(m.workforce.workers),
+            "p_dot":          lambda m: m.p_dot,
             # "workers":        lambda m: len(
             #     [a for a in self.schedule.agents_by_breed[Person].values()
             #              if a.is_working == 1]
