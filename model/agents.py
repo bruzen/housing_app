@@ -28,7 +28,7 @@ class Land(Agent):
         psi       = self.model.subsistence_wage
         a         = self.model.housing_services_share
         cd        = self.transport_cost
-        return omega - cd + a * psi
+        return omega - cd + a * psi # TODO add amenity + A
 
     @property 
     def market_rent(self):
@@ -116,7 +116,8 @@ class Person(Agent):
 
         # TODO: Fix
  
-        Formula: r_target + K/(W-W_min) - K/(W_mean-W_min)
+        Formula for interest rate they get: r_target + K/(W-W_min) - K/(W_mean-W_min)
+        Formula for adjustment: K/(W-W_min) - K/(W_mean-W_min)
         K is wealth sensitivity parameter
 
         Returns:
@@ -127,7 +128,7 @@ class Person(Agent):
         # W        = self.get_wealth() 
         # W_min
         # W_mean
-        return 0.0002
+        return 0.002
 
     def __init__(self, unique_id, model, pos, init_working_period = 0,
                  savings = 0., debt = 0.,
