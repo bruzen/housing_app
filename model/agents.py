@@ -171,7 +171,6 @@ class Person(Agent):
         self.count              += 1
         self.working_period     += 1
 
-
         # Newcomers, who don't find a home, leave the city
         if (self in self.workforce.newcomers):
             if (self.residence == None):
@@ -194,7 +193,7 @@ class Person(Agent):
                     self.model.realtor.sale_listing.append(self.residence)
                     # TODO if residence is not owned, renter moves out
 
-            # # Work if it is worthwhile to work
+            # Work if it is worthwhile to work
             # else:
             #     self.is_working     = 0
             #     # TODO: check same calc as city_extent. Remove redundancy.
