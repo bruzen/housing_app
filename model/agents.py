@@ -81,7 +81,6 @@ class Land(Agent):
             'transport_cost': self.transport_cost,
             'wage': self.model.firm.wage
        }
-
         # Add the price data to the model's step price data
         self.model.step_price_data.append(price_data)
 
@@ -196,7 +195,6 @@ class Person(Agent):
             # Work if it is worthwhile to work
             # else:
             #     self.is_working     = 0
-            #     # TODO: check same calc as city_extent. Remove redundancy.
             #     premium = self.model.firm.wage_premium
             #     if (premium > self.residence.transport_cost):
             #         self.is_working = 1

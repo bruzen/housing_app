@@ -20,7 +20,6 @@ def run_simulation(num_steps, parameters):
     model_out = city.datacollector.get_model_vars_dataframe()
     return agent_out, model_out
 
-
 @st.cache_data()
 def plot_agent_heatmap(df, selected_variable):
     # Define the color scale limits based on the minimum and maximum value of the selected variable
@@ -84,7 +83,7 @@ def plot_agent_heatmap(df, selected_variable):
 def plot_model_data(model_out):
     workers = np.array(model_out['workers'])
     wage = np.array(model_out['wage'])
-    city_extent = np.array(model_out['city_extent'])
+    city_extent_calc = np.array(model_out['city_extent_calc'])
     time = np.arange(len(workers))
 
     # Set up the figure and axes
@@ -100,7 +99,7 @@ def plot_model_data(model_out):
     axes[0, 0].grid(True)
 
     # New plot 3L: evolution of the city extent = l?
-    axes[0,1].plot(time, city_extent, color='red')
+    axes[0,1].plot(time, city_extent_calc, color='red')
     axes[0,1].set_title('Evolution of the City Extent (Rises)')
     axes[0,1].set_xlabel('Time')
     axes[0,1].set_ylabel('City Extent')
@@ -114,14 +113,14 @@ def plot_model_data(model_out):
     axes[1, 0].grid(True)
 
     # Plot 2L: city extent and workforce  
-    axes[1, 1].plot(city_extent, workers, color='magenta')
+    axes[1, 1].plot(city_extent_calc, workers, color='magenta')
     axes[1, 1].set_title('City Extent and Workforce (Curves Up)')
     axes[1, 1].set_xlabel('City Extent')
     axes[1, 1].set_ylabel('Workers')
     axes[1, 1].grid(True)              
     
     # New plot 3L: city extent and wage
-    axes[2, 0].plot(time, city_extent, color='red')
+    axes[2, 0].plot(time, city_extent_calc, color='red')
     # axes[2, 0].set_title('City Extent and Wage (Linear)')
     axes[2, 0].set_title('City Extent and Wage (Curves Up)')
     axes[2, 0].set_xlabel('Wage')

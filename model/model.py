@@ -53,7 +53,7 @@ logger = logging.getLogger(__name__)
 class City(Model):
     # TODO FIX check with agents to confirm
     @property
-    def city_extent(self):
+    def city_extent_calc(self):
         # Compute urban boundary where it is not worthwhile to work
         return ((self.firm.wage - self.subsistence_wage) / 
                  self.transport_cost_per_dist)
@@ -252,6 +252,19 @@ class City(Model):
             self.step()
 
     def setup_data_collection (self):
+
+        # Variables for data collection
+        self.rent_production = 0.
+        self.rent_amenity    = 0.
+        self.market_rent     = 0.
+        self.net_rent        = 0.
+        self.potential_dissipated_rent  = 0.
+        self.dissipated_rent = 0.
+        self.available_rent  = 0.
+        self.rent_captured_by_finance  = 0.
+        self.share_captured_by_finance = 0.
+        self.urban_surplus   = 0.
+
         # Setup data collection
         if 'timestamp' in self.params and self.params['timestamp'] is not None:
             timestamp = self.params['timestamp']
@@ -271,14 +284,23 @@ class City(Model):
         # Define what data the model will collect in each time step
         model_reporters      = {
 #             "rents":          capture_rents,
-            "time_step":      lambda m: m.time_step,
-            "companies":      lambda m: m.schedule.get_breed_count(Firm),
-            "people":         lambda m: m.schedule.get_breed_count(Person),
-            "wage":           lambda m: m.firm.wage,
-            "city_extent":    lambda m: m.city_extent,
-            "population":     lambda m: m.firm.N,
-            "workers":        lambda m: m.workforce.get_agent_count(m.workforce.workers),
-            "p_dot":          lambda m: m.p_dot,
+            "time_step":           lambda m: m.time_step,
+            "companies":           lambda m: m.schedule.get_breed_count(Firm),
+            "wage":                lambda m: m.firm.wage,
+            "city_extent_calc":    lambda m: m.city_extent_calc,
+            "p_dot":               lambda m: m.p_dot,
+            "wage_premium":        lambda m: m.firm.wage_premium,
+            "people":              lambda m: m.schedule.get_breed_count(Person),
+            "workers":             lambda m: m.firm.N,
+            "worker_agents":       lambda m: m.workforce.get_agent_count(m.workforce.workers),
+            "market_rent":         lambda m: m.market_rent,
+            "net_rent":            lambda m: m.net_rent,
+            "potential_dissipated_rent": lambda m: m.potential_dissipated_rent,
+            "dissipated_rent":           lambda m: m.dissipated_rent,
+            "available_rent":            lambda m: m.available_rent,
+            "rent_captured_by_finance":  lambda m: m.rent_captured_by_finance,
+            "share_captured_by_finance": lambda m: m.share_captured_by_finance,
+            "urban_surplus":             lambda m: m.urban_surplus,
             # "workers":        lambda m: len(
             #     [a for a in self.schedule.agents_by_breed[Person].values()
             #              if a.is_working == 1]
@@ -347,6 +369,33 @@ class City(Model):
             yaml.safe_dump(existing_metadata, file)
 
     def record_step_data(self):
+
+        # Calculations for data collection
+        # TODO: DO WE NEED TO WORRY ABOUT THE NUMBER OF WORKERS PER HOUSE AND ENSURIGN RESIDENCE
+        self.rent_production = sum(
+            agent.model.firm.wage_premium for agent in self.schedule.agents_by_breed[Person].values() 
+            if agent.unique_id in agent.workforce.workers
+        )
+
+        # TODO  Fix. Do we only count amenity for workers, or those in the urban boundary?
+        self.rent_amenity    = sum(
+            agent.amenity for agent in self.schedule.agents_by_breed[Person].values() 
+            if agent.unique_id in agent.workforce.workers
+        )
+
+        self.market_rent = sum(agent.market_rent    for agent in self.schedule.agents_by_breed[Land].values()
+                               if agent.resident and agent.resident.unique_id in agent.resident.workforce.workers)
+        self.net_rent    = sum(agent.net_rent       for agent in self.schedule.agents_by_breed[Land].values()
+                               if agent.resident and agent.resident.unique_id in agent.resident.workforce.workers)
+        self.potential_dissipated_rent = sum(agent.transport_cost for agent in self.schedule.agents_by_breed[Land].values())
+        self.dissipated_rent = sum(
+            agent.transport_cost for agent in self.schedule.agents_by_breed[Land].values() 
+            if agent.resident and agent.resident.unique_id in agent.resident.workforce.workers
+        )
+        self.available_rent  = self.rent_production + self.rent_amenity - self.dissipated_rent # w - cd + A - total_dissipated # total-captured
+        self.rent_captured_by_finance  = 0 # TODO make a marker for agents in the city
+        self.share_captured_by_finance = 0
+        self.urban_surplus   = 0
 
         # Retrieve data
         self.datacollector.collect(self)
