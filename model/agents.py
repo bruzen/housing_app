@@ -355,7 +355,10 @@ class Firm(Agent):
         k_next = k_target # TODO fix
 
         adj_w = self.wage_adjustment_parameter
-        self.wage_premium = (1-adj_w)*self.wage_premium + adj_w * wage_premium_target
+        if self.model.time_step < 3:
+            self.wage_premium = (1-adj_w)*self.wage_premium + adj_w * wage_premium_target
+        else:
+            self.wage_premium += 100
         self.k = k_next
         self.F = F_next_total # OR use F_total
 
