@@ -92,8 +92,8 @@ def plot_model_data(model_out):
     
     # New plot 1L: evolution of the wage  
     axes[0, 0].plot(time, wage, color='red')
-    axes[0, 0].set_title('City Extent and Wage (Rises)')
-    axes[0, 0].set_title('Evolution of the wage ')  
+    # axes[0, 0].set_title('City Extent and Wage (Rises)')
+    axes[0, 0].set_title('Evolution of the Wage (Rises)')  
     axes[0, 0].set_xlabel('Time')
     axes[0, 0].set_ylabel('Wage')
     axes[0, 0].grid(True)
