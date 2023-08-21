@@ -232,7 +232,7 @@ class Person(Agent):
         for sale_property in self.model.realtor.sale_listing:
 
             R_N = sale_property.net_rent
-            P_max_bid = self.model.bank.get_max_bid(R_N, r, r_target, m)
+            P_max_bid = self.model.bank.get_max_bid(R_N, r, r_target, m, sale_property.transport_cost)
 
             if m * P_max_bid < m:
                 mortgage = m * P_max_bid
@@ -264,6 +264,7 @@ class Person(Agent):
         return 0.28 * (wage + r * S) / r_prime
 
     def remove(self):
+        self.model.removed_agents += 1
         self.workforce.remove_from_all(self)
         # self.model.grid.remove(self)
         self.model.schedule.remove(self)
@@ -380,10 +381,10 @@ class Bank(Agent):
         super().__init__(unique_id, model)
         self.pos = pos
 
-    def get_max_bid(self, R_N, r, r_target, m):
+    def get_max_bid(self, R_N, r, r_target, m, transport_cost):
         T      = self.model.mortgage_period
         delta  = self.model.delta
-        p_dot  = self.model.get_p_dot()
+        p_dot  = self.model.get_p_dot() #(transport_cost)
 
         # if R_N is None:
         #     print("Value R_N is None.")
@@ -427,7 +428,7 @@ class Investor(Agent):
         # for sale_property in self.model.realtor.sale_listing:
         #     R_N = sale_property.net_rent
         #     print(R_N)
-        #     P_max_bid = self.model.bank.get_max_bid(R_N, r, r_target, m)
+        #     P_max_bid = self.model.bank.get_max_bid(R_N, r, r_target, m, sale_property.transport_cost)
         #     mortgage = m * P_max_bid
         #     bid = Bid(bidder=self, property=sale_property, price=P_max_bid, mortgage=mortgage)
         #     logger.debug(f'Bank {self.unique_id} bids {bid.price} for \
@@ -529,6 +530,7 @@ class Realtor(Agent):
     def handle_seller_departure(self, seller):
         """Handles the departure of a selling agent."""
         if seller.unique_id in self.workforce.retiring:
+            print('seller removed')
             seller.remove()
         else:
             logger.warning('Seller was not retiring, so was not removed from the model.')

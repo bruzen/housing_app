@@ -13,9 +13,11 @@ import numpy as np
 import pandas as pd
 from scipy.spatial import distance
 
-from sklearn import linear_model
+from sklearn.linear_model import LinearRegression
+# from sklearn.model_selection import KFold
+# from sklearn.metrics import mean_squared_error
 # from scikit-learn import linear_model
-import statsmodels.api as sm
+# import statsmodels.api as sm
 # from pysal.model import spreg
 
 from mesa import Model
@@ -148,6 +150,7 @@ class City(Model):
 
         # Add workforce manager to track workers, newcomers, and retiring agents
         self.workforce = Workforce()
+        self.   removed_agents = 0
 
         # Add bank, firm, investor, and realtor
         self.unique_id       = 1        
@@ -232,6 +235,10 @@ class City(Model):
         for i in self.workforce.retiring:
             # Add agents to replace retiring workers
             person = self.create_newcomer()
+            # if (person.unique_id in self.workforce.newcomers):
+            #     print('new agent in newcomers')
+            # else:
+            #     print('new agent not in newcomers')
             person.bid()
 
         # Investors bid on properties
@@ -291,7 +298,6 @@ class City(Model):
             "companies":           lambda m: m.schedule.get_breed_count(Firm),
             "wage":                lambda m: m.firm.wage,
             "city_extent_calc":    lambda m: m.city_extent_calc,
-            "p_dot":               lambda m: m.p_dot,
             "wage_premium":        lambda m: m.firm.wage_premium,
             "people":              lambda m: m.schedule.get_breed_count(Person),
             "workers":             lambda m: m.firm.N,
@@ -304,6 +310,10 @@ class City(Model):
             "rent_captured_by_finance":  lambda m: m.rent_captured_by_finance,
             "share_captured_by_finance": lambda m: m.share_captured_by_finance,
             "urban_surplus":             lambda m: m.urban_surplus,
+            "p_dot":                     lambda m: m.p_dot,
+            "removed_agents":            lambda m: m.removed_agents,
+            # "price_model_coefficients":  lambda m: m.price_model.coef,
+            # "price_model_intercept":     lambda m: m.price_model.intercept,
             # "workers":        lambda m: len(
             #     [a for a in self.schedule.agents_by_breed[Person].values()
             #              if a.is_working == 1]
@@ -453,16 +463,66 @@ class City(Model):
     def get_distance_to_center(self, pos):
         return distance.euclidean(pos, self.center)
 
+    # If there were more data
+    # def get_price_model(self):
+    #     x = self.price_data[['time_step', 'transport_cost', 'wage']]
+
+    #     # Dependent variable
+    #     y = self.price_data['warranted_price']
+
+    #     # Define the number of folds for cross-validation
+    #     num_folds = 5
+
+    #     # Initialize the k-fold cross-validator
+    #     kf = KFold(n_splits=num_folds, shuffle=True, random_state=42)
+
+    #     # Initialize lists to store the coefficients for each fold
+    #     coef_list = []
+
+    #     # Perform k-fold cross-validation
+    #     for train_index, test_index in kf.split(x):
+    #         x_train, x_test = x.iloc[train_index], x.iloc[test_index]
+    #         y_train, y_test = y.iloc[train_index], y.iloc[test_index]
+
+    #         # Create and train the Linear Regression model
+    #         regression_model = LinearRegression()
+    #         regression_model.fit(x_train, y_train)
+
+    #         # Store the coefficients for this fold
+    #         coef_list.append(regression_model.coef_)
+
+    #     # Calculate the average coefficients across all folds
+    #     # average_coef = np.mean(coef_list, axis=0)
+    #     self.price_model_coef = np.mean(coef_list, axis=0)
+    #     self.price_model_intercept  = np.mean(intercept_list)  # Calculate average intercept
+
+    #     return self.price_model_coef
+
+    # def get_p_dot(self, transport_cost):
+    #     """Rate of growth for property price"""
+    #     # Make p_dot zero for the first 10 steps or so.
+    #     if self.time_step < 5:
+    #         p_dot = 0
+    #     else: 
+    #         # p_dot = np.dot(self.price_model, [self.time_step, transport_cost, self.firm.wage])
+    #         coef_time_step, coef_transport_cost, coef_wage = self.price_model
+    #         p_dot = (
+    #             coef_time_step * self.time_step +
+    #             coef_transport_cost * transport_cost +
+    #             coef_wage * self.firm.wage
+    #         )
+    #     return p_dot
+
     def get_price_model(self):
         # TODO use realized price, not just warranted
         # Independent variables
-        # x = self.price_data[['time_step','transport_cost','wage']]
-        x = self.price_data[['time_step']]
+        x = self.price_data[['time_step','transport_cost','wage']]
+        # x = self.price_data[['time_step']]
         # Dependent variable
         y = self.price_data['warranted_price']
 
         # with sklearn
-        regr = linear_model.LinearRegression()
+        regr = LinearRegression()
         regr.fit(x, y)
         # # with statsmodels
         # x = sm.add_constant(x) # adding a constant
@@ -473,7 +533,7 @@ class City(Model):
     def get_p_dot(self):
         """Rate of growth for property price"""
         # Make p_dot zero for the first 10 steps or so.
-        if self.time_step < 10:
+        if self.time_step < 3:
             p_dot = 0
         else: 
             # self.p_dot = regr.coef_[0] # slope
