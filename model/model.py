@@ -9,6 +9,7 @@ from typing import Dict, List
 from contextlib import contextmanager
 # import subprocess
 # import math
+import numpy as np
 import pandas as pd
 from scipy.spatial import distance
 
@@ -251,6 +252,8 @@ class City(Model):
         for t in range(self.num_steps):
             self.step()
 
+        self.record_run_data_to_file()
+
     def setup_data_collection (self):
 
         # Variables for data collection
@@ -399,6 +402,8 @@ class City(Model):
 
         # Retrieve data
         self.datacollector.collect(self)
+
+    def record_run_data_to_file(self):
         model_out = self.datacollector.get_model_vars_dataframe()
         agent_out = self.datacollector.get_agent_vars_dataframe()
 

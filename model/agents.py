@@ -171,7 +171,7 @@ class Person(Agent):
         self.working_period     += 1
 
         # Newcomers, who don't find a home, leave the city
-        if (self in self.workforce.newcomers):
+        if (self.unique_id in self.workforce.newcomers):
             if (self.residence == None):
                 if (self.count > 0):
                     logger.debug(f'Newcomer {self.unique_id} removed, who \
@@ -182,7 +182,7 @@ class Person(Agent):
                                residence {self.residence.unique_id}, \
                                but was not removed from newcomer list.')
 
-        elif (self.residence) and (self not in self.workforce.retiring):
+        elif (self.residence) and (self.unique_id not in self.workforce.retiring):
             # Retire if past retirement age
             if (self.working_period > self.model.working_periods):
                 self.workforce.add(self, self.workforce.retiring)
@@ -211,7 +211,7 @@ class Person(Agent):
             self.savings += self.model.savings_per_step # TODO debt, wealth
             self.wealth  = self.get_wealth()
 
-        elif self in self.workforce.retiring:
+        elif self.unique_id in self.workforce.retiring:
             logger.debug(f'Retiring agent {self.unique_id} still in model.')
 
         else:
@@ -265,8 +265,11 @@ class Person(Agent):
 
     def remove(self):
         self.workforce.remove_from_all(self)
-        self.model.grid.remove(self)
+        # self.model.grid.remove(self)
         self.model.schedule.remove(self)
+        # x, y = self.pos
+        # self.model.grid.remove_agent(x,y,self)
+        self.model.grid.remove_agent(self)   
 
 class Firm(Agent):
     """Firm.
@@ -520,12 +523,12 @@ class Realtor(Agent):
         self.model.grid.move_agent(buyer, sale_property.pos)
         logger.debug('Property %s sold to newcomer %s.', sale_property.unique_id, buyer.unique_id)
 
-        if buyer in self.workforce.newcomers:
+        if buyer.unique_id in self.workforce.newcomers:
             self.workforce.remove(buyer, self.workforce.newcomers)
 
     def handle_seller_departure(self, seller):
         """Handles the departure of a selling agent."""
-        if seller in self.workforce.retiring:
+        if seller.unique_id in self.workforce.retiring:
             seller.remove()
         else:
             logger.warning('Seller was not retiring, so was not removed from the model.')
