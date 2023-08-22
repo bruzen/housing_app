@@ -241,6 +241,9 @@ class City(Model):
             #     print('new agent not in newcomers')
             person.bid()
 
+            # TODO temp
+            print('retiring')
+
         # Investors bid on properties
         self.schedule.step_breed(Investor, step_name='bid')
 
@@ -249,6 +252,10 @@ class City(Model):
 
         # Realtors rent properties
         self.schedule.step_breed(Realtor, step_name='rent_homes')
+
+        # TODO temp
+        for i in self.workforce.retiring:
+            print('retiring agent still in model after step')
 
         # Advance model time
         self.schedule.step_time()
@@ -326,8 +333,9 @@ class City(Model):
             "id":                lambda a: a.unique_id,
             "x":                 lambda a: a.pos[0],
             "y":                 lambda a: a.pos[1],
-            "wage":              lambda a: getattr(a, "wage", None) if isinstance(a, Land) else None,
-            "is_working":        lambda a: None if not isinstance(a, Person) else 1 if a.unique_id in a.workforce.workers else 0,
+            "distance_from_center": lambda a: getattr(a, "distance_from_center", None) if isinstance(a, Land) else None,
+            "wage":                 lambda a: getattr(a, "wage", None) if isinstance(a, Land) else None,
+            "is_working":           lambda a: None if not isinstance(a, Person) else 1 if a.unique_id in a.workforce.workers else 0,
             # "is_working":        lambda a: getattr(a, "is_working", None),
             "working_period":    lambda a: getattr(a, "working_period", None),
             "property_tax_rate": lambda a: getattr(a, "property_tax_rate", None),
