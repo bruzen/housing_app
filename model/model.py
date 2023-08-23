@@ -242,7 +242,7 @@ class City(Model):
             person.bid()
 
             # TODO temp
-            print('retiring')
+            # print('retiring')
 
         # Investors bid on properties
         self.schedule.step_breed(Investor, step_name='bid')
@@ -255,7 +255,7 @@ class City(Model):
 
         # TODO temp
         for i in self.workforce.retiring:
-            print('retiring agent still in model after step')
+            # print('retiring agent still in model after step')
 
         # Advance model time
         self.schedule.step_time()
