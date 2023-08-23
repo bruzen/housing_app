@@ -254,7 +254,7 @@ class City(Model):
         self.schedule.step_breed(Realtor, step_name='rent_homes')
 
         # TODO temp
-        for i in self.workforce.retiring:
+        # for i in self.workforce.retiring:
             # print('retiring agent still in model after step')
 
         # Advance model time
