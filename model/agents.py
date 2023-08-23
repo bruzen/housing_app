@@ -329,45 +329,57 @@ class Firm(Agent):
         self.k   = alpha_F * Y_U / self.r
         self.A_F = Y_R/(k_R**alpha_F * n_R * psi**beta_F)
 
+        self.y   = 0.
         self.MPL = 0.
         self.MPK = 0.
+
+        self.n_target = 0.
+        self.y_target = 0.
+        self.k_target = 0.
+
+        self.adj_f    = 0.
+        self.F_target = 0.
+        self.F_next   = 0.
+        self.N_target_total = 0.
+        self.F_next_total   = 0.
+
 
     def step(self):
         # Calculate wage, capital, and firm count given number of urban workers
         self.n = self.N/self.F
-        y = self.output(self.N, self.k, self.n)
+        self.y = self.output(self.N, self.k, self.n)
 
-        self.MPL = self.beta_F  * y / self.n
-        self.MPK = self.alpha_F * y / self.k
+        self.MPL = self.beta_F  * self.y / self.n
+        self.MPK = self.alpha_F * self.y / self.k
 
-        n_target = self.beta_F * y / self.wage
-        y_target = self.output(self.N, self.k, n_target)
-        k_target = self.alpha_F * y_target / self.r
+        self.n_target = self.beta_F * self.y / self.wage
+        self.y_target = self.output(self.N, self.k, self.n_target)
+        self.k_target = self.alpha_F * self.y_target / self.r
 
         # N_target_exist = n_target/self.n * self.N
-        adj_f = self.firm_adjustment_parameter
-        F_target = n_target/self.n * self.F
-        F_next = (1 - adj_f) * self.F + adj_f * F_target
-        N_target_total = F_next * n_target
-        F_next_total = N_target_total / n_target
+        self.adj_f = self.firm_adjustment_parameter
+        self.F_target = self.n_target/self.n * self.F
+        self.F_next = (1 - self.adj_f) * self.F + self.adj_f * self.F_target
+        self.N_target_total = self.F_next * self.n_target
+        self.F_next_total = self.N_target_total / self.n_target
 
         # adj_l = 1.25 # TODO self.labor_adjustment_parameter
         # N_target_total = adj_l * n_target/self.n * self.N
         # N_target_new = n_target * self.Z * (MPL - self.wage)/self.wage * self.F # TODO - CHECK IS THIS F-NEXT?
 
         c = self.model.transport_cost_per_dist
-        wage_premium_target = c * math.sqrt(N_target_total/(2*self.model.density))        
+        self.wage_premium_target = c * math.sqrt(self.N_target_total/(2*self.model.density))        
         
 
-        k_next = k_target # TODO fix
+        k_next = self.k_target # TODO fix
 
         adj_w = self.wage_adjustment_parameter
         if self.model.time_step < 3:
-            self.wage_premium = (1-adj_w)*self.wage_premium + adj_w * wage_premium_target
+            self.wage_premium = (1-adj_w)*self.wage_premium + adj_w * self.wage_premium_target
         else:
             self.wage_premium += 100
         self.k = k_next
-        self.F = F_next_total # OR use F_total
+        self.F = self.F_next_total # OR use F_total
 
     def output(self, N, k, n):
         A_F     = self.A_F
