@@ -329,13 +329,16 @@ class Firm(Agent):
         self.k   = alpha_F * Y_U / self.r
         self.A_F = Y_R/(k_R**alpha_F * n_R * psi**beta_F)
 
+        self.MPL = 0.
+        self.MPK = 0.
+
     def step(self):
         # Calculate wage, capital, and firm count given number of urban workers
         self.n = self.N/self.F
         y = self.output(self.N, self.k, self.n)
 
-        MPL = self.beta_F  * y / self.n
-        MPK = self.alpha_F * y / self.k
+        self.MPL = self.beta_F  * y / self.n
+        self.MPK = self.alpha_F * y / self.k
 
         n_target = self.beta_F * y / self.wage
         y_target = self.output(self.N, self.k, n_target)

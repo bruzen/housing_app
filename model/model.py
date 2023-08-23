@@ -303,11 +303,8 @@ class City(Model):
 #             "rents":          capture_rents,
             "time_step":           lambda m: m.time_step,
             "companies":           lambda m: m.schedule.get_breed_count(Firm),
-            "wage":                lambda m: m.firm.wage,
             "city_extent_calc":    lambda m: m.city_extent_calc,
-            "wage_premium":        lambda m: m.firm.wage_premium,
             "people":              lambda m: m.schedule.get_breed_count(Person),
-            "workers":             lambda m: m.firm.N,
             "worker_agents":       lambda m: m.workforce.get_agent_count(m.workforce.workers),
             "market_rent":         lambda m: m.market_rent,
             "net_rent":            lambda m: m.net_rent,
@@ -319,6 +316,15 @@ class City(Model):
             "urban_surplus":             lambda m: m.urban_surplus,
             "p_dot":                     lambda m: m.p_dot,
             "removed_agents":            lambda m: m.removed_agents,
+            "workers":                   lambda m: m.firm.N,
+            "wage":                      lambda m: m.firm.wage,
+            "wage_premium":              lambda m: m.firm.wage_premium,
+            "n":                         lambda m: m.firm.n,
+            "F":                         lambda m: m.firm.F,
+            "k":                         lambda m: m.firm.k,
+            "A_F":                       lambda m: m.firm.A_F,
+            "MPL":                       lambda m: m.firm.MPL,
+            "MPK":                       lambda m: m.firm.MPK,
             # "price_model_coefficients":  lambda m: m.price_model.coef,
             # "price_model_intercept":     lambda m: m.price_model.intercept,
             # "workers":        lambda m: len(
@@ -326,6 +332,13 @@ class City(Model):
             #              if a.is_working == 1]
             # )
         }
+
+        # self.n
+        # self.F
+        # self.k
+        # self.AF
+        # self.MPL
+        # self.MPK
         agent_reporters      = {
             "time_step":         lambda a: a.model.time_step,
             "agent_class":       lambda a: type(a),
@@ -334,12 +347,13 @@ class City(Model):
             "x":                 lambda a: a.pos[0],
             "y":                 lambda a: a.pos[1],
             "distance_from_center": lambda a: getattr(a, "distance_from_center", None) if isinstance(a, Land) else None,
-            "wage":                 lambda a: getattr(a, "wage", None) if isinstance(a, Land) else None,
+            # "wage":                 lambda a: getattr(a, "wage", None) if isinstance(a, Land) else None,
             "is_working":           lambda a: None if not isinstance(a, Person) else 1 if a.unique_id in a.workforce.workers else 0,
             # "is_working":        lambda a: getattr(a, "is_working", None),
             "working_period":    lambda a: getattr(a, "working_period", None),
-            "property_tax_rate": lambda a: getattr(a, "property_tax_rate", None),
+            # "property_tax_rate": lambda a: getattr(a, "property_tax_rate", None),
             "net_rent":          lambda a: getattr(a, "net_rent", None) if isinstance(a, Land) else None,
+            "warranted_rent":    lambda a: getattr(a, "warranted_rent", None) if isinstance(a, Land) else None,
             "warranted_price":   lambda a: getattr(a, "warranted_price", None) if isinstance(a, Land) else None,
         }
 
