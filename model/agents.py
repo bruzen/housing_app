@@ -297,11 +297,12 @@ class Firm(Agent):
     def wage(self):
         return self.wage_premium + self.model.subsistence_wage
 
-    def __init__(self, unique_id, model, pos, init_wage_premium,
+    def __init__(self, unique_id, model, pos, 
+                 init_wage_premium,
                  alpha_F, beta_F, Z,
                  price_of_output, cost_of_capital,
-                 firm_adjustment_parameter,
-                 wage_adjustment_parameter):
+                 wage_adjustment_parameter,
+                 firm_adjustment_parameter):
         super().__init__(unique_id, model)
         self.pos             = pos
         self.wage_premium    = init_wage_premium # omega
