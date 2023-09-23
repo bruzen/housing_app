@@ -191,8 +191,7 @@ class City(Model):
             self.schedule.add(land)
 
             self.unique_id      += 1
-            init_working_period = self.random.randint(0, 
-                                        self.working_periods - 1)
+            init_working_period  = 0 # self.random.randint(0, self.working_periods - 1) # TODO turn on
             savings = init_working_period * self.savings_per_step 
             # TODO check boundaries - at working period 0, no savings
             person  = Person(self.unique_id, self, pos,
