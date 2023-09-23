@@ -325,7 +325,7 @@ class City(Model):
             "n_target":                  lambda m: m.firm.n_target,
             "y_target":                  lambda m: m.firm.y_target,
             "k_target":                  lambda m: m.firm.k_target, 
-            "adj_f":                     lambda m: m.firm.adj_f,
+            "self.firm_adjustment_parameter": lambda m: m.firm.firm_adjustment_parameter,
             "F_target":                  lambda m: m.firm.F_target,
             "F_next":                    lambda m: m.firm.F_next,
             "N_target_total":            lambda m: m.firm.N_target_total,

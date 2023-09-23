@@ -319,7 +319,7 @@ class Firm(Agent):
         n_R           = self.model.workforce_rural_firm
         self.n        = n_R # workforce_urban_firm is initally same as urban firm
 
-        self.F        = 1. # TODO INITIALIZE, CHECK IN OVERLEAF
+        self.F        = 5 # TODO INITIALIZE, CHECK IN OVERLEAF
         # self.no_firms = self.model.baseline_population/self.model.workforce_rural_firm
 
         # Calculate scale factor A for a typical urban firm
@@ -328,7 +328,7 @@ class Firm(Agent):
         Y_U      = self.n * self.wage / beta_F
         k_R      = alpha_F * Y_R / self.r
         self.k   = alpha_F * Y_U / self.r
-        self.A_F = Y_R/(k_R**alpha_F * n_R * psi**beta_F)
+        self.A_F = 3500 # Y_R/(k_R**alpha_F * n_R * psi**beta_F)
 
         self.y   = 0.
         self.MPL = 0.
@@ -338,12 +338,10 @@ class Firm(Agent):
         self.y_target = 0.
         self.k_target = 0.
 
-        self.adj_f    = 0.
         self.F_target = 0.
         self.F_next   = 0.
         self.N_target_total = 0.
         self.F_next_total   = 0.
-
 
     def step(self):
         # Calculate wage, capital, and firm count given number of urban workers
@@ -358,9 +356,9 @@ class Firm(Agent):
         self.k_target = self.alpha_F * self.y_target / self.r
 
         # N_target_exist = n_target/self.n * self.N
-        self.adj_f = self.firm_adjustment_parameter
+        adj_f = self.firm_adjustment_parameter # TODO repeats
         self.F_target = self.n_target/self.n * self.F
-        self.F_next = (1 - self.adj_f) * self.F + self.adj_f * self.F_target
+        self.F_next = (1 - adj_f) * self.F + adj_f * self.F_target
         self.N_target_total = self.F_next * self.n_target
         self.F_next_total = self.N_target_total / self.n_target
 
@@ -370,16 +368,16 @@ class Firm(Agent):
 
         c = self.model.transport_cost_per_dist
         self.wage_premium_target = c * math.sqrt(self.N_target_total/(2*self.model.density))        
-        
 
         k_next = self.k_target # TODO fix
 
         adj_w = self.wage_adjustment_parameter
-        self.wage_premium = (1-adj_w)*self.wage_premium + adj_w * self.wage_premium_target
-        # if self.model.time_step < 3:
-        #     self.wage_premium = (1-adj_w)*self.wage_premium + adj_w * self.wage_premium_target
-        # else:
-        #     self.wage_premium += 100
+        # self.wage_premium = self.wage_premium_target # TODO add back in wage adjusment process
+        # self.wage_premium = (1-adj_w) * self.wage_premium + adj_w * self.wage_premium_target
+        if self.model.time_step < 3:
+            self.wage_premium = (1-adj_w)*self.wage_premium + adj_w * self.wage_premium_target
+        else:
+            self.wage_premium += 100
         self.k = k_next
         self.F = self.F_next_total # OR use F_total
 
