@@ -54,7 +54,7 @@ class City(Model):
     @property
     def city_extent_calc(self):
         # Compute urban boundary where it is not worthwhile to work
-        return self.firm.wage_premium /  self.transport_cost_per_dist
+        return self.firm.omega /  self.transport_cost_per_dist
 
     @property
     def r_target(self):
@@ -70,23 +70,26 @@ class City(Model):
             'width': 50,
             'height': 1,
             'init_city_extent': 10.,  # f CUT OR CHANGE?
-            'seed_population': 10,
+            'seed_population': 400,
             'density': 300,
             'subsistence_wage': 40000.,  # psi
-            'init_wage_premium_ratio': 0.2,
-            'workforce_rural_firm': 100,
-            'price_of_output': 1., 
-            'alpha_F': 0.18,
-            'beta_F': 0.72,  # beta and was lambda, workers_share of aglom surplus
-            'beta_city': 1.12,
-            'gamma': 0.02,  # FIX value
-            'Z': 0.5,  # CUT? Scales new entrants
-            'firm_adjustment_parameter': 0.25,
-            'wage_adjustment_parameter': 0.5,
+            'init_wage_premium_ratio': 1.2, # 0.2,
+            # 'workforce_rural_firm': 100,
+            # 'alpha_F': 0.18,
+            # 'beta_F': 0.72,  # beta and was lambda, workers_share of aglom surplus
+            # 'beta_city': 1.12,
+            # 'gamma': 0.02,  # FIX value
+            # 'Z': 0.5,  # CUT? Scales new entrants
+            'alpha': 0.18,
+            'beta':  0.73,
+            'gamma': 0.11,
+            'price_of_output': 4., 
+            'r_prime': 0.05,  # 0.03
+            # 'firm_adjustment_parameter': 0.25,
+            # 'wage_adjustment_parameter': 0.5,
             'mortgage_period': 5.0,  # T, in years
             'working_periods': 40,  # in years
             'savings_rate': 0.3,
-            'r_prime': 0.05,  # 0.03
             'discount_rate': 0.07, # 1/delta
             'r_margin': 0.01,
             'property_tax_rate': 0.04,  # tau, annual rate, was c
@@ -112,21 +115,11 @@ class City(Model):
         self.center    = (0, 0) # (width//2, height//2) # TODO make center
         self.grid = MultiGrid(self.params['width'], self.params['height'], torus=False)
         self.schedule = RandomActivationByBreed(self)
-        self.seed_population         = self.params['seed_population']
-        self.density                 = self.params['density'] # Coarse grain population
         self.transport_cost_per_dist = self.params['init_wage_premium_ratio'] * self.params['subsistence_wage'] / self.params['init_city_extent'] # c
-        # self.baseline_population   = density*width*height + self.seed_population 
 
         # People
         self.working_periods  = self.params['working_periods']
         self.savings_per_step = self.params['subsistence_wage'] * self.params['savings_rate']
-
-        # Production model
-        self.subsistence_wage = self.params['subsistence_wage'] # psi
-        self.workforce_rural_firm = self.params['workforce_rural_firm']
-        self.gamma = self.params['gamma']
-        self.beta_city = self.params['beta_city']
-        self.workers_share = self.params['beta_F'] # lambda
 
         # Housing market model
         self.mortgage_period        = self.params['mortgage_period']
@@ -152,14 +145,16 @@ class City(Model):
         self.schedule.add(self.bank)
         
         self.unique_id      += 1
-        init_wage_premium = self.params['init_wage_premium_ratio'] * self.params['subsistence_wage'] # omega
-        firm_cost_of_capital = self.r_prime
         self.firm            = Firm(self.unique_id, self, self.center, 
-                                    init_wage_premium,
-                                    self.params['alpha_F'], self.params['beta_F'], self.params['Z'],
-                                    self.params['price_of_output'], firm_cost_of_capital,
-                                    self.params['wage_adjustment_parameter'],
-                                    self.params['firm_adjustment_parameter'])
+                                    self.params['subsistence_wage'],
+                                    self.params['init_wage_premium_ratio'],
+                                    self.params['alpha'], self.params['beta'], self.params['gamma'],
+                                    self.params['price_of_output'], self.params['r_prime'],
+                                    # self.params['wage_adjustment_parameter'],
+                                    # self.params['firm_adjustment_parameter'],
+                                    self.params['seed_population'],
+                                    self.params['density'],
+                                    )
         self.grid.place_agent(self.firm, self.center)
         self.schedule.add(self.firm)
 
@@ -304,8 +299,6 @@ class City(Model):
             "urban_surplus":             lambda m: m.urban_surplus,
             "p_dot":                     lambda m: m.p_dot,
             "removed_agents":            lambda m: m.removed_agents,
-            "wage":                      lambda m: m.firm.wage,
-            "wage_premium":              lambda m: m.firm.wage_premium,
             "n":                         lambda m: m.firm.n,
             "y":                         lambda m: m.firm.y,
             "n_target":                  lambda m: m.firm.n_target,
@@ -321,7 +314,8 @@ class City(Model):
             "N":                         lambda m: m.firm.N,
             "P":                         lambda m: m.firm.P,
             "Y":                         lambda m: m.firm.Y,
-            "w":                         lambda m: m.firm.w, # TODO same as wage_premium - check and remove duplication
+            "omega":                     lambda m: m.firm.omega,
+            "psi":                       lambda m: m.firm.psi,
             # "A_F":                       lambda m: m.firm.A_F,
 
             # "price_model_coefficients":  lambda m: m.price_model.coef,
@@ -403,11 +397,10 @@ class City(Model):
             yaml.safe_dump(existing_metadata, file)
 
     def record_step_data(self):
-
         # Calculations for data collection
         # TODO: Check only one worker per house and that all workers have a residence
         self.rent_production = sum(
-            agent.model.firm.wage_premium for agent in self.schedule.agents_by_breed[Person].values() 
+            agent.model.firm.omega for agent in self.schedule.agents_by_breed[Person].values() 
             if agent.unique_id in agent.workforce.workers
         )
 

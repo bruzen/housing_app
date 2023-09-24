@@ -24,8 +24,8 @@ class Land(Agent):
 
     @property
     def warranted_rent(self):
-        omega     = self.model.firm.wage_premium
-        psi       = self.model.subsistence_wage
+        omega     = self.model.firm.omega # wage_premium
+        psi       = self.model.firm.psi   # subsistence_wage
         a         = self.model.housing_services_share
         cd        = self.transport_cost
         return omega - cd + a * psi # TODO add amenity + A
@@ -56,7 +56,7 @@ class Land(Agent):
     def maintenance(self):
         a         = self.model.housing_services_share
         b         = self.model.maintenance_share
-        psi       = self.model.subsistence_wage
+        psi       = self.model.firm.psi # subsistence_wage
         return a * b * psi
 
     def __init__(self, unique_id, model, pos, 
@@ -280,29 +280,31 @@ class Firm(Agent):
     # def N(self):
     #     """total_no_workers"""
     #     total_no_workers = self.model.workforce.get_agent_count(self.model.workforce.workers)
-    #     return total_no_workers * self.model.density + self.model.seed_population
+    #     return total_no_workers * self.density + self.seed_population
 
     @property
     def wage(self):
-        return self.wage_premium + self.model.subsistence_wage
+        return self.omega + self.psi
 
     def __init__(self, unique_id, model, pos, 
-                 init_wage_premium,
-                 alpha_F, beta_F, Z,
-                 price_of_output, cost_of_capital,
-                 wage_adjustment_parameter,
-                 firm_adjustment_parameter
+                 psi,
+                 init_wage_premium_ratio,
+                 alpha, beta, gamma,
+                 price_of_output, r_prime,
+                #  wage_adjustment_parameter,
+                #  firm_adjustment_parameter,
+                 seed_population,
+                 density,
                  ):
         super().__init__(unique_id, model)
         self.pos             = pos
         # Old parameter values TODO delete and get below values from param list
-        # self.wage_premium    = init_wage_premium # omega
         # self.alpha_F         = alpha_F
         # self.beta_F          = beta_F
         # self.Z               = Z
 
         # self.price_of_output = price_of_output
-        # self.r               = cost_of_capital
+        # self.r               = r_prime
 
         # self.firm_adjustment_parameter = firm_adjustment_parameter
         # self.wage_adjustment_parameter = wage_adjustment_parameter
@@ -314,12 +316,11 @@ class Firm(Agent):
         # # self.no_firms = self.model.baseline_population/self.model.workforce_rural_firm
 
         # # Calculate scale factor A for a typical urban firm
-        # psi      = self.model.subsistence_wage
         # Y_R      = n_R * psi / beta_F
         # Y_U      = self.n * self.wage / beta_F
         # k_R      = alpha_F * Y_R / self.r
         # self.k   = alpha_F * Y_U / self.r
-        # self.A_F = 3500 # Y_R/(k_R**alpha_F * n_R * psi**beta_F)
+        # self.A_F = 3500 # Y_R/(k_R**alpha_F * n_R * self.psi**beta_F)
 
         # self.y   = 0.
         # self.MPL = 0.
@@ -335,42 +336,41 @@ class Firm(Agent):
         # self.F_next_total   = 0.
 
         # TEMP New parameter values
-        self.A       = 500 
-        self.alpha   = .18
-        self.beta    = .73
-        self.gamma   = .11
-        self.price_of_output = 4
+        self.psi      = psi # subsistence_wage
+        self.alpha    = alpha
+        self.beta     = beta
+        self.gamma    = gamma
+        self.price_of_output = price_of_output
+        self.seed_population = seed_population
+        self.density  = density
+        self.A        = 500
         self.overhead = 2    # labour overhead costs for firm
-        self.price_of_output = 1
-        self.mult    = 1.2
-        self.c       = 200.
-        self.seed_population = 400
-        self.density = 300
-        self.adjN    = 0.15
-        self.adjk    = 0.15
-        self.adjn    = 0.25
-        self.adjF    = 0.15
+        self.mult     = 1.2
+        self.c        = 200.
+        self.adjN     = 0.15
+        self.adjk     = 0.15
+        self.adjn     = 0.25
+        self.adjF     = 0.15
         # agent_count = 50 # TODO comes from agents deciding
-        self.psi     = 40000.
-        self.r_prime = .05
+        self.r        = .05 # Firm cost of capital
 
         # Initial values
-        self.F = 100.
-        self.k = 100. #1.360878e+09 #100
-        self.n = 100.
-        self.w = 1.2 * self.psi
-        self.wage_premium = self.w # TODO replace w with wage_premium?
+        self.P        = 0. # population TODO change this will be confused with price
+        self.F        = 100.
+        self.k        = 100. #1.360878e+09 #100
+        self.n        = 100.
+        self.omega = init_wage_premium_ratio * self.psi
+        self.wage_premium = self.omega # TODO replace w with wage_premium?
         self.N = self.F * self.n
-        self.P = 0. # population TODO change this will be confused with price
 
     def step(self):
         self.P = self.mult * self.N + self.seed_population # TODO use multiplier instead of density?
         self.Y = self.price_of_output * self.A * self.P**self.gamma *  self.k**self.alpha * self.n**self.beta
-        # self.n_target = self.beta * self.Y / self.w  # (same as omega +psi )
-        self.n_target = (1 + self.overhead)**-1 * self.beta * self.Y / self.w  # (same as omega +psi )
+        # self.n_target = self.beta * self.Y / self.omega  # (same as omega +psi )
+        self.n_target = (1 + self.overhead)**-1 * self.beta * self.Y / self.omega  # (same as omega +psi )
         self.n = (1 - self.adjn) * self.n + self.adjn * self.n_target
         self.y_target = self.price_of_output * self.A * self.P**self.gamma *  self.k**self.alpha * self.n_target**self.beta
-        self.k_target = self.alpha*self.y_target/self.r_prime
+        self.k_target = self.alpha*self.y_target/self.r
         # self.F_target = self.F * self.n_target/self.n
         self.F_target = self.F*(self.n_target/self.n)**.5 # TODO name the .5
         self.N_target = self.F_target * self.n_target
@@ -378,8 +378,8 @@ class Firm(Agent):
         self.F = (1 - self.adjF) * self.F + self.adjF * self.F_target
         self.k = (1 - self.adjk) * self.k + self.adjk * self.k_target
         #n = N/F 
-        self.w = self.c * math.sqrt(self.N/(2*self.density)) #may work on P
-        self.wage_premium = self.w # TODO replace w with wage_premium
+        self.omega = self.c * math.sqrt(self.N/(2*self.density)) #may work on P
+        self.wage_premium = self.omega # TODO replace w with wage_premium
 
         self.y = self.Y / self.n # TODO get right value?
         
@@ -410,7 +410,7 @@ class Firm(Agent):
         # # N_target_new = n_target * self.Z * (MPL - self.wage)/self.wage * self.F # TODO - CHECK IS THIS F-NEXT?
 
         # c = self.model.transport_cost_per_dist
-        # self.wage_premium_target = c * math.sqrt(self.N_target_total/(2*self.model.density))        
+        # self.wage_premium_target = c * math.sqrt(self.N_target_total/(2*self.density))        
 
         # k_next = self.k_target # TODO fix
 
@@ -424,13 +424,12 @@ class Firm(Agent):
         # self.k = k_next
         # self.F = self.F_next_total # OR use F_total
 
-    def output(self, N, k, n):
-        A_F     = self.A_F
-        alpha_F = self.alpha_F
-        beta_F  = self.beta_F
-        gamma   = self.model.gamma
-
-        return A_F * N**gamma * k**alpha_F * n**beta_F
+    # def output(self, N, k, n):
+    #     A_F     = self.A_F
+    #     alpha_F = self.alpha_F
+    #     beta_F  = self.beta_F
+    #     gamma   = self.model.gamma
+    #     return A_F * N**gamma * k**alpha_F * n**beta_F
 
 class Bank(Agent):
     def __init__(self, unique_id, model, pos,
