@@ -39,12 +39,9 @@ logger = logging.getLogger(__name__)
 #     for row in model.grid.grid:   
 #         new_row = []
 #         for cell in row:
-#             # TODO Should initial cell_rent be empty/null to signal unassigned?
 #             cell_rent = -1.0
 #             for item in cell:
 #                 try:
-#                     # TODO Should we get rent from owner rather than resident?
-#                     # TODO Add a warning/error if mult agents have same resid.
 #                     if (item.residence):
 #                         cell_rent = item.rent
 #                 except:
@@ -54,12 +51,10 @@ logger = logging.getLogger(__name__)
 #     return rent_grid
 
 class City(Model):
-    # TODO FIX check with agents to confirm
     @property
     def city_extent_calc(self):
         # Compute urban boundary where it is not worthwhile to work
-        return ((self.firm.wage - self.subsistence_wage) / 
-                 self.transport_cost_per_dist)
+        return self.firm.wage_premium /  self.transport_cost_per_dist
 
     @property
     def r_target(self):
@@ -80,7 +75,7 @@ class City(Model):
             'subsistence_wage': 40000.,  # psi
             'init_wage_premium_ratio': 0.2,
             'workforce_rural_firm': 100,
-            'price_of_output': 1.,  # TODO CUT?
+            'price_of_output': 1., 
             'alpha_F': 0.18,
             'beta_F': 0.72,  # beta and was lambda, workers_share of aglom surplus
             'beta_city': 1.12,
@@ -107,8 +102,6 @@ class City(Model):
             self.params = {**default_parameters, **parameters}
         else:
             self.params = default_parameters
-
-        # TODO maybe remove .self and access params
 
         # Model
         self.model_name        = 'Housing Market'
@@ -150,7 +143,7 @@ class City(Model):
 
         # Add workforce manager to track workers, newcomers, and retiring agents
         self.workforce = Workforce()
-        self.   removed_agents = 0
+        self.removed_agents = 0
 
         # Add bank, firm, investor, and realtor
         self.unique_id       = 1        
@@ -191,7 +184,7 @@ class City(Model):
             self.schedule.add(land)
 
             self.unique_id      += 1
-            init_working_period  = 0 # self.random.randint(0, self.working_periods - 1) # TODO turn on
+            init_working_period  = 0 # self.random.randint(0, self.working_periods - 1) # TODO randomize working period
             savings = init_working_period * self.savings_per_step 
             # TODO check boundaries - at working period 0, no savings
             person  = Person(self.unique_id, self, pos,
@@ -240,9 +233,6 @@ class City(Model):
             #     print('new agent not in newcomers')
             person.bid()
 
-            # TODO temp
-            # print('retiring')
-
         # Investors bid on properties
         self.schedule.step_breed(Investor, step_name='bid')
 
@@ -251,10 +241,6 @@ class City(Model):
 
         # Realtors rent properties
         self.schedule.step_breed(Realtor, step_name='rent_homes')
-
-        # TODO temp
-        # for i in self.workforce.retiring:
-            # print('retiring agent still in model after step')
 
         # Advance model time
         self.schedule.step_time()
@@ -323,16 +309,20 @@ class City(Model):
             "n":                         lambda m: m.firm.n,
             "y":                         lambda m: m.firm.y,
             "n_target":                  lambda m: m.firm.n_target,
-            "y_target":                  lambda m: m.firm.y_target,
-            "k_target":                  lambda m: m.firm.k_target, 
-            "self.firm_adjustment_parameter": lambda m: m.firm.firm_adjustment_parameter,
-            "F_target":                  lambda m: m.firm.F_target,
-            "F_next":                    lambda m: m.firm.F_next,
-            "N_target_total":            lambda m: m.firm.N_target_total,
-            "F_next_total":              lambda m: m.firm.F_next_total,
+            # "y_target":                  lambda m: m.firm.y_target,
+            # "k_target":                  lambda m: m.firm.k_target, 
+            # # "self.firm_adjustment_parameter": lambda m: m.firm.firm_adjustment_parameter,
+            # "F_target":                  lambda m: m.firm.F_target,
+            # "F_next":                    lambda m: m.firm.F_next,
+            # "N_target_total":            lambda m: m.firm.N_target_total,
+            # "F_next_total":              lambda m: m.firm.F_next_total,
             "F":                         lambda m: m.firm.F,
             "k":                         lambda m: m.firm.k,
-            "A_F":                       lambda m: m.firm.A_F,
+            "N":                         lambda m: m.firm.N,
+            "P":                         lambda m: m.firm.P,
+            "Y":                         lambda m: m.firm.Y,
+            "w":                         lambda m: m.firm.w, # TODO same as wage_premium - check and remove duplication
+            # "A_F":                       lambda m: m.firm.A_F,
 
             # "price_model_coefficients":  lambda m: m.price_model.coef,
             # "price_model_intercept":     lambda m: m.price_model.intercept,
@@ -415,13 +405,13 @@ class City(Model):
     def record_step_data(self):
 
         # Calculations for data collection
-        # TODO: DO WE NEED TO WORRY ABOUT THE NUMBER OF WORKERS PER HOUSE AND ENSURIGN RESIDENCE
+        # TODO: Check only one worker per house and that all workers have a residence
         self.rent_production = sum(
             agent.model.firm.wage_premium for agent in self.schedule.agents_by_breed[Person].values() 
             if agent.unique_id in agent.workforce.workers
         )
 
-        # TODO  Fix. Do we only count amenity for workers, or those in the urban boundary?
+        # TODO  Do we only count amenity for workers, or those in the urban boundary?
         self.rent_amenity    = sum(
             agent.amenity for agent in self.schedule.agents_by_breed[Person].values() 
             if agent.unique_id in agent.workforce.workers
@@ -437,9 +427,9 @@ class City(Model):
             if agent.resident and agent.resident.unique_id in agent.resident.workforce.workers
         )
         self.available_rent  = self.rent_production + self.rent_amenity - self.dissipated_rent # w - cd + A - total_dissipated # total-captured
-        self.rent_captured_by_finance  = 0 # TODO make a marker for agents in the city
-        self.share_captured_by_finance = 0
-        self.urban_surplus   = 0
+        self.rent_captured_by_finance  = 0 # TODO implement. make a marker for agents in the city
+        self.share_captured_by_finance = 0 # TODO implement.
+        self.urban_surplus   = 0 # TODO implement
 
         # Retrieve data
         self.datacollector.collect(self)
