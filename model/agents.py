@@ -378,8 +378,7 @@ class Firm(Agent):
     def step(self):
         self.P = self.mult * self.N + self.seed_population # TODO use multiplier instead of density?
         self.Y = self.price_of_output * self.A * self.P**self.gamma *  self.k**self.alpha * self.n**self.beta
-        # self.n_target = self.beta * self.Y / self.omega  # (same as omega +psi )
-        self.n_target = (1 + self.overhead)**-1 * self.beta * self.Y / self.omega  # (same as omega +psi )
+        self.n_target = (self.beta * self.Y) / (self.wage * (1 + self.overhead))
         self.n = (1 - self.adjn) * self.n + self.adjn * self.n_target
         self.y_target = self.price_of_output * self.A * self.P**self.gamma *  self.k**self.alpha * self.n_target**self.beta
         self.k_target = self.alpha*self.y_target/self.r
