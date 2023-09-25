@@ -295,6 +295,18 @@ class Firm(Agent):
                 #  firm_adjustment_parameter,
                  seed_population,
                  density,
+                 A,
+                 overhead,
+                 mult,
+                 c,
+                 adjN,
+                 adjk,
+                 adjn,
+                 adjF,
+                 init_P,
+                 init_F,
+                 init_k,
+                 init_n,
                  ):
         super().__init__(unique_id, model)
         self.pos             = pos
@@ -343,22 +355,22 @@ class Firm(Agent):
         self.price_of_output = price_of_output
         self.seed_population = seed_population
         self.density  = density
-        self.A        = 500
-        self.overhead = 2    # labour overhead costs for firm
-        self.mult     = 1.2
-        self.c        = 200.
-        self.adjN     = 0.15
-        self.adjk     = 0.15
-        self.adjn     = 0.25
-        self.adjF     = 0.15
+        self.A        = A
+        self.overhead = overhead    # labour overhead costs for firm
+        self.mult     = mult
+        self.c        = c
+        self.adjN     = adjN
+        self.adjk     = adjk
+        self.adjn     = adjn
+        self.adjF     = adjF
         # agent_count = 50 # TODO comes from agents deciding
-        self.r        = .05 # Firm cost of capital
+        self.r        = r_prime # Firm cost of capital
 
         # Initial values
-        self.P        = 0. # population TODO change this will be confused with price
-        self.F        = 100.
-        self.k        = 100. #1.360878e+09 #100
-        self.n        = 100.
+        self.P        = init_P # population TODO change this will be confused with price
+        self.F        = init_F
+        self.k        = init_k #1.360878e+09 #100
+        self.n        = init_n
         self.omega = init_wage_premium_ratio * self.psi
         self.wage_premium = self.omega # TODO replace w with wage_premium?
         self.N = self.F * self.n

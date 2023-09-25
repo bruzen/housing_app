@@ -98,6 +98,18 @@ class City(Model):
             'max_mortgage_share': 0.9,
             'ability_to_carry_mortgage': 0.28,
             'wealth_sensitivity': 0.1,
+            'A': 500,
+            'overhead': 2,
+            'mult': 1.2,
+            'c': 200.0,
+            'adjN': 0.15,
+            'adjk': 0.15,
+            'adjn': 0.25,
+            'adjF': 0.15,
+            'init_P': 0.0,
+            'init_F': 100.0,
+            'init_k': 100.0,
+            'init_n': 100.0,
         }
 
         # Merge default parameters with provided parameters
@@ -154,6 +166,18 @@ class City(Model):
                                     # self.params['firm_adjustment_parameter'],
                                     self.params['seed_population'],
                                     self.params['density'],
+                                    A=self.params['A'],
+                                    overhead=self.params['overhead'],
+                                    mult=self.params['mult'],
+                                    c=self.params['c'],
+                                    adjN=self.params['adjN'],
+                                    adjk=self.params['adjk'],
+                                    adjn=self.params['adjn'],
+                                    adjF=self.params['adjF'],
+                                    init_P=self.params['init_P'],
+                                    init_F=self.params['init_F'],
+                                    init_k=self.params['init_k'],
+                                    init_n=self.params['init_n']
                                     )
         self.grid.place_agent(self.firm, self.center)
         self.schedule.add(self.firm)
