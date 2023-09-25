@@ -54,7 +54,7 @@ class City(Model):
     @property
     def city_extent_calc(self):
         # Compute urban boundary where it is not worthwhile to work
-        return self.firm.omega /  self.transport_cost_per_dist
+        return self.firm.wage_premium /  self.transport_cost_per_dist
 
     @property
     def r_target(self):
@@ -72,8 +72,8 @@ class City(Model):
             'init_city_extent': 10.,  # f CUT OR CHANGE?
             'seed_population': 400,
             'density': 300,
-            'subsistence_wage': 40000.,  # psi
-            'init_wage_premium_ratio': 1.2, # 0.2,
+            'subsistence_wage': 40000.,
+            'init_wage_premium_ratio': 1.2,
             # 'workforce_rural_firm': 100,
             # 'alpha_F': 0.18,
             # 'beta_F': 0.72,  # beta and was lambda, workers_share of aglom surplus
@@ -304,7 +304,7 @@ class City(Model):
         # TODO FIX TO IN WORKERS-- RECORD WORKERS, NEWCOMERS, RETIRING
         # Define what data the model will collect in each time step
         model_reporters      = {
-#             "rents":          capture_rents,
+#           "rents":                     capture_rents,
             "workers":                   lambda m: m.firm.N,
             "MPL":                       lambda m: m.firm.MPL,
             "MPK":                       lambda m: m.firm.MPK,
@@ -338,9 +338,11 @@ class City(Model):
             "N":                         lambda m: m.firm.N,
             "P":                         lambda m: m.firm.P,
             "Y":                         lambda m: m.firm.Y,
-            "omega":                     lambda m: m.firm.omega,
-            "psi":                       lambda m: m.firm.psi,
-            # "A_F":                       lambda m: m.firm.A_F,
+            "wage_premium":              lambda m: m.firm.wage_premium,
+            "subsistence_wage":          lambda m: m.firm.subsistence_wage,
+            "wage":                      lambda m: m.firm.wage,
+
+            # "A_F":                     lambda m: m.firm.A_F,
 
             # "price_model_coefficients":  lambda m: m.price_model.coef,
             # "price_model_intercept":     lambda m: m.price_model.intercept,
@@ -350,12 +352,6 @@ class City(Model):
             # )
         }
 
-        # self.n
-        # self.F
-        # self.k
-        # self.AF
-        # self.MPL
-        # self.MPK
         agent_reporters      = {
             "time_step":         lambda a: a.model.time_step,
             "agent_class":       lambda a: type(a),
@@ -364,11 +360,11 @@ class City(Model):
             "x":                 lambda a: a.pos[0],
             "y":                 lambda a: a.pos[1],
             "distance_from_center": lambda a: getattr(a, "distance_from_center", None) if isinstance(a, Land) else None,
-            # "wage":                 lambda a: getattr(a, "wage", None) if isinstance(a, Land) else None,
+            # "wage":               lambda a: getattr(a, "wage", None) if isinstance(a, Land) else None,
             "is_working":           lambda a: None if not isinstance(a, Person) else 1 if a.unique_id in a.workforce.workers else 0,
-            # "is_working":        lambda a: getattr(a, "is_working", None),
+            # "is_working":         lambda a: getattr(a, "is_working", None),
             "working_period":    lambda a: getattr(a, "working_period", None),
-            # "property_tax_rate": lambda a: getattr(a, "property_tax_rate", None),
+            # "property_tax_rate":  lambda a: getattr(a, "property_tax_rate", None),
             "net_rent":          lambda a: getattr(a, "net_rent", None) if isinstance(a, Land) else None,
             "warranted_rent":    lambda a: getattr(a, "warranted_rent", None) if isinstance(a, Land) else None,
             "warranted_price":   lambda a: getattr(a, "warranted_price", None) if isinstance(a, Land) else None,
@@ -424,7 +420,7 @@ class City(Model):
         # Calculations for data collection
         # TODO: Check only one worker per house and that all workers have a residence
         self.rent_production = sum(
-            agent.model.firm.omega for agent in self.schedule.agents_by_breed[Person].values() 
+            agent.model.firm.wage_premium for agent in self.schedule.agents_by_breed[Person].values() 
             if agent.unique_id in agent.workforce.workers
         )
 

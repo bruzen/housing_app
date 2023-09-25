@@ -24,11 +24,10 @@ class Land(Agent):
 
     @property
     def warranted_rent(self):
-        omega     = self.model.firm.omega # wage_premium
-        psi       = self.model.firm.psi   # subsistence_wage
-        a         = self.model.housing_services_share
-        cd        = self.transport_cost
-        return omega - cd + a * psi # TODO add amenity + A
+        wage_premium     = self.model.firm.wage_premium
+        subsistence_wage = self.model.firm.subsistence_wage
+        a                = self.model.housing_services_share
+        return wage_premium - self.transport_cost + a * subsistence_wage # TODO add amenity + A
 
     @property 
     def market_rent(self):
@@ -54,10 +53,10 @@ class Land(Agent):
 
     @property
     def maintenance(self):
-        a         = self.model.housing_services_share
-        b         = self.model.maintenance_share
-        psi       = self.model.firm.psi # subsistence_wage
-        return a * b * psi
+        a                 = self.model.housing_services_share
+        b                 = self.model.maintenance_share
+        subsistence_wage  = self.model.firm.subsistence_wage # subsistence_wage
+        return a * b * subsistence_wage
 
     def __init__(self, unique_id, model, pos, 
                  property_tax_rate = 0., 
@@ -284,10 +283,10 @@ class Firm(Agent):
 
     @property
     def wage(self):
-        return self.omega + self.psi
+        return self.wage_premium + self.subsistence_wage
 
     def __init__(self, unique_id, model, pos, 
-                 psi,
+                 subsistence_wage,
                  init_wage_premium_ratio,
                  alpha, beta, gamma,
                  price_of_output, r_prime,
@@ -328,11 +327,11 @@ class Firm(Agent):
         # # self.no_firms = self.model.baseline_population/self.model.workforce_rural_firm
 
         # # Calculate scale factor A for a typical urban firm
-        # Y_R      = n_R * psi / beta_F
+        # Y_R      = n_R * subsistence_wage / beta_F
         # Y_U      = self.n * self.wage / beta_F
         # k_R      = alpha_F * Y_R / self.r
         # self.k   = alpha_F * Y_U / self.r
-        # self.A_F = 3500 # Y_R/(k_R**alpha_F * n_R * self.psi**beta_F)
+        # self.A_F = 3500 # Y_R/(k_R**alpha_F * n_R * self.subsistence_wage**beta_F)
 
         # self.y   = 0.
         # self.MPL = 0.
@@ -348,12 +347,12 @@ class Firm(Agent):
         # self.F_next_total   = 0.
 
         # TEMP New parameter values
-        self.psi      = psi # subsistence_wage
+        self.subsistence_wage = subsistence_wage # subsistence_wage
         self.alpha    = alpha
         self.beta     = beta
         self.gamma    = gamma
-        self.price_of_output = price_of_output
-        self.seed_population = seed_population
+        self.price_of_output  = price_of_output
+        self.seed_population  = seed_population
         self.density  = density
         self.A        = A
         self.overhead = overhead    # labour overhead costs for firm
@@ -371,8 +370,7 @@ class Firm(Agent):
         self.F        = init_F
         self.k        = init_k #1.360878e+09 #100
         self.n        = init_n
-        self.omega = init_wage_premium_ratio * self.psi
-        self.wage_premium = self.omega # TODO replace w with wage_premium?
+        self.wage_premium = init_wage_premium_ratio * self.subsistence_wage
         self.N = self.F * self.n
 
     def step(self):
@@ -389,8 +387,7 @@ class Firm(Agent):
         self.F = (1 - self.adjF) * self.F + self.adjF * self.F_target
         self.k = (1 - self.adjk) * self.k + self.adjk * self.k_target
         #n = N/F 
-        self.omega = self.c * math.sqrt(self.N/(2*self.density)) #may work on P
-        self.wage_premium = self.omega # TODO replace w with wage_premium
+        self.wage_premium = self.c * math.sqrt(self.N/(2*self.density)) # TODO should this be wage? may work on P
 
         self.y = self.Y / self.n # TODO get right value?
         
@@ -401,9 +398,6 @@ class Firm(Agent):
         # # Calculate wage, capital, and firm count given number of urban workers
         # self.n = self.N/self.F
         # self.y = self.output(self.N, self.k, self.n)
-
-        # self.MPL = self.beta_F  * self.y / self.n
-        # self.MPK = self.alpha_F * self.y / self.k
 
         # self.n_target = self.beta_F * self.y / self.wage
         # self.y_target = self.output(self.N, self.k, self.n_target)
