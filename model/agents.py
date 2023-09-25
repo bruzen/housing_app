@@ -374,7 +374,14 @@ class Firm(Agent):
         self.N = self.F * self.n
 
     def step(self):
-        self.P = self.mult * self.N + self.seed_population # TODO use multiplier instead of density?
+        # P is effective workforce
+        # If the city is in the bottom corner center_city is false, and effective population must be multiplied by 4
+        # TODO notation - use N in Y, and have something else for the agent count pre multiplication to avoid confusion e.g. worker_agent_count
+        if self.model.center_city:
+            self.P = self.mult * self.density * self.N + self.seed_population # TODO use multiplier instead of density?
+        else:
+            self.P = 4 * self.mult * self.density * self.N + self.seed_population # TODO use multiplier instead of density?
+        
         self.Y = self.price_of_output * self.A * self.P**self.gamma *  self.k**self.alpha * self.n**self.beta
         self.n_target = (self.beta * self.Y) / (self.wage * (1 + self.overhead))
         self.n = (1 - self.adjn) * self.n + self.adjn * self.n_target

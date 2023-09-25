@@ -122,9 +122,13 @@ class City(Model):
         self.model_name        = 'Housing Market'
         self.model_version     = '0.0.1'
         self.model_description = 'Agent-based housing market model with rent and urban aglomeration.'
-        self.num_steps = num_steps
+        self.num_steps = num_steps        
         self.time_step = 1.
-        self.center    = (0, 0) # (width//2, height//2) # TODO make center
+        self.center_city = False # put city in the bottom corner TODO check flags logic
+        if self.center_city:
+            self.center    = (width//2, height//2)
+        else:
+            self.center    = (0, 0)
         self.grid = MultiGrid(self.params['width'], self.params['height'], torus=False)
         self.schedule = RandomActivationByBreed(self)
         self.transport_cost_per_dist = self.params['init_wage_premium_ratio'] * self.params['subsistence_wage'] / self.params['init_city_extent'] # c
