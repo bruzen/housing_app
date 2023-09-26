@@ -302,49 +302,21 @@ class Firm(Agent):
                  adjk,
                  adjn,
                  adjF,
-                 init_P,
+                 init_agglomeration_population,
                  init_F,
                  init_k,
                  init_n,
                  ):
         super().__init__(unique_id, model)
         self.pos             = pos
-        # Old parameter values TODO delete and get below values from param list
-        # self.alpha_F         = alpha_F
-        # self.beta_F          = beta_F
-        # self.Z               = Z
 
-        # self.price_of_output = price_of_output
-        # self.r               = r_prime
-
-        # self.firm_adjustment_parameter = firm_adjustment_parameter
-        # self.wage_adjustment_parameter = wage_adjustment_parameter
-
-        # n_R           = self.model.workforce_rural_firm
-        # self.n        = n_R # workforce_urban_firm is initally same as urban firm
-
-        # self.F        = 5 # init_F  TODO initialize firmcount, check in Overleaf
-        # # self.no_firms = self.model.baseline_population/self.model.workforce_rural_firm
-
+        # Old initialization calculations
         # # Calculate scale factor A for a typical urban firm
         # Y_R      = n_R * subsistence_wage / beta_F
         # Y_U      = self.n * self.wage / beta_F
         # k_R      = alpha_F * Y_R / self.r
         # self.k   = alpha_F * Y_U / self.r
         # self.A_F = 3500 # Y_R/(k_R**alpha_F * n_R * self.subsistence_wage**beta_F)
-
-        # self.y   = 0.
-        # self.MPL = 0.
-        # self.MPK = 0.
-
-        # self.n_target = 0.
-        # self.y_target = 0.
-        # self.k_target = 0.
-
-        # self.F_target = 0.
-        # self.F_next   = 0.
-        # self.N_target_total = 0.
-        # self.F_next_total   = 0.
 
         # TEMP New parameter values
         self.subsistence_wage = subsistence_wage # subsistence_wage
@@ -365,8 +337,10 @@ class Firm(Agent):
         # agent_count = 50 # TODO comes from agents deciding
         self.r        = r_prime # Firm cost of capital
 
-        # Initial values
-        self.P        = init_P # population TODO change this will be confused with price
+        # Initial values # TODO do we need all these initial values?
+        self.y        = 0 # TODO check init_y init value doesn't matter - replaced before its recorded
+        self.Y        = 0
+        self.agglomeration_population = init_agglomeration_population # population TODO change this will be confused with price
         self.F        = init_F
         self.k        = init_k #1.360878e+09 #100
         self.n        = init_n
@@ -374,19 +348,14 @@ class Firm(Agent):
         self.N = self.F * self.n
 
     def step(self):
-        # P is effective workforce
-        # If the city is in the bottom corner center_city is false, and effective population must be multiplied by 4
-        # TODO notation - use N in Y, and have something else for the agent count pre multiplication to avoid confusion e.g. worker_agent_count
-        if self.model.center_city:
-            self.P = self.mult * self.density * self.N + self.seed_population # TODO use multiplier instead of density?
-        else:
-            self.P = 4 * self.mult * self.density * self.N + self.seed_population # TODO use multiplier instead of density?
-        
-        self.Y = self.price_of_output * self.A * self.P**self.gamma *  self.k**self.alpha * self.n**self.beta
-        self.n_target = (self.beta * self.Y) / (self.wage * (1 + self.overhead))
+        # TODO uncomment to link this code to agent count
+        # N = self.get_N # TODO make sure all relevant populations are tracked - n, N, N adjustedx4/not, agent count, agglomeration_population
+        self.agglomeration_population = self.mult * self.N + self.seed_population
+        self.y = self.price_of_output * self.A * self.agglomeration_population**self.gamma *  self.k**self.alpha * self.n**self.beta
+        self.n_target = (self.beta * self.y) / (self.wage * (1 + self.overhead))
         self.n = (1 - self.adjn) * self.n + self.adjn * self.n_target
-        self.y_target = self.price_of_output * self.A * self.P**self.gamma *  self.k**self.alpha * self.n_target**self.beta
-        self.k_target = self.alpha*self.y_target/self.r
+        self.y_target = self.price_of_output * self.A * self.agglomeration_population**self.gamma *  self.k**self.alpha * self.n_target**self.beta
+        self.k_target = self.alpha * self.y_target/self.r
         # self.F_target = self.F * self.n_target/self.n
         self.F_target = self.F*(self.n_target/self.n)**.5 # TODO name the .5
         self.N_target = self.F_target * self.n_target
@@ -394,7 +363,7 @@ class Firm(Agent):
         self.F = (1 - self.adjF) * self.F + self.adjF * self.F_target
         self.k = (1 - self.adjk) * self.k + self.adjk * self.k_target
         #n = N/F 
-        self.wage_premium = self.c * math.sqrt(self.N/(2*self.density)) # TODO should this be wage? may work on P
+        self.wage_premium = self.c * math.sqrt(self.N / (2 * self.density)) # TODO should this be wage? may work on P
 
         self.y = self.Y / self.n # TODO get right value?
         
@@ -442,6 +411,14 @@ class Firm(Agent):
     #     beta_F  = self.beta_F
     #     gamma   = self.model.gamma
     #     return A_F * N**gamma * k**alpha_F * n**beta_F
+
+    def get_N(self):
+        # If the city is in the bottom corner center_city is false, and effective population must be multiplied by 4
+        # TODO think about whether this multiplier needs to come in elsewhere
+        if self.model.center_city:
+            self.N = self.density * self.worker_agent_count
+        else:
+            self.N = 4 * self.density * self.worker_agent_count
 
 class Bank(Agent):
     def __init__(self, unique_id, model, pos,

@@ -106,7 +106,7 @@ class City(Model):
             'adjk': 0.15,
             'adjn': 0.25,
             'adjF': 0.15,
-            'init_P': 0.0,
+            'init_agglomeration_population': 0.0,
             'init_F': 100.0,
             'init_k': 100.0,
             'init_n': 100.0,
@@ -124,7 +124,8 @@ class City(Model):
         self.model_description = 'Agent-based housing market model with rent and urban aglomeration.'
         self.num_steps = num_steps        
         self.time_step = 1.
-        self.center_city = False # put city in the bottom corner TODO check flags logic
+        # If self.center_city is True, it places the city in the center; otherwise, it places it in the bottom corner.
+        self.center_city = False # put city in the bottom corner TODO check flag's logic
         if self.center_city:
             self.center    = (width//2, height//2)
         else:
@@ -178,7 +179,7 @@ class City(Model):
                                     adjk=self.params['adjk'],
                                     adjn=self.params['adjn'],
                                     adjF=self.params['adjF'],
-                                    init_P=self.params['init_P'],
+                                    init_agglomeration_population=self.params['init_agglomeration_population'],
                                     init_F=self.params['init_F'],
                                     init_k=self.params['init_k'],
                                     init_n=self.params['init_n']
@@ -340,7 +341,7 @@ class City(Model):
             "F":                         lambda m: m.firm.F,
             "k":                         lambda m: m.firm.k,
             "N":                         lambda m: m.firm.N,
-            "P":                         lambda m: m.firm.P,
+            "agglomeration_population":  lambda m: m.firm.agglomeration_population,
             "Y":                         lambda m: m.firm.Y,
             "wage_premium":              lambda m: m.firm.wage_premium,
             "subsistence_wage":          lambda m: m.firm.subsistence_wage,
