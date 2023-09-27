@@ -281,10 +281,6 @@ class Firm(Agent):
     #     total_no_workers = self.model.workforce.get_agent_count(self.model.workforce.workers)
     #     return total_no_workers * self.density + self.seed_population
 
-    @property
-    def wage(self):
-        return self.wage_premium + self.subsistence_wage
-
     def __init__(self, unique_id, model, pos, 
                  subsistence_wage,
                  init_wage_premium_ratio,
@@ -340,37 +336,37 @@ class Firm(Agent):
         # Initial values # TODO do we need all these initial values?
         self.y        = 0 # TODO check init_y init value doesn't matter - replaced before its recorded
         self.Y        = 0
-        self.agglomeration_population = init_agglomeration_population # population TODO change this will be confused with price
         self.F        = init_F
         self.k        = init_k #1.360878e+09 #100
         self.n        = init_n
-        self.wage_premium = init_wage_premium_ratio * self.subsistence_wage
         self.N = self.F * self.n
+        self.agglomeration_population = init_agglomeration_population # population TODO change this will be confused with price
+        self.wage_premium = init_wage_premium_ratio * self.subsistence_wage 
+        self.wage         = self.wage_premium + self.subsistence_wage
 
     def step(self):
         # TODO uncomment to link this code to agent count
         # N = self.get_N # TODO make sure all relevant populations are tracked - n, N, N adjustedx4/not, agent count, agglomeration_population
         self.agglomeration_population = self.mult * self.N + self.seed_population
         self.y = self.price_of_output * self.A * self.agglomeration_population**self.gamma *  self.k**self.alpha * self.n**self.beta
+        self.MPL = self.beta  * self.y / self.n
+        self.MPK = self.alpha * self.y / self.k
         self.n_target = (self.beta * self.y) / (self.wage * (1 + self.overhead))
         self.n = (1 - self.adjn) * self.n + self.adjn * self.n_target
         self.y_target = self.price_of_output * self.A * self.agglomeration_population**self.gamma *  self.k**self.alpha * self.n_target**self.beta
         self.k_target = self.alpha * self.y_target/self.r
         # self.F_target = self.F * self.n_target/self.n
-        self.F_target = self.F*(self.n_target/self.n)**.5 # TODO name the .5
+        # self.F_target = self.F*(self.n_target/self.n)**.5 # TODO name the .5
+        self.F_target = (1-self.adjF)*self.F + self.adjF*self.F*(self.n_target/self.n) 
         self.N_target = self.F_target * self.n_target
         self.N = (1 - self.adjN) * self.N + self.adjN * self.N_target
         self.F = (1 - self.adjF) * self.F + self.adjF * self.F_target
         self.k = (1 - self.adjk) * self.k + self.adjk * self.k_target
-        #n = N/F 
-        self.wage_premium = self.c * math.sqrt(self.N / (2 * self.density)) # TODO should this be wage? may work on P
+        # n = N/F 
+        self.wage_premium = self.c * math.sqrt(self.mult * self.N / (2 * self.density)) # TODO check role of multiplier
+        self.wage = self.wage_premium + self.subsistence_wage
 
-        self.y = self.Y / self.n # TODO get right value?
-        
-        self.MPL = self.beta  * self.y / self.n # TODO okay to calculate this at the end?
-        self.MPK = self.alpha * self.y / self.k
-
-        # TODO Old firm implementation. Cut.
+        # # TODO Old firm implementation. Cut.
         # # Calculate wage, capital, and firm count given number of urban workers
         # self.n = self.N/self.F
         # self.y = self.output(self.N, self.k, self.n)
