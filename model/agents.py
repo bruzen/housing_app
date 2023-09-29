@@ -346,8 +346,8 @@ class Firm(Agent):
 
     def step(self):
         # TODO uncomment to link this code to agent count
-        # N = self.get_N # TODO make sure all relevant populations are tracked - n, N, N adjustedx4/not, agent count, agglomeration_population
-        self.agglomeration_population = self.mult * self.N + self.seed_population
+        N = self.get_N # TODO make sure all relevant populations are tracked - n, N, N adjustedx4/not, agent count, agglomeration_population
+        # self.agglomeration_population = self.mult * self.N + self.seed_population
         self.y = self.price_of_output * self.A * self.agglomeration_population**self.gamma *  self.k**self.alpha * self.n**self.beta
         self.MPL = self.beta  * self.y / self.n
         self.MPK = self.alpha * self.y / self.k
@@ -411,10 +411,11 @@ class Firm(Agent):
     def get_N(self):
         # If the city is in the bottom corner center_city is false, and effective population must be multiplied by 4
         # TODO think about whether this multiplier needs to come in elsewhere
+        worker_agent_count = self.model.workforce.get_agent_count(m.workforce.workers)
         if self.model.center_city:
-            self.N = self.density * self.worker_agent_count
+            self.N = self.density * worker_agent_count
         else:
-            self.N = 4 * self.density * self.worker_agent_count
+            self.N = 4 * self.density * worker_agent_count
 
 class Bank(Agent):
     def __init__(self, unique_id, model, pos,
