@@ -102,10 +102,12 @@ class City(Model):
             'overhead': 2,
             'mult': 1.2,
             'c': 200.0,
-            'adjN': 0.15,
+            'adjN': 0.15,   #### Sept 28 raise adj factors from 15, 15, 25, 15, 15
             'adjk': 0.15,
             'adjn': 0.25,
             'adjF': 0.15,
+            'adjw': 0.15,
+            'dist': 1.0,
             'init_agglomeration_population': 0.0,
             'init_F': 100.0,
             'init_k': 100.0,
@@ -124,6 +126,8 @@ class City(Model):
         self.model_description = 'Agent-based housing market model with rent and urban aglomeration.'
         self.num_steps = num_steps        
         self.time_step = 1.
+        self.height = self.params['height']
+        self.width  = self.params['width']
         # If self.center_city is True, it places the city in the center; otherwise, it places it in the bottom corner.
         self.center_city = False # put city in the bottom corner TODO check flag's logic
         if self.center_city:
@@ -179,6 +183,8 @@ class City(Model):
                                     adjk=self.params['adjk'],
                                     adjn=self.params['adjn'],
                                     adjF=self.params['adjF'],
+                                    adjw=self.params['adjw'],
+                                    dist=self.params['dist'],
                                     init_agglomeration_population=self.params['init_agglomeration_population'],
                                     init_F=self.params['init_F'],
                                     init_k=self.params['init_k'],
@@ -312,7 +318,7 @@ class City(Model):
 #           "rents":                     capture_rents,
             "workers":                   lambda m: m.firm.N,
             "MPL":                       lambda m: m.firm.MPL,
-            "MPK":                       lambda m: m.firm.MPK,
+            #"MPK":                       lambda m: m.firm.MPK,
             "time_step":                 lambda m: m.time_step,
             "companies":                 lambda m: m.schedule.get_breed_count(Firm),
             "city_extent_calc":          lambda m: m.city_extent_calc,
@@ -330,11 +336,11 @@ class City(Model):
             "removed_agents":            lambda m: m.removed_agents,
             "n":                         lambda m: m.firm.n,
             "y":                         lambda m: m.firm.y,
-            "n_target":                  lambda m: m.firm.n_target,
+            #"n_target":                  lambda m: m.firm.n_target,
             # "y_target":                  lambda m: m.firm.y_target,
             # "k_target":                  lambda m: m.firm.k_target, 
             # # "self.firm_adjustment_parameter": lambda m: m.firm.firm_adjustment_parameter,
-            # "F_target":                  lambda m: m.firm.F_target,
+            "F_target":                  lambda m: m.firm.F_target,
             # "F_next":                    lambda m: m.firm.F_next,
             # "N_target_total":            lambda m: m.firm.N_target_total,
             # "F_next_total":              lambda m: m.firm.F_next_total,

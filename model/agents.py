@@ -19,7 +19,6 @@ class Land(Agent):
     :param pos: The land parcel's location on the spatial grid.
     :param resident: The agent who resides at this land parcel.
     :param owner: The agent who owns this land parcel.
-    # :param rent_history: The history of rent values for the land parcel.
     """
 
     @property
@@ -298,6 +297,8 @@ class Firm(Agent):
                  adjk,
                  adjn,
                  adjF,
+                 adjw,
+                 dist,
                  init_agglomeration_population,
                  init_F,
                  init_k,
@@ -330,41 +331,63 @@ class Firm(Agent):
         self.adjk     = adjk
         self.adjn     = adjn
         self.adjF     = adjF
+        self.adjw     = adjw
+        self.dist     = dist
         # agent_count = 50 # TODO comes from agents deciding
         self.r        = r_prime # Firm cost of capital
 
         # Initial values # TODO do we need all these initial values?
-        self.y        = 0 # TODO check init_y init value doesn't matter - replaced before its recorded
+        self.y        = 100000
         self.Y        = 0
         self.F        = init_F
         self.k        = init_k #1.360878e+09 #100
         self.n        = init_n
+        self.F_target = init_F
+        #self.k_target = 10000
+        #self.n_target = 100        
+        #self.y_target = 10000
         self.N = self.F * self.n
         self.agglomeration_population = init_agglomeration_population # population TODO change this will be confused with price
         self.wage_premium = init_wage_premium_ratio * self.subsistence_wage 
         self.wage         = self.wage_premium + self.subsistence_wage
 
     def step(self):
-        # TODO uncomment to link this code to agent count
+        # GET POPULATION AND OUTPUT TODO replace N with agent count
         N = self.get_N # TODO make sure all relevant populations are tracked - n, N, N adjustedx4/not, agent count, agglomeration_population
-        # self.agglomeration_population = self.mult * self.N + self.seed_population
-        self.y = self.price_of_output * self.A * self.agglomeration_population**self.gamma *  self.k**self.alpha * self.n**self.beta
-        self.MPL = self.beta  * self.y / self.n
-        self.MPK = self.alpha * self.y / self.k
-        self.n_target = (self.beta * self.y) / (self.wage * (1 + self.overhead))
-        self.n = (1 - self.adjn) * self.n + self.adjn * self.n_target
-        self.y_target = self.price_of_output * self.A * self.agglomeration_population**self.gamma *  self.k**self.alpha * self.n_target**self.beta
-        self.k_target = self.alpha * self.y_target/self.r
-        # self.F_target = self.F * self.n_target/self.n
-        # self.F_target = self.F*(self.n_target/self.n)**.5 # TODO name the .5
-        self.F_target = (1-self.adjF)*self.F + self.adjF*self.F*(self.n_target/self.n) 
-        self.N_target = self.F_target * self.n_target
-        self.N = (1 - self.adjN) * self.N + self.adjN * self.N_target
+        self.agglomeration_population = self.mult * self.N + self.seed_population
+        self.y = self.A * self.agglomeration_population**self.gamma *  self.k**self.alpha * self.n**self.beta
+
+        # ADJUST WAGE
+        self.MPL = self.beta  * self.y / self.n  # marginal value product of labour known to firms
+        self.wage_target = self.MPL # (1+self.overhead) # economic rationality implies intention
+        self.wage = (1 - self.adjw) * self.wage + self.adjw * self.wage_target # assume a partial adjustment process
+        
+        # FIND POPULATION AT NEW WAGE
+        self.wage_premium = self.wage - self.subsistence_wage # find wage available for transportation
+        self.dist = self.wage_premium / self.c  # find calculated extent of city at wage
+        self.N = self.dist * self.model.height * self.density / self.mult # calculate total firm population from city size # TODO make this expected pop
+        self.n =  self.N / self.F # distribute workforce across firms
+
+        # ADJUST NUMBER OF FIRMS
+        self.F_target = self.F * self.wage_target/self.wage  # this is completely arbitrary but harmless
         self.F = (1 - self.adjF) * self.F + self.adjF * self.F_target
+ 
+        # ADJUST CAPITAL STOCK 
+        self.y_target = self.price_of_output * self.A * self.agglomeration_population**self.gamma *  self.k**self.alpha * self.n**self.beta
+        self.k_target = self.alpha * self.y_target/self.r
         self.k = (1 - self.adjk) * self.k + self.adjk * self.k_target
+    
+        #self.F_target = self.F * self.n_target/self.n  #this is completely argbitrary but harmless
+        # self.F_target = self.F*(self.n_target/self.n)**.5 # TODO name the .5
+        ####self.F_target = (1-self.adjF)*self.F + self.adjF*self.F*(self.n_target/self.n) 
+        #self.N_target = self.F_target * self.n_target
+        #self.N = (1 - self.adjN) * self.N + self.adjN * self.N_target
+        #####self.N = self.N*1.02
+        #self.F = (1 - self.adjF) * self.F + self.adjF * self.F_target
+        #self.k = (1 - self.adjk) * self.k + self.adjk * self.k_target
         # n = N/F 
-        self.wage_premium = self.c * math.sqrt(self.mult * self.N / (2 * self.density)) # TODO check role of multiplier
-        self.wage = self.wage_premium + self.subsistence_wage
+        #self.wage_premium = self.c * math.sqrt(self.mult * self.N / (2 * self.density)) # TODO check role of multiplier
+        #self.wage = self.wage_premium + self.subsistence_wage
 
         # # TODO Old firm implementation. Cut.
         # # Calculate wage, capital, and firm count given number of urban workers
@@ -603,4 +626,4 @@ class Allocation:
         self.property          = property
         self.successful_bidder = successful_bidder
         self.bid_price         = bid_price
-        self.final_price       = final_price
+        self.final_price       = final_pric
