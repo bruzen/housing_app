@@ -355,18 +355,19 @@ class Firm(Agent):
         # GET POPULATION AND OUTPUT TODO replace N with agent count
         self.N = self.get_N() # TODO make sure all relevant populations are tracked - n, N, N adjustedx4/not, agent count, agglomeration_population
         self.agglomeration_population = self.mult * self.N + self.seed_population
+        self.n =  self.N / self.F # distribute workforce across firms
         self.y = self.A * self.agglomeration_population**self.gamma *  self.k**self.alpha * self.n**self.beta
 
         # ADJUST WAGE
         self.MPL = self.beta  * self.y / self.n  # marginal value product of labour known to firms
-        self.wage_target = self.MPL # (1+self.overhead) # economic rationality implies intention
+        self.wage_target = self.subsistence_wage + (self.MPL - self.subsistence_wage) / (1 + self.overhead)       #self.wage_target = self.MPL / (1 + self.overhead) # (1+self.overhead) # economic rationality implies intention
         self.wage = (1 - self.adjw) * self.wage + self.adjw * self.wage_target # assume a partial adjustment process
         
         # FIND POPULATION AT NEW WAGE
         self.wage_premium = self.wage - self.subsistence_wage # find wage available for transportation
-        self.dist = self.wage_premium / self.c  # find calculated extent of city at wage
-        self.N = self.dist * self.model.height * self.density / self.mult # calculate total firm population from city size # TODO make this expected pop
-        self.n =  self.N / self.F # distribute workforce across firms
+        #self.dist = self.wage_premium / self.c  # find calculated extent of city at wage
+        #self.N = self.dist * self.model.height * self.density / self.mult # calculate total firm population from city size # TODO make this expected pop
+        #self.n =  self.N / self.F # distribute workforce across firms
 
         # ADJUST NUMBER OF FIRMS
         self.F_target = self.F * self.wage_target/self.wage  # this is completely arbitrary but harmless
