@@ -70,7 +70,9 @@ class Land(Agent):
         self.distance_from_center = self.calculate_distance_from_center()
         self.transport_cost       = self.calculate_transport_cost()
 
-    def step(self): 
+    def step(self):
+        # TODO should we clear all offers for a property here to be sure it is clear?
+
         # Prepare price data for the current step
         price_data = {
             'id': self.unique_id,
@@ -239,7 +241,9 @@ class Person(Agent):
                         for property {sale_property.unique_id}, \
                         if val is positive.')
             if bid.price > 0:
-                sale_property.offers.append(bid)
+                # TODO fix this
+                self.model.realtor.add_bid(self, sale_property, bid.price)
+                # sale_property.offers.append(bid)
 
     def get_wealth(self):
         # TODO Wealth is properties owned, minuse mortgages owed, plus savings.
@@ -524,58 +528,100 @@ class Realtor(Agent):
     def step(self):
         pass
 
+    # TODO do I want to work just from the bidders list
+    # TODO add the bids to the offers list for the property? - agents use this above to add their own bids for themselves then anyone can put bids for agents for easy testing?
     def add_bid(self, bidder, property, price):
+        # Add to bidders/properties dictionary if not there already
         if bidder not in self.bidders:
             self.bidders[bidder] = bidder
-
         if property not in self.properties:
             self.properties[property] = property
     
         bid = Bid(bidder, property, price)
         self.bids[property].append(bid)
+        # OR TODO when agents bid, they should append the property to the for sale listing? WHY IS ADD_BID NEVER USED?
 
+    
+    # TODO add a check if value is greater than williness to pay
+    # TODO what to do with old bids - does property clear them in each step?
     def sell_homes(self):
         allocations = []
-
-        for property in self.bids.keys():
-            property_bids = self.bids[property]
-            property_bids.sort(key=lambda x: x.price, reverse=True)
-
-            highest_bid = property_bids[0]
-            second_highest_price = property_bids[1].price if len(property_bids) > 1 else 0
-
-            if highest_bid.price > second_highest_price:
+        # properties = [agent for agent in self.model.schedule.agents if isinstance(agent, Land)]
+        # properties = {unique_id: agent for unique_id, agent in self.bidders.items() if isinstance(agent, Land)}
+        properties = {unique_id: agent for unique_id, agent in self.bidders.items()}
+        for unique_id, agent in properties:
+            print("Type:", type(agent))  # Print the type of the agent
+            print("Object:", agent)      # Print the agent object
+            print()  # Add an empty line for separation
+        print("len properties: ", len(properties))
+        # print(properties)
+        for property in properties.values():  # Iterate over the values (Land agent objects)
+            property_bids = property.offers
+            if len(property_bids) > 0:
+                property_bids = property.offers
+                property_bids.sort(key=lambda x: x.price, reverse=True)
+                
+                highest_bid = property_bids[0]
+                second_highest_price = property_bids[1].price if len(property_bids) > 1 else 0
+                
                 allocation = Allocation(property, highest_bid.bidder, highest_bid.price, second_highest_price)
-            else:
-                allocation = Allocation(property, None, highest_bid.price, 0)
+                allocations.append(allocation)
 
-            allocations.append(allocation)
+        # # OLD COMMENT OUT WHEN DONE
+        # for property in self.bids.keys():
+        #     property_bids = self.bids[property]
+        #     property_bids.sort(key=lambda x: x.price, reverse=True)
+
+        #     highest_bid = property_bids[0]
+        #     second_highest_price = property_bids[1].price if len(property_bids) > 1 else 0
+
+        #     if highest_bid.price > second_highest_price:
+        #         allocation = Allocation(property, highest_bid.bidder, highest_bid.price, second_highest_price)
+        #     else:
+        #         allocation = Allocation(property, None, highest_bid.price, 0)
+
+        #     allocations.append(allocation)
 
         self.complete_transactions(allocations)
 
-        self.bids.clear()
-        self.bidders.clear()
-        self.properties.clear()
+        # self.bids.clear()
+        # self.bidders.clear()
+        # self.properties.clear()
+
+        return allocations
 
     def complete_transactions(self, allocations):
         for allocation in allocations:
-            buyer = allocation.successful_bidder
-            seller = allocation.property.owner
-            final_price = allocation.final_price
+            print('Allocation')
+            print(allocation)
+            # print()
+            # buyer = allocation.successful_bidder
+            # seller = allocation.property.owner
+            # final_price = allocation.final_price
+            # print(buyer)
+            # print(seller)
+            # print(final_price)
+            # print("Buyer:", allocation.successful_bidder)
+            # print("Seller:", allocation.property.owner)
+            # print("Final Price:", allocation.final_price)
 
-            self.transfer_property(seller, buyer, allocation.property)
+            # self.transfer_property(seller, buyer, allocation.property)
 
-            if isinstance(buyer, Investor):
-                self.handle_investor_purchase(buyer, allocation.property)
-            elif isinstance(buyer, Person):
-                self.handle_person_purchase(buyer, allocation.property, final_price)
-            else:
-                logger.warning('Buyer was neither a person nor an investor.')
+            # if isinstance(buyer, Investor):
+            #     self.handle_investor_purchase(buyer, allocation.property)
+            #     print('investor buyer')
+            # elif isinstance(buyer, Person):
+            #     self.handle_person_purchase(buyer, allocation.property, final_price)
+            #     print('person buyer')
+            # else:
+            #     logger.warning('Buyer was neither a person nor an investor.')
+            #     print('neither buyer')
 
-            if isinstance(seller, Person):
-                self.handle_seller_departure(seller)
-            else:
-                logger.warning('Seller was not a person, so was not removed from the model.')
+            # # TODO integrate with person buyer case above
+            # if isinstance(seller, Person):
+            #     self.handle_seller_departure(seller)
+            # else:
+            #     logger.warning('Seller was not a person, so was not removed from the model.')
 
     def transfer_property(self, seller, buyer, sale_property):
         """Transfers ownership of the property from seller to buyer."""
@@ -631,4 +677,7 @@ class Allocation:
         self.property          = property
         self.successful_bidder = successful_bidder
         self.bid_price         = bid_price
-        self.final_price       = final_pric
+        self.final_price       = final_price
+
+    def __str__(self):
+        return f"Property: {self.property}, Successful Bidder: {self.successful_bidder}, Bid Price: {self.bid_price}, Final Price: {self.final_price}"
