@@ -1,5 +1,6 @@
 import math
 import logging
+from typing import Union
 from collections import defaultdict
 from scipy.spatial import distance
 
@@ -65,14 +66,11 @@ class Land(Agent):
         self.property_tax_rate    = property_tax_rate
         self.resident             = resident
         self.owner                = owner
-
-        self.offers               = []
         self.distance_from_center = self.calculate_distance_from_center()
         self.transport_cost       = self.calculate_transport_cost()
+        # TODO want to make distance from center, warranted price, realized price.
 
     def step(self):
-        # TODO should we clear all offers for a property here to be sure it is clear?
-
         # Prepare price data for the current step
         price_data = {
             'id': self.unique_id,
@@ -244,9 +242,7 @@ class Person(Agent):
                         for property {sale_property.unique_id}, \
                         if val is positive.')
             if bid.price > 0:
-                # TODO fix this
                 self.model.realtor.add_bid(self, sale_property, bid.price)
-                # sale_property.offers.append(bid)
 
     def get_wealth(self):
         # TODO Wealth is properties owned, minuse mortgages owed, plus savings.
@@ -511,11 +507,11 @@ class Investor(Agent):
         #     print(R_N)
         #     P_max_bid = self.model.bank.get_max_bid(R_N, r, r_target, m, sale_property.transport_cost)
         #     mortgage = m * P_max_bid
-        #     bid = Bid(bidder=self, property=sale_property, price=P_max_bid, mortgage=mortgage)
+        #     # bid = Bid(bidder=self, property=sale_property, price=P_max_bid, mortgage=mortgage)
         #     logger.debug(f'Bank {self.unique_id} bids {bid.price} for \
         #                 property {sale_property.unique_id}, if val is positive.')
         #     if bid.price > 0:
-        #         sale_property.offers.append(bid)
+        #         self.model.realtor.add_bid(self,sale_property,bid.price) #Bid(bidder=self, property=sale_property, price=P_max_bid, mortgage=mortgage)
     
 class Realtor(Agent):
     """Realtor agents connect sellers, buyers, and renters."""
@@ -527,91 +523,64 @@ class Realtor(Agent):
         self.sale_listing = []
         self.rental_listing = []
 
-        self.bidders = {}
-        self.properties = {}
         self.bids = defaultdict(list)
 
     def step(self):
         pass
 
-    # TODO do I want to work just from the bidders list
-    # TODO add the bids to the offers list for the property? - agents use this above to add their own bids for themselves then anyone can put bids for agents for easy testing?
     def add_bid(self, bidder, property, price):
-        # Add to bidders/properties dictionary if not there already
-        if bidder not in self.bidders:
-            self.bidders[bidder] = bidder
-        if property not in self.properties:
-            self.properties[property] = property
-    
+        # Type check for bidder and property
+        if not isinstance(bidder, Person):
+            raise ValueError("Bidder must be of type Person.")
+        if not isinstance(property, Land):
+            raise ValueError("Property must be of type Land.")
+        if not isinstance(price, (int, float)):
+            raise ValueError("Price must be a numeric value (int or float).")
+        
         bid = Bid(bidder, property, price)
         self.bids[property].append(bid)
-        # OR TODO when agents bid, they should append the property to the for sale listing? WHY IS ADD_BID NEVER USED?
 
-    
-    # TODO add a check if value is greater than williness to pay
-    # TODO what to do with old bids - does property clear them in each step?
     def sell_homes(self):
+        for key, value in self.bids.items():
+            print(f'Key: {key}')
+            for bid in value:
+                print(f'  {bid}')
+        
         allocations = []
-        # properties = [agent for agent in self.model.schedule.agents if isinstance(agent, Land)]
-        # properties = {unique_id: agent for unique_id, agent in self.bidders.items() if isinstance(agent, Land)}
-        properties = {unique_id: agent for unique_id, agent in self.bidders.items()}
-        for unique_id, agent in properties:
-            print("Type:", type(agent))  # Print the type of the agent
-            print("Object:", agent)      # Print the agent object
-            print()  # Add an empty line for separation
-        print("len properties: ", len(properties))
-        # print(properties)
-        for property in properties.values():  # Iterate over the values (Land agent objects)
-            property_bids = property.offers
+        for property in self.bids.keys():
+            if not isinstance(property, Land):
+                raise TypeError(f"Property in self.bids.keys is not of type 'Land'.")
+
+            property_bids = self.bids[property]
             if len(property_bids) > 0:
-                property_bids = property.offers
                 property_bids.sort(key=lambda x: x.price, reverse=True)
-                
                 highest_bid = property_bids[0]
-                second_highest_price = property_bids[1].price if len(property_bids) > 1 else 0
-                
-                allocation = Allocation(property, highest_bid.bidder, highest_bid.price, second_highest_price)
+                second_highest_bid = property_bids[1].price if len(property_bids) > 1 else 0
+                final_price = highest_bid.price
+                allocation = Allocation(property, highest_bid.bidder, highest_bid.price, second_highest_bid, final_price)
+                print(allocation)
                 allocations.append(allocation)
-
-        # # OLD COMMENT OUT WHEN DONE
-        # for property in self.bids.keys():
-        #     property_bids = self.bids[property]
-        #     property_bids.sort(key=lambda x: x.price, reverse=True)
-
-        #     highest_bid = property_bids[0]
-        #     second_highest_price = property_bids[1].price if len(property_bids) > 1 else 0
-
-        #     if highest_bid.price > second_highest_price:
-        #         allocation = Allocation(property, highest_bid.bidder, highest_bid.price, second_highest_price)
-        #     else:
-        #         allocation = Allocation(property, None, highest_bid.price, 0)
-
-        #     allocations.append(allocation)
+            # TODO compute final price given wtp
 
         self.complete_transactions(allocations)
-
-        # self.bids.clear()
-        # self.bidders.clear()
-        # self.properties.clear()
-
-        return allocations
+        self.bids.clear()
+        return allocations # TODO returning for testing. Do we need this? Does it interfere with main code?
 
     def complete_transactions(self, allocations):
         for allocation in allocations:
             print('Allocation')
-            print(allocation)
-            # print()
-            # buyer = allocation.successful_bidder
-            # seller = allocation.property.owner
+            # print(allocation)
+
+            buyer = allocation.successful_bidder
+            seller = allocation.property.owner
+            # TODO should we work on final price here?
             # final_price = allocation.final_price
-            # print(buyer)
-            # print(seller)
-            # print(final_price)
+
             # print("Buyer:", allocation.successful_bidder)
             # print("Seller:", allocation.property.owner)
             # print("Final Price:", allocation.final_price)
 
-            # self.transfer_property(seller, buyer, allocation.property)
+            self.transfer_property(seller, buyer, allocation.property)
 
             # if isinstance(buyer, Investor):
             #     self.handle_investor_purchase(buyer, allocation.property)
