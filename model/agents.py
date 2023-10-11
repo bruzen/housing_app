@@ -97,6 +97,9 @@ class Land(Agent):
         cost = self.distance_from_center * self.model.transport_cost_per_dist
         return cost
 
+    def __str__(self):
+        return f"Land {self.unique_id} (Dist. {self.distance_from_center}, Pw {self.warranted_price})"
+
 class Person(Agent):
     @property
     def borrowing_rate(self):
@@ -267,6 +270,9 @@ class Person(Agent):
         # x, y = self.pos
         # self.model.grid.remove_agent(x,y,self)
         self.model.grid.remove_agent(self)   
+
+    def __str__(self):
+        return f"Person {self.unique_id}"
 
 class Firm(Agent):
     """Firm.
@@ -665,19 +671,65 @@ class Realtor(Agent):
                          f'resident {rental.resident.unique_id}.')
         self.rental_listing.clear()
 
+
 class Bid:
-    def __init__(self, bidder, property, price, mortgage=0.):
-        self.bidder   = bidder
+    def __init__(
+        self, 
+        bidder: Person, 
+        property: Land, 
+        price: Union[float, int], 
+        mortgage: Union[float, int] = 0.0
+    ):
+        if not isinstance(bidder, Person):
+            raise ValueError("Bidder must be of type Person.")
+        
+        if not isinstance(property, Land):
+            raise ValueError("Property must be of type Land.")
+        
+        if not isinstance(price, (float, int)):
+            raise ValueError("Price must be a numeric value.")
+        
+        if not isinstance(mortgage, (float, int)):
+            raise ValueError("Mortgage must be a numeric value.")
+        
+        self.bidder = bidder
         self.property = property
-        self.price    = price
+        self.price = price
         self.mortgage = mortgage
 
+    def __str__(self):
+        return f"Bidder: {self.bidder}, Property: {self.property}, Price: {self.price}, Mortgage: {self.mortgage}"
+
+
 class Allocation:
-    def __init__(self, property, successful_bidder, bid_price, final_price):
-        self.property          = property
+    def __init__(
+        self, 
+        property: Land, 
+        successful_bidder: Person, 
+        highest_bid: Union[float, int], 
+        second_highest_bid: Union[float, int] = 0.0, 
+        final_price: Union[float, int] = 0.0
+    ):
+        if not isinstance(property, Land):
+            raise ValueError("Property must be of type Land.")
+        
+        if successful_bidder is not None and not isinstance(successful_bidder, Person):
+            raise ValueError("Successful bidder must be of type Person or None.")
+        
+        if not isinstance(highest_bid, (float, int)):
+            raise ValueError("Highest bid must be a numeric value.")
+        
+        if not isinstance(second_highest_bid, (float, int)):
+            raise ValueError("Second highest bid must be a numeric value.")
+        
+        if not isinstance(final_price, (float, int)):
+            raise ValueError("Final price must be a numeric value.")
+        
+        self.property = property
         self.successful_bidder = successful_bidder
-        self.bid_price         = bid_price
-        self.final_price       = final_price
+        self.highest_bid = highest_bid
+        self.second_highest_bid = second_highest_bid
+        self.final_price = final_price
 
     def __str__(self):
-        return f"Property: {self.property}, Successful Bidder: {self.successful_bidder}, Bid Price: {self.bid_price}, Final Price: {self.final_price}"
+        return f"Property: {self.property}, Successful Bidder: {self.successful_bidder}, Highest Bid: {self.highest_bid}, Second Highest Bid: {self.second_highest_bid}, Final Price: {self.final_price}"
