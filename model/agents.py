@@ -568,35 +568,27 @@ class Realtor(Agent):
 
     def complete_transactions(self, allocations):
         for allocation in allocations:
-            print('Allocation')
-            # print(allocation)
-
-            buyer = allocation.successful_bidder
-            seller = allocation.property.owner
-            # TODO should we work on final price here?
-            # final_price = allocation.final_price
-
-            # print("Buyer:", allocation.successful_bidder)
-            # print("Seller:", allocation.property.owner)
-            # print("Final Price:", allocation.final_price)
+            buyer       = allocation.successful_bidder
+            seller      = allocation.property.owner
+            final_price = allocation.final_price
 
             self.transfer_property(seller, buyer, allocation.property)
 
-            # if isinstance(buyer, Investor):
-            #     self.handle_investor_purchase(buyer, allocation.property)
-            #     print('investor buyer')
-            # elif isinstance(buyer, Person):
-            #     self.handle_person_purchase(buyer, allocation.property, final_price)
-            #     print('person buyer')
-            # else:
-            #     logger.warning('Buyer was neither a person nor an investor.')
-            #     print('neither buyer')
+            if isinstance(buyer, Investor):
+                self.handle_investor_purchase(buyer, allocation.property)
+                print('investor buyer')
+            elif isinstance(buyer, Person):
+                self.handle_person_purchase(buyer, allocation.property, final_price)
+                print('person buyer')
+            else:
+                logger.warning('Buyer was neither a person nor an investor.')
+                print('neither buyer')
 
-            # # TODO integrate with person buyer case above
-            # if isinstance(seller, Person):
-            #     self.handle_seller_departure(seller)
-            # else:
-            #     logger.warning('Seller was not a person, so was not removed from the model.')
+            # TODO integrate with person buyer case above
+            if isinstance(seller, Person):
+                self.handle_seller_departure(seller)
+            else:
+                logger.warning('Seller was not a person, so was not removed from the model.')
 
     def transfer_property(self, seller, buyer, sale_property):
         """Transfers ownership of the property from seller to buyer."""
