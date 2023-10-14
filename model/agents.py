@@ -8,7 +8,7 @@ from mesa import Agent
 
 logging.basicConfig(filename='logfile.log',
                     filemode='w',
-                    level=logging.ERROR,
+                    level=logging.DEBUG,
                     format='%(asctime)s %(name)s %(levelname)s:%(message)s')
 logger = logging.getLogger(__name__)
 

@@ -33,6 +33,8 @@ logging.basicConfig(filename='logfile.log',
                     format='%(asctime)s %(name)s %(levelname)s:%(message)s')
 logger = logging.getLogger(__name__)
 
+logging.getLogger('matplotlib').setLevel(logging.ERROR) 
+
 # def capture_rents(model):
 #     """Current rents for each location in the grid."""
 #     rent_grid = []
@@ -69,6 +71,8 @@ class City(Model):
             'subfolder': None,
             'width': 50,
             'height': 1,
+            'center_city': False,     # Flag for city center in center if True, or bottom corner if False
+            'random_init_age': False, # Flag for randomizing initial age. If False, all workers begin at age 0
             'init_city_extent': 10.,  # f CUT OR CHANGE?
             'seed_population': 400,
             'density': 300,
@@ -129,7 +133,7 @@ class City(Model):
         self.height = self.params['height']
         self.width  = self.params['width']
         # If self.center_city is True, it places the city in the center; otherwise, it places it in the bottom corner.
-        self.center_city = False # put city in the bottom corner TODO check flag's logic
+        self.center_city = self.params['center_city'] # put city in the bottom corner TODO check flag's logic
         if self.center_city:
             self.center    = (width//2, height//2)
         else:
@@ -215,8 +219,10 @@ class City(Model):
 
             self.unique_id      += 1
             # TODO maybe control flow for this with a flag passed in
-            init_working_period  = 0 
-            # init_working_period  = self.random.randint(0, self.working_periods - 1) # TODO randomize working period
+            if self.params['random_init_age']:
+                init_working_period  = self.random.randint(0, self.working_periods - 1) # TODO randomize working period
+            else:
+                init_working_period  = 0
             savings = init_working_period * self.savings_per_step 
             # TODO check boundaries - at working period 0, no savings
             person  = Person(self.unique_id, self, pos,
