@@ -1,5 +1,6 @@
 import math
 import logging
+import numpy as np
 from typing import Union
 from collections import defaultdict
 from scipy.spatial import distance
@@ -68,6 +69,8 @@ class Land(Agent):
         self.owner                = owner
         self.distance_from_center = self.calculate_distance_from_center()
         self.transport_cost       = self.calculate_transport_cost()
+        self.person_vs_investor_owner = 0 # random.randint(0, 1) # random.choice([True, False])  # TODO check who owner is and update.
+        self.realized_price       = - 1 # random.randint(1, 10000)
         # TODO want to make distance from center, warranted price, realized price.
 
     def step(self):
@@ -81,6 +84,13 @@ class Land(Agent):
        }
         # Add the price data to the model's step price data
         self.model.step_price_data.append(price_data)
+
+        probabilities = [0.01, 0.99]
+
+        # TODO random values should use model's random number generator
+        self.person_vs_investor_owner = np.random.choice([np.random.randint(0, 1), -1], size=None, p=probabilities) # random.randint(0, 1) # random.choice([True, False])  # TODO check who owner is and update.
+        # self.realized_price           = -1 # np.random.choice([np.random.uniform(0, 600000), -1], size=None, p=probabilities) # random.randint(1, 10000)
+        # TODO do something with old realized prixe
 
     def calculate_distance_from_center(self, method='euclidean'):
         if method == 'euclidean':
@@ -541,10 +551,10 @@ class Realtor(Agent):
         self.bids[property].append(bid)
 
     def sell_homes(self):
-        for key, value in self.bids.items():
-            print(f'Key: {key}')
-            for bid in value:
-                print(f'  {bid}')
+        # for key, value in self.bids.items():
+        #     print(f'Key: {key}')
+        #     for bid in value:
+        #         print(f'  {bid}')
         
         allocations = []
         for property in self.bids.keys():
@@ -558,7 +568,7 @@ class Realtor(Agent):
                 second_highest_bid = property_bids[1].price if len(property_bids) > 1 else 0
                 final_price = highest_bid.price
                 allocation = Allocation(property, highest_bid.bidder, highest_bid.price, second_highest_bid, final_price)
-                print(allocation)
+                # print(allocation)
                 allocations.append(allocation)
             # TODO compute final price given wtp
 
@@ -571,6 +581,9 @@ class Realtor(Agent):
             buyer       = allocation.successful_bidder
             seller      = allocation.property.owner
             final_price = allocation.final_price
+
+            allocation.property.realized_price = allocation.final_price # + np.random.randint(-30000, 30000)
+            print(f'Time {self.model.time_step}, Property {allocation.property.unique_id}, Price {allocation.property.realized_price}')
 
             self.transfer_property(seller, buyer, allocation.property)
 
