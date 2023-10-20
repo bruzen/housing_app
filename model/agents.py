@@ -583,19 +583,19 @@ class Realtor(Agent):
             final_price = allocation.final_price
 
             allocation.property.realized_price = allocation.final_price # + np.random.randint(-30000, 30000)
-            print(f'Time {self.model.time_step}, Property {allocation.property.unique_id}, Price {allocation.property.realized_price}')
+            # print(f'Time {self.model.time_step}, Property {allocation.property.unique_id}, Price {allocation.property.realized_price}')
 
             self.transfer_property(seller, buyer, allocation.property)
 
             if isinstance(buyer, Investor):
                 self.handle_investor_purchase(buyer, allocation.property)
-                print('investor buyer')
+                # print('investor buyer')
             elif isinstance(buyer, Person):
                 self.handle_person_purchase(buyer, allocation.property, final_price)
-                print('person buyer')
+                # print('person buyer')
             else:
                 logger.warning('Buyer was neither a person nor an investor.')
-                print('neither buyer')
+                # print('neither buyer')
 
             # TODO integrate with person buyer case above
             if isinstance(seller, Person):
@@ -627,7 +627,7 @@ class Realtor(Agent):
     def handle_seller_departure(self, seller):
         """Handles the departure of a selling agent."""
         if seller.unique_id in self.workforce.retiring:
-            print('seller removed')
+            # print('seller removed')
             seller.remove()
         else:
             logger.warning('Seller was not retiring, so was not removed from the model.')
@@ -644,7 +644,6 @@ class Realtor(Agent):
                          f'property {renter.residence.unique_id} which has '
                          f'resident {rental.resident.unique_id}.')
         self.rental_listing.clear()
-
 
 class Bid:
     def __init__(
