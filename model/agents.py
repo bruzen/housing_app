@@ -180,6 +180,7 @@ class Person(Agent):
         self.count              += 1
         self.working_period     += 1
 
+        premium = self.model.firm.wage_premium
         # Newcomers, who don't find a home, leave the city
         if (self.unique_id in self.workforce.newcomers):
             if (self.residence == None):
@@ -191,36 +192,39 @@ class Person(Agent):
                 logger.error(f'Newcomer {self.unique_id} has a \
                                residence {self.residence.unique_id}, \
                                but was not removed from newcomer list.')
-
+        
         elif (self.residence) and (self.unique_id not in self.workforce.retiring):
-            # Retire if past retirement age
-            if (self.working_period > self.model.working_periods):
-                self.workforce.add(self, self.workforce.retiring)
-                # List homes for sale
-                if (self.residence in self.properties_owned):
-                    # TODO Contact bank. Decide: sell, rent or keep empty
-                    self.model.realtor.sale_listing.append(self.residence)
-                    # TODO if residence is not owned, renter moves out
-
-            # Work if it is worthwhile to work
-            else:
-                premium = self.model.firm.wage_premium
-                if premium > self.residence.transport_cost:
+            # If it is worthwhile work
+            if premium > self.residence.transport_cost:
+                # Retire if past retirement age
+                if (self.working_period > self.model.working_periods):
+                    self.workforce.add(self, self.workforce.retiring)
+                    # List homes for sale
+                    if (self.residence in self.properties_owned):
+                        # TODO Contact bank. Decide: sell, rent or keep empty
+                        self.model.realtor.sale_listing.append(self.residence)
+                        # TODO if residence is not owned, renter moves out
+                else:
                     # Add the person to the workforce's workers dictionary if not already present
                     self.workforce.add(self, self.workforce.workers)
-                else:
-                    # Remove the person from the workforce's workers dictionary (if present)
-                    self.workforce.remove(self, self.workforce.workers)
+            # If it is not worthwhile to work
+            else:
+                # Remove the person from the workforce's workers dictionary if present
+                self.workforce.remove(self, self.workforce.workers)
+                if (self.working_period > self.model.working_periods):
+                    # Population age cycles to model an outside urban population
+                    self.working_period = 1 # TODO test demoographics
 
             # Update savings
             self.savings += self.model.savings_per_step # TODO debt, wealth
             self.wealth  = self.get_wealth()
-
         elif self.unique_id in self.workforce.retiring:
             logger.debug(f'Retiring agent {self.unique_id} still in model.')
+            print(f'Retiring agent {self.unique_id} still in model.')
 
         else:
             logger.debug(f'Agent {self.unique_id} has no residence.')
+            print(f'Agent {self.unique_id} has no residence.')
 
     def bid(self):
         """Newcomers bid on properties for use or investment value."""
