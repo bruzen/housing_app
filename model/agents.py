@@ -230,11 +230,10 @@ class Person(Agent):
         """Newcomers bid on properties for use or investment value."""
         
         # W = self.savings # TODO fix self.get_wealth() # TODO use wealth in mortgage share and borrowing rate
-        # r_target = self.model.r_target # TODO this is personal but uses same as bank. Clarify.        
-
         S = self.savings
         r = self.borrowing_rate
         r_prime  = self.model.r_prime
+        r_target = self.model.r_target # TODO this is personal but uses same as bank. Clarify.        
         wage     = self.model.firm.wage
 
         # Max mortgage
@@ -276,9 +275,9 @@ class Person(Agent):
             if P_bid > 0:
                 self.model.realtor.add_bid(self, sale_property, P_bid, bid_type, mortgage)
 
-    # def get_wealth(self):
-    #     # TODO Wealth is properties owned, minuse mortgages owed, plus savings.
-    #     return self.savings
+    def get_wealth(self):
+        # TODO Wealth is properties owned, minuse mortgages owed, plus savings.
+        return self.savings
 
     def remove(self):
         self.model.removed_agents += 1
