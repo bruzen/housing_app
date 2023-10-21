@@ -229,48 +229,56 @@ class Person(Agent):
     def bid(self):
         """Newcomers bid on properties for use or investment value."""
         
-        W = self.get_wealth() # TODO use wealth in mortgage share and borrowing rate
+        # W = self.savings # TODO fix self.get_wealth() # TODO use wealth in mortgage share and borrowing rate
+        # r_target = self.model.r_target # TODO this is personal but uses same as bank. Clarify.        
+
         S = self.savings
         r = self.borrowing_rate
-        m = self.get_max_mortgage_share()
-        M = self.get_max_mortgage()
-        
-        r_target = self.model.r_target # TODO this is personal but uses same as bank. Clarify.
-        
+        r_prime  = self.model.r_prime
+        wage     = self.model.firm.wage
+
+        # Max mortgage
+        M = 0.28 * (wage + r * S) / r_prime
+
+        # Max mortgage share
+        m = 0.8
 
         for sale_property in self.model.realtor.sale_listing:
-
+            # Max desired bid
             R_N = sale_property.net_rent
             P_max_bid = self.model.bank.get_max_bid(R_N, r, r_target, m, sale_property.transport_cost)
 
-            if m * P_max_bid < m:
-                mortgage = m * P_max_bid
-                P_bid = min(m * P_max_bid + S, P_max_bid)
+            mortgage_share_max = m * P_max_bid
+            mortgage_total_max = M
 
+            # Agents cannot exceed any of their constraints
+            if mortgage_share_max < mortgage_total_max:
+                mortgage = m * P_max_bid
+                # Mortgage share limited
+                if mortgage_share_max + S < P_max_bid:
+                    P_bid = mortgage_share_max + S
+                    bid_type = 'mortgage_share_limited'
+                # Max bid limited
+                else:
+                    P_bid = P_max_bid
+                    bid_type = 'max_bid_limited'
             else:
                 mortgage = M
-                P_bid = min(M + S, P_max_bid)
+                # Mortgage total limited
+                if mortgage_total_max + S < P_max_bid:
+                    P_bid = mortgage_total_max + S
+                    bid_type = 'mortgage_total_limited'
+                # Max bid limited
+                else:
+                    P_bid = P_max_bid
+                    bid_type = 'max_bid_limited'
 
-            bid = Bid(bidder=self, property=sale_property, price=P_bid, mortgage=mortgage)
-            logger.debug(f'Person {self.unique_id} bids {bid.price} \
-                        for property {sale_property.unique_id}, \
-                        if val is positive.')
-            if bid.price > 0:
-                self.model.realtor.add_bid(self, sale_property, bid.price)
+            if P_bid > 0:
+                self.model.realtor.add_bid(self, sale_property, P_bid, bid_type, mortgage)
 
-    def get_wealth(self):
-        # TODO Wealth is properties owned, minuse mortgages owed, plus savings.
-        return self.savings
-
-    def get_max_mortgage_share(self):
-        return 0.8
-    
-    def get_max_mortgage(self):
-        S        = self.savings
-        r        = self.borrowing_rate
-        r_prime  = self.model.r_prime
-        wage     = self.model.firm.wage
-        return 0.28 * (wage + r * S) / r_prime
+    # def get_wealth(self):
+    #     # TODO Wealth is properties owned, minuse mortgages owed, plus savings.
+    #     return self.savings
 
     def remove(self):
         self.model.removed_agents += 1
@@ -521,7 +529,7 @@ class Investor(Agent):
         #     print(R_N)
         #     P_max_bid = self.model.bank.get_max_bid(R_N, r, r_target, m, sale_property.transport_cost)
         #     mortgage = m * P_max_bid
-        #     # bid = Bid(bidder=self, property=sale_property, price=P_max_bid, mortgage=mortgage)
+        #     # bid = Bid(bidder=self, property_agent=sale_property, price=P_max_bid, mortgage=mortgage, type="investor")
         #     logger.debug(f'Bank {self.unique_id} bids {bid.price} for \
         #                 property {sale_property.unique_id}, if val is positive.')
         #     if bid.price > 0:
@@ -542,17 +550,17 @@ class Realtor(Agent):
     def step(self):
         pass
 
-    def add_bid(self, bidder, property, price):
+    def add_bid(self, bidder, property_agent, price, bid_type= "", mortgage=0.):
         # Type check for bidder and property
         if not isinstance(bidder, Person):
             raise ValueError("Bidder must be of type Person.")
-        if not isinstance(property, Land):
+        if not isinstance(property_agent, Land):
             raise ValueError("Property must be of type Land.")
         if not isinstance(price, (int, float)):
             raise ValueError("Price must be a numeric value (int or float).")
         
-        bid = Bid(bidder, property, price)
-        self.bids[property].append(bid)
+        bid = Bid(bidder, property_agent, price, bid_type, mortgage)
+        self.bids[property_agent].append(bid)
 
     def sell_homes(self):
         # for key, value in self.bids.items():
@@ -561,17 +569,17 @@ class Realtor(Agent):
         #         print(f'  {bid}')
         
         allocations = []
-        for property in self.bids.keys():
-            if not isinstance(property, Land):
+        for property_agent in self.bids.keys():
+            if not isinstance(property_agent, Land):
                 raise TypeError(f"Property in self.bids.keys is not of type 'Land'.")
 
-            property_bids = self.bids[property]
+            property_bids = self.bids[property_agent]
             if len(property_bids) > 0:
                 property_bids.sort(key=lambda x: x.price, reverse=True)
                 highest_bid = property_bids[0]
                 second_highest_bid = property_bids[1].price if len(property_bids) > 1 else 0
                 final_price = highest_bid.price
-                allocation = Allocation(property, highest_bid.bidder, highest_bid.price, second_highest_bid, final_price)
+                allocation = Allocation(property_agent, highest_bid.bidder, highest_bid.price, second_highest_bid, final_price)
                 # print(allocation)
                 allocations.append(allocation)
             # TODO compute final price given wtp
@@ -583,19 +591,19 @@ class Realtor(Agent):
     def complete_transactions(self, allocations):
         for allocation in allocations:
             buyer       = allocation.successful_bidder
-            seller      = allocation.property.owner
+            seller      = allocation.property_agent.owner
             final_price = allocation.final_price
 
-            allocation.property.realized_price = allocation.final_price # + np.random.randint(-30000, 30000)
+            allocation.property_agent.realized_price = allocation.final_price # + np.random.randint(-30000, 30000)
             # print(f'Time {self.model.time_step}, Property {allocation.property.unique_id}, Price {allocation.property.realized_price}')
 
-            self.transfer_property(seller, buyer, allocation.property)
+            self.transfer_property(seller, buyer, allocation.property_agent)
 
             if isinstance(buyer, Investor):
-                self.handle_investor_purchase(buyer, allocation.property)
+                self.handle_investor_purchase(buyer, allocation.property_agent)
                 # print('investor buyer')
             elif isinstance(buyer, Person):
-                self.handle_person_purchase(buyer, allocation.property, final_price)
+                self.handle_person_purchase(buyer, allocation.property_agent, final_price)
                 # print('person buyer')
             else:
                 logger.warning('Buyer was neither a person nor an investor.')
@@ -637,7 +645,7 @@ class Realtor(Agent):
             logger.warning('Seller was not retiring, so was not removed from the model.')
 
     def rent_homes(self):
-        """Rent homes listed by investors    to newcomers."""
+        """Rent homes listed by investors to newcomers."""
         logger.debug(f'{len(self.rental_listing)} properties to rent.')
         for rental in self.rental_listing:
             renter = self.model.create_newcomer()
@@ -653,41 +661,45 @@ class Bid:
     def __init__(
         self, 
         bidder: Person, 
-        property: Land, 
+        property_agent: Land, 
         price: Union[float, int], 
-        mortgage: Union[float, int] = 0.0
+        bid_type: str = "",
+        mortgage: Union[float, int] = 0.0,
     ):
         if not isinstance(bidder, Person):
             raise ValueError("Bidder must be of type Person.")
-        
-        if not isinstance(property, Land):
+
+        if not isinstance(property_agent, Land):
             raise ValueError("Property must be of type Land.")
-        
+
         if not isinstance(price, (float, int)):
             raise ValueError("Price must be a numeric value.")
-        
+
+        if not isinstance(bid_type, (str)):
+            raise ValueError("Price must be a numeric value.")
+
         if not isinstance(mortgage, (float, int)):
             raise ValueError("Mortgage must be a numeric value.")
-        
+               
         self.bidder = bidder
-        self.property = property
+        self.property_agent = property_agent
         self.price = price
         self.mortgage = mortgage
+        self.bid_type = type
 
     def __str__(self):
-        return f"Bidder: {self.bidder}, Property: {self.property}, Price: {self.price}, Mortgage: {self.mortgage}"
-
+        return f"Bidder: {self.bidder}, Property: {self.property_agent}, Price: {self.price}, Mortgage: {self.mortgage}, Type: {self.type}"
 
 class Allocation:
     def __init__(
         self, 
-        property: Land, 
+        property_agent: Land, 
         successful_bidder: Person, 
         highest_bid: Union[float, int], 
         second_highest_bid: Union[float, int] = 0.0, 
         final_price: Union[float, int] = 0.0
     ):
-        if not isinstance(property, Land):
+        if not isinstance(property_agent, Land):
             raise ValueError("Property must be of type Land.")
         
         if successful_bidder is not None and not isinstance(successful_bidder, Person):
@@ -702,11 +714,11 @@ class Allocation:
         if not isinstance(final_price, (float, int)):
             raise ValueError("Final price must be a numeric value.")
         
-        self.property = property
+        self.property_agent = property_agent
         self.successful_bidder = successful_bidder
         self.highest_bid = highest_bid
         self.second_highest_bid = second_highest_bid
         self.final_price = final_price
 
     def __str__(self):
-        return f"Property: {self.property}, Successful Bidder: {self.successful_bidder}, Highest Bid: {self.highest_bid}, Second Highest Bid: {self.second_highest_bid}, Final Price: {self.final_price}"
+        return f"Property: {self.property_agent}, Successful Bidder: {self.successful_bidder}, Highest Bid: {self.highest_bid}, Second Highest Bid: {self.second_highest_bid}, Final Price: {self.final_price}"
