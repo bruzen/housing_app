@@ -389,6 +389,7 @@ class City(Model):
             "warranted_price":   lambda a: getattr(a, "warranted_price", None) if isinstance(a, Land) else None,
             "person_vs_investor_owner":   lambda a: getattr(a, "person_vs_investor_owner", None) if isinstance(a, Land) else None,
             "realized_price":   lambda a: getattr(a, "realized_price", None) if isinstance(a, Land) else None,
+            "owner_type":   lambda a: getattr(a, "owner_type", None) if isinstance(a, Land) else None,
         }
         # TODO replace with actual values for "person_vs_investor_owner" and "realized_price":
 

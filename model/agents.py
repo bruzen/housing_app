@@ -72,6 +72,8 @@ class Land(Agent):
         self.person_vs_investor_owner = 0 # random.randint(0, 1) # random.choice([True, False])  # TODO check who owner is and update.
         self.realized_price       = - 1 # random.randint(1, 10000)
         # TODO want to make distance from center, warranted price, realized price.
+        # self.owner_types = np.array(['Person', 'Investor', 'Bank', 'Other']) # TEMP - move to model? Have agent type list?
+        self.owner_type = 'Other'
 
     def step(self):
         # Prepare price data for the current step
@@ -91,6 +93,25 @@ class Land(Agent):
         self.person_vs_investor_owner = np.random.choice([np.random.randint(0, 1), -1], size=None, p=probabilities) # random.randint(0, 1) # random.choice([True, False])  # TODO check who owner is and update.
         # self.realized_price           = -1 # np.random.choice([np.random.uniform(0, 600000), -1], size=None, p=probabilities) # random.randint(1, 10000)
         # TODO do something with old realized prixe
+
+
+
+        # Generate a random index to select an owner type
+        # random_index = np.random.randint(0, len(self.owner_types))
+        # Get the random owner type
+        # self.owner_type = self.owner_types[random_index]
+        if isinstance(self.owner, Person):
+            self.owner_type = 'Person'
+        elif isinstance(self.owner, Investor):
+            self.owner_type = 'Investor'
+        elif isinstance(self.owner, Bank):
+            self.owner_type = 'Bank'
+        else:
+            self.owner_type = 'Other'
+
+        # # TODO TEMP!
+        # if np.random.random() < 0.2:
+        #     self.owner_type = 'Investor'
 
     def calculate_distance_from_center(self, method='euclidean'):
         if method == 'euclidean':
