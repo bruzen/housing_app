@@ -505,30 +505,23 @@ class Bank(Agent):
         delta  = self.model.delta
         p_dot  = self.model.get_p_dot() #(transport_cost)
 
-        # if R_N is None:
-        #     print("Value R_N is None.")
-        # if r is None:
-        #     print("Value r is None.")
-        # if r_target is None:
-        #     print("Value r_target is None.")
-        # if m is None:
-        #     print("Value m is None.")
-        # if p_dot is None:
-        #     print("Value p_dot is None.")
-
-        # if R_N is not None and r is not None and r_target is not None and m is not None and p_dot is not None:
-        R_NT   = ((1 + r)**T - 1) / r * R_N
-        return R_NT / ((1 - m) * r_target/(delta**T) - p_dot)
+        if R_N is not None and r is not None and r_target is not None and m is not None and p_dot is not None:
+            R_NT   = ((1 + r)**T - 1) / r * R_N
+            return R_NT / ((1 - m) * r_target/(delta**T) - p_dot)
+        else:
+            print(f'get_max_bid error Rn {R_N}, r {r}, r_target {r_target}, m {m}, p_dot {p_dot}')
+            return 0. # TODO Temp
 
 class Investor(Agent):
 
-    @property
-    def borrowing_rate(self):
-        self.model.r_target
+    # @property
+    # def borrowing_rate(self):
+    #     self.model.r_target
     
     def __init__(self, unique_id, model, pos, properties_owned = []):
         super().__init__(unique_id, model)
         self.pos = pos
+        self.borrowing_rate = self.model.r_target
 
         # Properties for bank as an asset holder
         # self.property_management_costs = property_management_costs # TODO 
@@ -539,22 +532,20 @@ class Investor(Agent):
 
     def bid(self):
         # """Investors bid on investment properties."""
-        pass
-        # m = 0.9 # TODO fix
-        # r = self.borrowing_rate
-        # r_target = self.model.r_target
-        
-        # for sale_property in self.model.realtor.sale_listing:
-        #     R_N = sale_property.net_rent
-        #     print(R_N)
-        #     P_max_bid = self.model.bank.get_max_bid(R_N, r, r_target, m, sale_property.transport_cost)
-        #     mortgage = m * P_max_bid
-        #     # bid = Bid(bidder=self, sale_property=sale_property, price=P_max_bid, mortgage=mortgage, type="investor")
-        #     logger.debug(f'Bank {self.unique_id} bids {bid.price} for \
-        #                 property {sale_property.unique_id}, if val is positive.')
-        #     if bid.price > 0:
-        #         self.model.realtor.add_bid(self,sale_property,bid.price) #Bid(bidder=self, property=sale_property, price=P_max_bid, mortgage=mortgage)
-    
+        m = 0.9 # TODO fix
+        r = self.borrowing_rate
+        r_target = self.model.r_target
+
+        for sale_property in self.model.realtor.sale_listing:
+            R_N      = sale_property.net_rent
+            P_bid    = self.model.bank.get_max_bid(R_N, r, r_target, m, sale_property.transport_cost)
+            bid_type = 'investor'
+            mortgage = m * P_bid
+            logger.debug(f'Bank {self.unique_id} bids {P_bid} for \
+                        property {sale_property.unique_id}, if val is positive.')
+            if P_bid > 0:
+                self.model.realtor.add_bid(self, sale_property, P_bid, bid_type, mortgage)
+
 class Realtor(Agent):
     """Realtor agents connect sellers, buyers, and renters."""
     def __init__(self, unique_id, model, pos):
@@ -572,8 +563,8 @@ class Realtor(Agent):
 
     def add_bid(self, bidder, sale_property, price, bid_type= "", mortgage=0.):
         # Type check for bidder and property
-        if not isinstance(bidder, Person):
-            raise ValueError("Bidder must be of type Person.")
+        if not isinstance(bidder, (Person, Investor)):
+            raise ValueError("Bidder must be of type Person or Investor.")
         if not isinstance(sale_property, Land):
             raise ValueError("Property must be of type Land.")
         if not isinstance(price, (int, float)):
@@ -615,19 +606,14 @@ class Realtor(Agent):
         for allocation in allocations:
             allocation.sale_property.realized_price = allocation.final_price
             # print(f'Time {self.model.time_step}, Property {allocation.property.unique_id}, Price {allocation.property.realized_price}')
-
             if isinstance(allocation.buyer, Investor):
                 self.handle_investor_purchase(allocation)
-
             elif isinstance(allocation.buyer, Person):
                 self.handle_person_purchase(allocation)
-
             else:
                 logger.warning('Buyer was neither a person nor an investor.')
-
             if isinstance(allocation.seller, Person):
                 self.handle_seller_departure(allocation)
-
             else:
                 logger.warning('Seller was not a person, so was not removed from the model.')
 
@@ -680,24 +666,20 @@ class Realtor(Agent):
 class Bid:
     def __init__(
         self, 
-        bidder: Person, 
+        bidder: Union[Person, Investor],
         sale_property: Land, 
-        price: Union[float, int], 
+        price: Union[float, int],
         bid_type: str = "",
         mortgage: Union[float, int] = 0.0,
     ):
-        if not isinstance(bidder, Person):
+        if not isinstance(bidder, (Person, Investor)):
             raise ValueError("Bidder must be of type Person.")  
-
         if not isinstance(sale_property, Land):
             raise ValueError("Property must be of type Land.")
-
         if not isinstance(price, (float, int)):
             raise ValueError("Price must be a numeric value.")
-
         if not isinstance(bid_type, (str)):
             raise ValueError("Price must be a numeric value.")
-
         if not isinstance(mortgage, (float, int)):
             raise ValueError("Mortgage must be a numeric value.")
                
@@ -722,19 +704,14 @@ class Allocation:
     ):
         if not isinstance(buyer, (Person, Investor)):
             raise ValueError("Successful bidder must be of type Person or Investor.")
-
         if not isinstance(seller, (Person, Investor)):
             raise ValueError("Successful bidder must be of type Person or Investor.")
-
         if not isinstance(sale_property, Land):
             raise ValueError("Property must be of type Land.")
-
         if not isinstance(final_price, (float, int)):
             raise ValueError("Final price must be a numeric value.")
-
         if not isinstance(highest_bid, (float, int)):
             raise ValueError("Highest bid must be a numeric value.")
-
         if not isinstance(second_highest_bid, (float, int)):
             raise ValueError("Second highest bid must be a numeric value.")
 
