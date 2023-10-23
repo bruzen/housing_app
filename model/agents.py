@@ -549,7 +549,7 @@ class Investor(Agent):
         #     print(R_N)
         #     P_max_bid = self.model.bank.get_max_bid(R_N, r, r_target, m, sale_property.transport_cost)
         #     mortgage = m * P_max_bid
-        #     # bid = Bid(bidder=self, property_agent=sale_property, price=P_max_bid, mortgage=mortgage, type="investor")
+        #     # bid = Bid(bidder=self, sale_property=sale_property, price=P_max_bid, mortgage=mortgage, type="investor")
         #     logger.debug(f'Bank {self.unique_id} bids {bid.price} for \
         #                 property {sale_property.unique_id}, if val is positive.')
         #     if bid.price > 0:
@@ -570,103 +570,103 @@ class Realtor(Agent):
     def step(self):
         pass
 
-    def add_bid(self, bidder, property_agent, price, bid_type= "", mortgage=0.):
+    def add_bid(self, bidder, sale_property, price, bid_type= "", mortgage=0.):
         # Type check for bidder and property
         if not isinstance(bidder, Person):
             raise ValueError("Bidder must be of type Person.")
-        if not isinstance(property_agent, Land):
+        if not isinstance(sale_property, Land):
             raise ValueError("Property must be of type Land.")
         if not isinstance(price, (int, float)):
             raise ValueError("Price must be a numeric value (int or float).")
         
-        bid = Bid(bidder, property_agent, price, bid_type, mortgage)
-        self.bids[property_agent].append(bid)
+        bid = Bid(bidder, sale_property, price, bid_type, mortgage)
+        self.bids[sale_property].append(bid)
 
     def sell_homes(self):
+        # TODO maybe if DEBUG?
         # for key, value in self.bids.items():
         #     print(f'Key: {key}')
         #     for bid in value:
         #         print(f'  {bid}')
         
+        # Allocate proeprties based on bids
         allocations = []
-        for property_agent in self.bids.keys():
-            if not isinstance(property_agent, Land):
+        for sale_property in self.bids.keys():
+            if not isinstance(sale_property, Land):
                 raise TypeError(f"Property in self.bids.keys is not of type 'Land'.")
 
-            property_bids = self.bids[property_agent]
+            property_bids = self.bids[sale_property]
             if len(property_bids) > 0:
                 property_bids.sort(key=lambda x: x.price, reverse=True)
                 highest_bid = property_bids[0]
                 second_highest_bid = property_bids[1].price if len(property_bids) > 1 else 0
                 final_price = highest_bid.price
-                allocation = Allocation(property_agent, highest_bid.bidder, highest_bid.price, second_highest_bid, final_price)
+                allocation = Allocation(highest_bid.bidder, sale_property.owner, sale_property, final_price, highest_bid.price, second_highest_bid)
                 # print(allocation)
                 allocations.append(allocation)
-            # TODO compute final price given wtp
+            # TODO *** compute final price given wtp
 
+        # Complete transaction and clear existing bids
         self.complete_transactions(allocations)
         self.bids.clear()
         return allocations # TODO returning for testing. Do we need this? Does it interfere with main code?
 
     def complete_transactions(self, allocations):
         for allocation in allocations:
-            buyer       = allocation.successful_bidder
-            seller      = allocation.property_agent.owner
-            final_price = allocation.final_price
-
-            allocation.property_agent.realized_price = allocation.final_price # + np.random.randint(-30000, 30000)
+            allocation.sale_property.realized_price = allocation.final_price
             # print(f'Time {self.model.time_step}, Property {allocation.property.unique_id}, Price {allocation.property.realized_price}')
 
-            self.transfer_property(seller, buyer, allocation.property_agent)
+            if isinstance(allocation.buyer, Investor):
+                self.handle_investor_purchase(allocation)
 
-            if isinstance(buyer, Investor):
-                self.handle_investor_purchase(buyer, allocation.property_agent)
-                # print('investor buyer')
-            elif isinstance(buyer, Person):
-                self.handle_person_purchase(buyer, allocation.property_agent, final_price)
-                # print('person buyer')
+            elif isinstance(allocation.buyer, Person):
+                self.handle_person_purchase(allocation)
+
             else:
                 logger.warning('Buyer was neither a person nor an investor.')
-                # print('neither buyer')
 
-            # TODO integrate with person buyer case above
-            if isinstance(seller, Person):
-                self.handle_seller_departure(seller)
+            if isinstance(allocation.seller, Person):
+                self.handle_seller_departure(allocation)
+
             else:
                 logger.warning('Seller was not a person, so was not removed from the model.')
 
-    def transfer_property(self, seller, buyer, sale_property):
+    def handle_investor_purchase(self, allocation):
+        """Handles the purchase of a property by an investor."""
+        self.transfer_ownership(allocation.buyer, allocation.seller, allocation.sale_property)
+        logger.debug('Property %s sold to investor.', allocation.sale_property.unique_id)
+        self.rental_listing.append(allocation.sale_property)
+
+    def handle_person_purchase(self, allocation):
+        """Handles the purchase of a property by a person."""
+        self.transfer_ownership(allocation.buyer, allocation.seller, allocation.sale_property)
+        allocation.sale_property.resident = allocation.buyer
+        allocation.buyer.residence = allocation.sale_property
+        self.model.grid.move_agent(allocation.buyer, allocation.sale_property.pos)
+        logger.debug('Property %s sold to newcomer %s.', allocation.sale_property.unique_id, allocation.buyer.unique_id)
+
+        if allocation.buyer.unique_id in self.workforce.newcomers:
+            self.workforce.remove(allocation.buyer, self.workforce.newcomers)
+        # print(f'Time {self.model.time_step} New worker {buyer.unique_id} Loc {sale_property}') # TEMP
+
+    def handle_seller_departure(self, allocation):
+        """Handles the departure of a selling agent."""
+        if allocation.seller.unique_id in self.workforce.retiring:
+            # print('seller removed')
+            allocation.seller.remove()
+        else:
+            logger.warning('Seller was not retiring, so was not removed from the model.')
+
+    def transfer_ownership(self, buyer, seller, sale_property):
         """Transfers ownership of the property from seller to buyer."""
         buyer.properties_owned.append(sale_property)
         seller.properties_owned.remove(sale_property)
         sale_property.owner = buyer
 
-    def handle_investor_purchase(self, buyer, sale_property):
-        """Handles the purchase of a property by an investor."""
-        logger.debug('Property %s sold to investor.', sale_property.unique_id)
-        self.rental_listing.append(sale_property)
-
-    def handle_person_purchase(self, buyer, sale_property, final_price):
-        """Handles the purchase of a property by a person."""
-        sale_property.resident = buyer
-        buyer.residence = sale_property
-        self.model.grid.move_agent(buyer, sale_property.pos)
-        logger.debug('Property %s sold to newcomer %s.', sale_property.unique_id, buyer.unique_id)
-
-        if buyer.unique_id in self.workforce.newcomers:
-            self.workforce.remove(buyer, self.workforce.newcomers)
-
-    def handle_seller_departure(self, seller):
-        """Handles the departure of a selling agent."""
-        if seller.unique_id in self.workforce.retiring:
-            # print('seller removed')
-            seller.remove()
-        else:
-            logger.warning('Seller was not retiring, so was not removed from the model.')
-
     def rent_homes(self):
         """Rent homes listed by investors to newcomers."""
         logger.debug(f'{len(self.rental_listing)} properties to rent.')
+        # print(len(self.rental_listing))
         for rental in self.rental_listing:
             renter = self.model.create_newcomer()
             rental.resident = renter
@@ -681,15 +681,15 @@ class Bid:
     def __init__(
         self, 
         bidder: Person, 
-        property_agent: Land, 
+        sale_property: Land, 
         price: Union[float, int], 
         bid_type: str = "",
         mortgage: Union[float, int] = 0.0,
     ):
         if not isinstance(bidder, Person):
-            raise ValueError("Bidder must be of type Person.")
+            raise ValueError("Bidder must be of type Person.")  
 
-        if not isinstance(property_agent, Land):
+        if not isinstance(sale_property, Land):
             raise ValueError("Property must be of type Land.")
 
         if not isinstance(price, (float, int)):
@@ -702,43 +702,48 @@ class Bid:
             raise ValueError("Mortgage must be a numeric value.")
                
         self.bidder = bidder
-        self.property_agent = property_agent
+        self.sale_property = sale_property
         self.price = price
         self.mortgage = mortgage
         self.bid_type = type
 
     def __str__(self):
-        return f"Bidder: {self.bidder}, Property: {self.property_agent}, Price: {self.price}, Mortgage: {self.mortgage}, Type: {self.type}"
+        return f"Bidder: {self.bidder}, Property: {self.sale_property}, Price: {self.price}, Mortgage: {self.mortgage}, Type: {self.type}"
 
 class Allocation:
     def __init__(
         self, 
-        property_agent: Land, 
-        successful_bidder: Person, 
-        highest_bid: Union[float, int], 
-        second_highest_bid: Union[float, int] = 0.0, 
-        final_price: Union[float, int] = 0.0
+        buyer: Union[Person, Investor],
+        seller: Union[Person, Investor],
+        sale_property: Land,
+        final_price: Union[float, int] = 0.0,
+        highest_bid: Union[float, int] = 0.0,
+        second_highest_bid: Union[float, int] = 0.0,
     ):
-        if not isinstance(property_agent, Land):
+        if not isinstance(buyer, (Person, Investor)):
+            raise ValueError("Successful bidder must be of type Person or Investor.")
+
+        if not isinstance(seller, (Person, Investor)):
+            raise ValueError("Successful bidder must be of type Person or Investor.")
+
+        if not isinstance(sale_property, Land):
             raise ValueError("Property must be of type Land.")
-        
-        if successful_bidder is not None and not isinstance(successful_bidder, Person):
-            raise ValueError("Successful bidder must be of type Person or None.")
-        
-        if not isinstance(highest_bid, (float, int)):
-            raise ValueError("Highest bid must be a numeric value.")
-        
-        if not isinstance(second_highest_bid, (float, int)):
-            raise ValueError("Second highest bid must be a numeric value.")
-        
+
         if not isinstance(final_price, (float, int)):
             raise ValueError("Final price must be a numeric value.")
-        
-        self.property_agent = property_agent
-        self.successful_bidder = successful_bidder
-        self.highest_bid = highest_bid
+
+        if not isinstance(highest_bid, (float, int)):
+            raise ValueError("Highest bid must be a numeric value.")
+
+        if not isinstance(second_highest_bid, (float, int)):
+            raise ValueError("Second highest bid must be a numeric value.")
+
+        self.buyer              = buyer
+        self.seller             = seller
+        self.sale_property      = sale_property
+        self.final_price        = final_price
+        self.highest_bid        = highest_bid
         self.second_highest_bid = second_highest_bid
-        self.final_price = final_price
 
     def __str__(self):
-        return f"Property: {self.property_agent}, Successful Bidder: {self.successful_bidder}, Highest Bid: {self.highest_bid}, Second Highest Bid: {self.second_highest_bid}, Final Price: {self.final_price}"
+        return f"Property: {self.sale_property}, Successful Bidder: {self.buyer}, Highest Bid: {self.highest_bid}, Second Highest Bid: {self.second_highest_bid}, Final Price: {self.final_price}"
