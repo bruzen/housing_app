@@ -91,10 +91,8 @@ class Land(Agent):
 
         # TODO random values should use model's random number generator
         self.person_vs_investor_owner = np.random.choice([np.random.randint(0, 1), -1], size=None, p=probabilities) # random.randint(0, 1) # random.choice([True, False])  # TODO check who owner is and update.
-        # self.realized_price           = -1 # np.random.choice([np.random.uniform(0, 600000), -1], size=None, p=probabilities) # random.randint(1, 10000)
+        self.realized_price           = -1 # np.random.choice([np.random.uniform(0, 600000), -1], size=None, p=probabilities) # random.randint(1, 10000)
         # TODO do something with old realized prixe
-
-
 
         # Generate a random index to select an owner type
         # random_index = np.random.randint(0, len(self.owner_types))
@@ -104,8 +102,6 @@ class Land(Agent):
             self.owner_type = 'Person'
         elif isinstance(self.owner, Investor):
             self.owner_type = 'Investor'
-        elif isinstance(self.owner, Bank):
-            self.owner_type = 'Bank'
         else:
             self.owner_type = 'Other'
 
@@ -264,37 +260,52 @@ class Person(Agent):
         m = 0.8
 
         for sale_property in self.model.realtor.sale_listing:
-            # Max desired bid
-            R_N = sale_property.net_rent
-            P_max_bid = self.model.bank.get_max_bid(R_N, r, r_target, m, sale_property.transport_cost)
 
-            mortgage_share_max = m * P_max_bid
-            mortgage_total_max = M
+            #First Calculate value of purchase (max bid)
+            R_N      = sale_property.net_rent # Need net rent for P_bid
+            P_bid    = self.model.bank.get_max_bid(R_N, r, r_target, m, sale_property.transport_cost)
+            bid_type = 'value_limited'
 
-            # Agents cannot exceed any of their constraints
-            if mortgage_share_max < mortgage_total_max:
-                mortgage = m * P_max_bid
-                # Mortgage share limited
-                if mortgage_share_max + S < P_max_bid:
-                    P_bid = mortgage_share_max + S
-                    bid_type = 'mortgage_share_limited'
-                # Max bid limited
-                else:
-                    P_bid = P_max_bid
-                    bid_type = 'max_bid_limited'
-            else:
-                mortgage = M
-                # Mortgage total limited
-                if mortgage_total_max + S < P_max_bid:
-                    P_bid = mortgage_total_max + S
-                    bid_type = 'mortgage_total_limited'
-                # Max bid limited
-                else:
-                    P_bid = P_max_bid
-                    bid_type = 'max_bid_limited'
+            if S/(1-m) <= P_bid:
+                bid_type = 'equity_limited'
+                P_bid = S/(1-m)
+
+            if (0.28 * (wage + r * S) / r_prime)  <= P_bid: # Note not elif - this replaces the above
+                bid_type = 'income_limited'
+                P_bid = 0.28 * (wage + r * S) / r_prime
 
             if P_bid > 0:
-                self.model.realtor.add_bid(self, sale_property, P_bid, bid_type, mortgage)
+                self.model.realtor.add_bid(self, sale_property, P_bid, bid_type)
+
+            # # Old logic, replaced by version above
+            # # Max desired bid
+            # R_N = sale_property.net_rent
+            # # P_max_bid = self.model.bank.get_max_bid(R_N, r, r_target, m, sale_property.transport_cost)
+
+            # mortgage_share_max = m * P_max_bid # TODO this should have S in it. 
+            # mortgage_total_max = M
+
+            # # Agents cannot exceed any of their constraints
+            # if mortgage_share_max < mortgage_total_max:
+            #     # Mortgage share limited
+            #     if mortgage_share_max + S < P_max_bid:
+            #         P_bid = mortgage_share_max + S
+            #         bid_type = 'mortgage_share_limited'
+            #     # Max bid limited
+            #     else:
+            #         P_bid = P_max_bid
+            #         bid_type = 'max_bid_limited'
+            #     mortgage = P_bid - S # TODO is this right? what about savings. 
+            # else:
+            #     mortgage = M
+            #     # Mortgage total limited
+            #     if mortgage_total_max + S < P_max_bid:
+            #         P_bid = mortgage_total_max + S
+            #         bid_type = 'mortgage_total_limited'
+            #     # Max bid limited
+            #     else:
+            #         P_bid = P_max_bid
+            #         bid_type = 'max_bid_limited'
 
     def get_wealth(self):
         # TODO Wealth is properties owned, minuse mortgages owed, plus savings.
