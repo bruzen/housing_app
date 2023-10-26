@@ -263,14 +263,14 @@ class Person(Agent):
 
             #First Calculate value of purchase (max bid)
             R_N      = sale_property.net_rent # Need net rent for P_bid
-            P_bid    = self.model.bank.get_max_bid(R_N, r, r_target, m, sale_property.transport_cost)
             bid_type = 'value_limited'
+            P_bid    = self.model.bank.get_max_bid(R_N, r, r_target, m, sale_property.transport_cost)
 
             if S/(1-m) <= P_bid:
                 bid_type = 'equity_limited'
                 P_bid = S/(1-m)
 
-            if (0.28 * (wage + r * S) / r_prime)  <= P_bid: # Note not elif - this replaces the above
+            if (0.28 * (wage + r * S) / r_prime)  <= P_bid:
                 bid_type = 'income_limited'
                 P_bid = 0.28 * (wage + r * S) / r_prime
 
@@ -518,7 +518,9 @@ class Bank(Agent):
 
         if R_N is not None and r is not None and r_target is not None and m is not None and p_dot is not None:
             R_NT   = ((1 + r)**T - 1) / r * R_N
-            return R_NT / ((1 - m) * r_target/(delta**T) - p_dot)
+            # return R_NT / ((1 - m) * r_target/(delta**T) - p_dot) 
+            return R_NT / ((1 - m) * r_target/(delta**T) - p_dot +(1+r)**T*m) # Revised denominator from eqn 6:20
+
         else:
             print(f'get_max_bid error Rn {R_N}, r {r}, r_target {r_target}, m {m}, p_dot {p_dot}')
             return 0. # TODO Temp
