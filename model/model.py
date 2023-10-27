@@ -156,8 +156,9 @@ class City(Model):
         self.max_mortgage_share        = self.params['max_mortgage_share']
         self.ability_to_carry_mortgage = self.params['ability_to_carry_mortgage']
         self.wealth_sensitivity        = self.params['wealth_sensitivity']
-        self.p_dot       = 0. # Price adjustment rate. TODO fix here? rename?
-        self.price_model = 0. # TODO need to fix type?
+        self.p_dot                     = 0.0 # Price adjustment rate. TODO fix here? rename?
+        self.warranted_price_model     = None
+        self.realized_price_model      = None
 
         # Add workforce manager to track workers, newcomers, and retiring agents
         self.workforce = Workforce()
@@ -250,10 +251,9 @@ class City(Model):
         # Land records locational rents and calculates price forecast
         self.schedule.step_breed(Land)
         new_df = pd.DataFrame(self.step_price_data)
-        self.price_data = pd.concat([self.price_data, new_df], 
+        self.warranted_price_data = pd.concat([self.warranted_price_data, new_df], 
                                           ignore_index=True)
 
-        self.price_model = self.get_price_model()
         self.p_dot       = self.get_p_dot()
 
         # Firms update wages
@@ -396,10 +396,12 @@ class City(Model):
         self.datacollector  = DataCollector(model_reporters = model_reporters,
                                             agent_reporters = agent_reporters)
 
-
-        self.step_price_data = [] # for forecasting
-        self.price_data = pd.DataFrame(
-             columns=['id', 'warranted_price', 'time_step', 'transport_cost', 'wage'])   
+        # Price data for forecasting
+        self.warranted_price_data = pd.DataFrame(
+             columns=['land_id', 'warranted_price', 'time_step', 'transport_cost', 'wage'])   
+        self.step_price_data = []
+        self.realized_price_data  = pd.DataFrame(
+             columns=['land_id', 'realized_price', 'time_step', 'transport_cost', 'wage']) 
 
         # Create the 'output_data' subfolder if it doesn't exist
         if not os.path.exists(self.subfolder):
@@ -520,12 +522,12 @@ class City(Model):
     def get_distance_to_center(self, pos):
         return distance.euclidean(pos, self.center)
 
-    # If there were more data
+    # If there were more data, we might use k-folds
     # def get_price_model(self):
-    #     x = self.price_data[['time_step', 'transport_cost', 'wage']]
+    #     x = self.warranted_price_data[['time_step', 'transport_cost', 'wage']]
 
     #     # Dependent variable
-    #     y = self.price_data['warranted_price']
+    #     y = self.warranted_price_data['warranted_price']
 
     #     # Define the number of folds for cross-validation
     #     num_folds = 5
@@ -570,32 +572,81 @@ class City(Model):
     #         )
     #     return p_dot
 
-    def get_price_model(self):
-        # TODO use realized price, not just warranted
-        # Independent variables
-        x = self.price_data[['time_step','transport_cost','wage']]
-        # x = self.price_data[['time_step']]
-        # Dependent variable
-        y = self.price_data['warranted_price']
+    # # Alternative model, using statsmodels
+    # x = sm.add_constant(x) # adding a constant
+    # model = sm.OLS(y, x).fit()
+    # predictions = model.predict(x)
 
-        # with sklearn
-        regr = LinearRegression()
-        regr.fit(x, y)
-        # # with statsmodels
-        # x = sm.add_constant(x) # adding a constant
-        # model = sm.OLS(y, x).fit()
-        # predictions = model.predict(x)   
-        return(regr)
+    def get_warranted_price_model(self):
+        x_w = self.warranted_price_data[['time_step','transport_cost','wage']] # Independent variables
+        warranted_price       = self.warranted_price_data['warranted_price']   # Dependent variable
+        warranted_price_model = LinearRegression()
+        warranted_price_model.fit(x_w, warranted_price)
+        return warranted_price_model
+
+    def get_realized_price_model(self):
+        x_r = self.realized_price_data[['time_step','transport_cost','wage']] # Independent variables
+        realized_price       = self.realized_price_data['realized_price']     # Dependent variable
+        realized_price_model = LinearRegression()
+        realized_price_model.fit(x_r, realized_price)
+        return realized_price_model
 
     def get_p_dot(self):
-        """Rate of growth for property price"""
-        # Make p_dot zero for the first 10 steps or so.
-        if self.time_step < 3:
+        time_zero = 6
+        if self.time_step < time_zero:
             p_dot = 0
-        else: 
-            # self.p_dot = regr.coef_[0] # slope
-            p_dot = self.price_model.coef_[0] # slope
+            print('p-dot 1')
+        else:
+            # Predict rate of change using the warranted price model
+            print(f'Len warranted_price_data {len(self.warranted_price_data)}')
+            warranted_price_model = self.get_warranted_price_model()
+            if warranted_price_model is None:
+                # Handle the case where the model is not created or trained
+                print("Error: Warranted price model is not initialized.")
+                p_dot_warranted_price = 0
+            else:
+                p_dot_warranted_price = warranted_price_model.coef_[0]
+
+            # Predict rate of change using the realized price model        
+            if len(self.realized_price_data) > 10:
+                print(f'Len realized_price_data {len(self.realized_price_data)}')
+                realized_price_model = self.get_realized_price_model()
+                if realized_price_model is None:
+                    # Handle the case where the model is not created or trained
+                    print("Error: Realized price model is not initialized.")
+                    p_dot_realized_price = 0
+                else:
+                    p_dot_realized_price = realized_price_model.coef_[0]
+            else:
+                p_dot_realized_price = 0
+
+            # The influence of the weighted model prediction increases over time
+            time_threshold = time_zero * 2
+            w_w = min(1.0, self.time_step / time_threshold)
+
+            # The influence of p_dot_realized_price on p_dot increases as the quantity of realized price data grows. 
+            data_threshold = 100
+            w_r = min(len(self.realized_price_data) / data_threshold, 1.0)
+
+            # Alternative p_dot calculations
+            # p_dot = .001 
+            # p_dot = p * p_dot_warranted_price + (1 - p) * p_dot_realized_price # Old without, 0 term
+            # TODO consider sigmoid transitions
+
+            # Linearly interpolate between 0 and the weighted rate of change
+            p_dot = w_w * (w_r * p_dot_warranted_price + (1 - w_r) * p_dot_realized_price)
+            
         return p_dot
+
+# TODO MAKE A WEGHTED MODE FOR THE TWO VARIABLES
+# Assume you have the trained models regr1 and regr2
+# Assume you have data for new_data1 and new_data2 for both models
+# p is the weight parameter (a value between 0 and 1)
+
+
+
+# Blend the predictions using the weight parameter p
+
 
 class Workforce:
     """Manages a dictionary of working agents."""

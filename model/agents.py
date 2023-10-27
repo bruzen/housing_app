@@ -70,7 +70,7 @@ class Land(Agent):
         self.distance_from_center = self.calculate_distance_from_center()
         self.transport_cost       = self.calculate_transport_cost()
         self.person_vs_investor_owner = 0 # random.randint(0, 1) # random.choice([True, False])  # TODO check who owner is and update.
-        self.realized_price       = - 1 # random.randint(1, 10000)
+        self.realized_price           = - 1 # random.randint(1, 10000)
         # TODO want to make distance from center, warranted price, realized price.
         # self.owner_types = np.array(['Person', 'Investor', 'Bank', 'Other']) # TEMP - move to model? Have agent type list?
         self.owner_type = 'Other'
@@ -78,7 +78,7 @@ class Land(Agent):
     def step(self):
         # Prepare price data for the current step
         price_data = {
-            'id': self.unique_id,
+            'land_id': self.unique_id,
             'warranted_price': self.warranted_price,
             'time_step': self.model.time_step,
             'transport_cost': self.transport_cost,
@@ -514,7 +514,7 @@ class Bank(Agent):
     def get_max_bid(self, R_N, r, r_target, m, transport_cost):
         T      = self.model.mortgage_period
         delta  = self.model.delta
-        p_dot  = self.model.get_p_dot() #(transport_cost)
+        p_dot  = self.model.p_dot #(transport_cost)
 
         if R_N is not None and r is not None and r_target is not None and m is not None and p_dot is not None:
             R_NT   = ((1 + r)**T - 1) / r * R_N
@@ -617,7 +617,19 @@ class Realtor(Agent):
 
     def complete_transactions(self, allocations):
         for allocation in allocations:
+            # Record data for data_collection
             allocation.sale_property.realized_price = allocation.final_price
+
+            # Record data for forecasting
+            new_row = {
+            'land_id':        allocation.sale_property.unique_id,
+            'realized_price': allocation.final_price,
+            'time_step':      self.model.time_step,
+            'transport_cost': allocation.sale_property.transport_cost,
+            'wage':           self.model.firm.wage,
+            }
+            self.model.realized_price_data = self.model.realized_price_data.append(new_row, ignore_index=True)
+
             # print(f'Time {self.model.time_step}, Property {allocation.property.unique_id}, Price {allocation.property.realized_price}')
             if isinstance(allocation.buyer, Investor):
                 self.handle_investor_purchase(allocation)
