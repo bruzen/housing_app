@@ -236,12 +236,16 @@ class Person(Agent):
             self.savings += self.model.savings_per_step # TODO debt, wealth
             self.wealth  = self.get_wealth()
         elif self.unique_id in self.workforce.retiring:
-            logger.debug(f'Retiring agent {self.unique_id} still in model.')
-            print(f'Retiring agent {self.unique_id} still in model.')
+            if (self.residence):
+                logger.debug(f'Retiring agent with residence {self.unique_id} still in model.')
+                # logger.debug(f'Retiring agent with residence {self.unique_id} still in model.')
+            else:
+                logger.debug(f'Retiring agent witout residence {self.unique_id} still in model.')
+                # logger.debug(f'Retiring agent without residence {self.unique_id} still in model.')
+            # TODO remove agents if they sell - what about if they retire.
 
         else:
             logger.debug(f'Agent {self.unique_id} has no residence.')
-            print(f'Agent {self.unique_id} has no residence.')
 
     def bid(self):
         """Newcomers bid on properties for use or investment value."""
@@ -522,7 +526,7 @@ class Bank(Agent):
             return R_NT / ((1 - m) * r_target/(delta**T) - p_dot +(1+r)**T*m) # Revised denominator from eqn 6:20
 
         else:
-            print(f'get_max_bid error Rn {R_N}, r {r}, r_target {r_target}, m {m}, p_dot {p_dot}')
+            logger.error(f'Get_max_bid error Rn {R_N}, r {r}, r_target {r_target}, m {m}, p_dot {p_dot}')
             return 0. # TODO Temp
 
 class Investor(Agent):
@@ -589,9 +593,9 @@ class Realtor(Agent):
     def sell_homes(self):
         # TODO maybe if DEBUG?
         # for key, value in self.bids.items():
-        #     print(f'Key: {key}')
+        #     logger.debug(f'Key: {key}')
         #     for bid in value:
-        #         print(f'  {bid}')
+        #         logger.debug(f'  {bid}')
         
         # Allocate proeprties based on bids
         allocations = []
@@ -606,7 +610,6 @@ class Realtor(Agent):
                 second_highest_bid = property_bids[1].price if len(property_bids) > 1 else 0
                 final_price = highest_bid.price
                 allocation = Allocation(highest_bid.bidder, sale_property.owner, sale_property, final_price, highest_bid.price, second_highest_bid)
-                # print(allocation)
                 allocations.append(allocation)
             # TODO *** compute final price given wtp
 
@@ -630,7 +633,7 @@ class Realtor(Agent):
             }
             self.model.realized_price_data = self.model.realized_price_data.append(new_row, ignore_index=True)
 
-            # print(f'Time {self.model.time_step}, Property {allocation.property.unique_id}, Price {allocation.property.realized_price}')
+            # logger.debug(f'Time {self.model.time_step}, Property {allocation.property.unique_id}, Price {allocation.property.realized_price}')
             if isinstance(allocation.buyer, Investor):
                 self.handle_investor_purchase(allocation)
             elif isinstance(allocation.buyer, Person):
@@ -658,12 +661,12 @@ class Realtor(Agent):
 
         if allocation.buyer.unique_id in self.workforce.newcomers:
             self.workforce.remove(allocation.buyer, self.workforce.newcomers)
-        # print(f'Time {self.model.time_step} New worker {buyer.unique_id} Loc {sale_property}') # TEMP
+        # logger.debug(f'Time {self.model.time_step} New worker {buyer.unique_id} Loc {sale_property}') # TEMP
 
     def handle_seller_departure(self, allocation):
         """Handles the departure of a selling agent."""
         if allocation.seller.unique_id in self.workforce.retiring:
-            # print('seller removed')
+            logger.debug(f'Selling agent {self.unique_id} removed.')
             allocation.seller.remove()
         else:
             logger.warning('Seller was not retiring, so was not removed from the model.')
@@ -677,7 +680,7 @@ class Realtor(Agent):
     def rent_homes(self):
         """Rent homes listed by investors to newcomers."""
         logger.debug(f'{len(self.rental_listing)} properties to rent.')
-        # print(len(self.rental_listing))
+        # logger.debug(len(self.rental_listing))
         for rental in self.rental_listing:
             renter = self.model.create_newcomer()
             rental.resident = renter

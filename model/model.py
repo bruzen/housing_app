@@ -265,10 +265,6 @@ class City(Model):
         for i in self.workforce.retiring:
             # Add agents to replace retiring workers
             person = self.create_newcomer()
-            # if (person.unique_id in self.workforce.newcomers):
-            #     print('new agent in newcomers')
-            # else:
-            #     print('new agent not in newcomers')
             person.bid()
 
         # Investors bid on properties
@@ -595,25 +591,24 @@ class City(Model):
         time_zero = 6
         if self.time_step < time_zero:
             p_dot = 0
-            print('p-dot 1')
         else:
             # Predict rate of change using the warranted price model
-            print(f'Len warranted_price_data {len(self.warranted_price_data)}')
+            # logger.debug(f'Len warranted_price_data {len(self.warranted_price_data)}')
             warranted_price_model = self.get_warranted_price_model()
             if warranted_price_model is None:
                 # Handle the case where the model is not created or trained
-                print("Error: Warranted price model is not initialized.")
+                logger.error("Error: Warranted price model is not initialized.")
                 p_dot_warranted_price = 0
             else:
                 p_dot_warranted_price = warranted_price_model.coef_[0]
 
             # Predict rate of change using the realized price model        
             if len(self.realized_price_data) > 10:
-                print(f'Len realized_price_data {len(self.realized_price_data)}')
+                # logger.debug(f'Len realized_price_data {len(self.realized_price_data)}')
                 realized_price_model = self.get_realized_price_model()
                 if realized_price_model is None:
                     # Handle the case where the model is not created or trained
-                    print("Error: Realized price model is not initialized.")
+                    logger.error("Error: Realized price model is not initialized.")
                     p_dot_realized_price = 0
                 else:
                     p_dot_realized_price = realized_price_model.coef_[0]
