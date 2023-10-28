@@ -76,6 +76,9 @@ class Land(Agent):
         self.owner_type = 'Other'
 
     def step(self):
+        if not isinstance(self.owner, (Person, Investor)):
+            logger.warning(f'Land {self.unique_id} owner not a person or investor: {self.owner}')
+
         # Prepare price data for the current step
         price_data = {
             'land_id': self.unique_id,
@@ -202,8 +205,7 @@ class Person(Agent):
         if (self.unique_id in self.workforce.newcomers):
             if (self.residence == None):
                 if (self.count > 0):
-                    logger.debug(f'Newcomer {self.unique_id} removed, who \
-                                   owns {self.properties_owned}.')
+                    logger.debug(f'Newcomer {self.unique_id} removed, who owns {self.properties_owned}.')
                     self.remove()
             else:
                 logger.error(f'Newcomer {self.unique_id} has a \
@@ -237,11 +239,13 @@ class Person(Agent):
             self.wealth  = self.get_wealth()
         elif self.unique_id in self.workforce.retiring:
             if (self.residence):
-                logger.debug(f'Retiring agent with residence {self.unique_id} still in model.')
-                # logger.debug(f'Retiring agent with residence {self.unique_id} still in model.')
+                if premium > self.residence.transport_cost:
+                    logger.debug(f'Retiring agent {self.unique_id}, working, with residence, properties owned {len(self.properties_owned)} still in model.')
+                else:
+                    logger.debug(f'Retiring agent {self.unique_id}, not working, with residence, still in model.')
+
             else:
-                logger.debug(f'Retiring agent witout residence {self.unique_id} still in model.')
-                # logger.debug(f'Retiring agent without residence {self.unique_id} still in model.')
+                logger.debug(f'Retiring agent {self.unique_id}, witout residence, still in model.')
             # TODO remove agents if they sell - what about if they retire.
 
         else:
@@ -312,7 +316,7 @@ class Person(Agent):
             #         bid_type = 'max_bid_limited'
 
     def get_wealth(self):
-        # TODO Wealth is properties owned, minuse mortgages owed, plus savings.
+        # TODO Wealth is properties owned, minus mortgages owed, plus savings.
         return self.savings
 
     def remove(self):
@@ -558,8 +562,7 @@ class Investor(Agent):
             P_bid    = self.model.bank.get_max_bid(R_N, r, r_target, m, sale_property.transport_cost)
             bid_type = 'investor'
             mortgage = m * P_bid
-            logger.debug(f'Bank {self.unique_id} bids {P_bid} for \
-                        property {sale_property.unique_id}, if val is positive.')
+            logger.debug(f'Bank {self.unique_id} bids {P_bid} for property {sale_property.unique_id}, if val is positive.')
             if P_bid > 0:
                 self.model.realtor.add_bid(self, sale_property, P_bid, bid_type, mortgage)
 
@@ -642,8 +645,9 @@ class Realtor(Agent):
                 logger.warning('Buyer was neither a person nor an investor.')
             if isinstance(allocation.seller, Person):
                 self.handle_seller_departure(allocation)
+                logger.warning(f'Seller {allocation.seller.unique_id} was a person, removed from the model.')
             else:
-                logger.warning('Seller was not a person, so was not removed from the model.')
+                logger.warning(f'Seller {allocation.seller.unique_id} was not a person, so was not removed from the model.')
 
     def handle_investor_purchase(self, allocation):
         """Handles the purchase of a property by an investor."""

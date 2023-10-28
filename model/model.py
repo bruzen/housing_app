@@ -245,7 +245,7 @@ class City(Model):
 
         self.time_step += 1
 
-        logger.debug(f'Step {self.schedule.steps}.')
+        logger.info(f'\n \n \n Step {self.schedule.steps}. \n')
         self.step_price_data.clear()
 
         # Land records locational rents and calculates price forecast
