@@ -69,7 +69,6 @@ class Land(Agent):
         self.owner                = owner
         self.distance_from_center = self.calculate_distance_from_center()
         self.transport_cost       = self.calculate_transport_cost()
-        self.person_vs_investor_owner = 0 # random.randint(0, 1) # random.choice([True, False])  # TODO check who owner is and update.
         self.realized_price           = - 1 # random.randint(1, 10000)
         # TODO want to make distance from center, warranted price, realized price.
         # self.owner_types = np.array(['Person', 'Investor', 'Bank', 'Other']) # TEMP - move to model? Have agent type list?
@@ -77,7 +76,7 @@ class Land(Agent):
 
     def step(self):
         if not isinstance(self.owner, (Person, Investor)):
-            logger.warning(f'Land {self.unique_id} owner not a person or investor: {self.owner}')
+            logger.warning(f'Land {self.unique_id} owner not a person or investor: {self.owner}') # Note: will warn if no owner
 
         # Prepare price data for the current step
         price_data = {
@@ -86,14 +85,11 @@ class Land(Agent):
             'time_step': self.model.time_step,
             'transport_cost': self.transport_cost,
             'wage': self.model.firm.wage
-       }
+        }
+        
         # Add the price data to the model's step price data
         self.model.step_price_data.append(price_data)
 
-        probabilities = [0.01, 0.99]
-
-        # TODO random values should use model's random number generator
-        self.person_vs_investor_owner = np.random.choice([np.random.randint(0, 1), -1], size=None, p=probabilities) # random.randint(0, 1) # random.choice([True, False])  # TODO check who owner is and update.
         self.realized_price           = -1 # np.random.choice([np.random.uniform(0, 600000), -1], size=None, p=probabilities) # random.randint(1, 10000)
         # TODO do something with old realized prixe
 
@@ -208,9 +204,7 @@ class Person(Agent):
                     logger.debug(f'Newcomer {self.unique_id} removed, who owns {self.properties_owned}.')
                     self.remove()
             else:
-                logger.error(f'Newcomer {self.unique_id} has a \
-                               residence {self.residence.unique_id}, \
-                               but was not removed from newcomer list.')
+                logger.error(f'Newcomer {self.unique_id} has a residence {self.residence.unique_id}, but was not removed from newcomer list.')
         
         elif (self.residence) and (self.unique_id not in self.workforce.retiring):
             # If it is worthwhile work
@@ -547,9 +541,6 @@ class Investor(Agent):
         # Properties for bank as an asset holder
         # self.property_management_costs = property_management_costs # TODO 
         self.properties_owned      = properties_owned
-
-    # def step(self):
-    #     self.bid()
 
     def bid(self):
         # """Investors bid on investment properties."""
