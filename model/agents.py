@@ -75,6 +75,12 @@ class Land(Agent):
         self.owner_type = 'Other'
 
     def step(self):
+
+        if self.check_owners_match():
+                self.model.owner_matches += 1
+        else:
+            self.model.owner_doesnt_match += 1
+
         if not isinstance(self.owner, (Person, Investor)):
             logger.warning(f'Land {self.unique_id} owner not a person or investor: {self.owner}') # Note: will warn if no owner
 
@@ -120,6 +126,16 @@ class Land(Agent):
     def calculate_transport_cost(self):
         cost = self.distance_from_center * self.model.transport_cost_per_dist
         return cost
+
+    def check_owners_match(self):
+        if self.unique_id == self.owner.properties_owned[0].unique_id:
+            # logger.warning(f'Land {self.unique_id} owner matchs owner agents properties owned: {self.owner.properties_owned}. Property owner: {self.owner}')
+            if self != self.owner.properties_owned[0]:
+                logger.error(f'check_owners_match errors not caught ids match but agents dont')
+            return True
+        else:
+            # logger.warning(f'Land {self.unique_id} owner does not match owner agents properties owned: {self.owner.properties_owned}. Property owner: {self.owner}')
+            return False
 
     def __str__(self):
         return f"Land {self.unique_id} (Dist. {self.distance_from_center}, Pw {self.warranted_price})"
