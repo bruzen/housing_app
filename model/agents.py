@@ -615,7 +615,6 @@ class Realtor(Agent):
         #     logger.debug(f'Key: {key}')
         #     for bid in value:
         #         logger.debug(f'  {bid}')
-        
 
         # unique_ids = [str(bid.sale_property.unique_id) for bid in bid_list]
         # property_string = ', '.join(unique_ids)
@@ -625,12 +624,6 @@ class Realtor(Agent):
         # Allocate proeprties based on bids
         allocations = []
 
-        # # Access and print the data
-
-            #     print(listing)
-            #     for bid in bids:
-            #         print(bid)
-            # # for listing in self.bids.keys():
             # # TODO TEMP SHOULD BE ENFORCED ELSEWHERE
             # if not isinstance(listing.sale_property, Land):
             #     logger.error(f'listing in sell_homes {listing.sale_property} is not Land')
@@ -744,7 +737,6 @@ class Realtor(Agent):
     def rent_homes(self):
         """Rent homes listed by investors to newcomers."""
         logger.debug(f'{len(self.rental_listings)} properties to rent.')
-        # logger.debug(len(self.rental_listings))
         for rental in self.rental_listings:
             renter = self.model.create_newcomer()
             rental.resident = renter
@@ -762,7 +754,6 @@ class Listing:
         seller: Union[Person, Investor],
         sale_property: Land, 
         list_price: Union[float, int] = 0.0,
-        # bids TODO find bids -- add bids
     ):
         if not isinstance(seller, (Person, Investor)):
             logger.error(f'Bidder in Listing {seller.unique_id} is not a Person or Investor, {seller}')
@@ -782,26 +773,17 @@ class Bid:
     def __init__(
         self, 
         bidder: Union[Person, Investor],
-        # seller: Union[Person, Investor], 
-        # sale_property: Land, 
         bid_price: Union[float, int],
         bid_type: str = '',
     ):
         if not isinstance(bidder, (Person, Investor)):
             logger.error(f'Bidder in Bid {bidder.unique_id} is not a Person or Investor, {bidder}')
-        # if not isinstance(seller, (Person, Investor)):
-        #     logger.error(f'Bidder in Bid {seller.unique_id} is not a Person or Investor, {seller}')
-        # if not isinstance(sale_property, Land):
-        #     logger.error(f'sale_property in Bid {sale_property.unique_id} is not Land, {sale_property}')
-        # elif isinstance(sale_property.owner, Investor):
-        #     logger.error(f'sale_property in Bid {sale_property.unique_id} owner in add_bid is an Investor')
         if not isinstance(bid_price, (float, int)):
             logger.error(f'Price in Bid must be a numeric value.')
         if not isinstance(bid_type, (str)):
             logger.error(f'Price in Bid must be a numeric value.')
                
         self.bidder = bidder
-        # self.sale_property = sale_property
         self.bid_price = bid_price
         self.bid_type = bid_type
 
@@ -831,10 +813,10 @@ class Allocation:
         if not isinstance(second_highest_bid_price, (float, int)):
             logger.error(f'Second highest bid in Allocation must be a numeric value.')
 
-        self.buyer              = buyer
-        self.seller             = seller
-        self.sale_property      = sale_property
-        self.final_price        = final_price
+        self.buyer                    = buyer
+        self.seller                   = seller
+        self.sale_property            = sale_property
+        self.final_price              = final_price
         self.highest_bid_price        = highest_bid_price
         self.second_highest_bid_price = second_highest_bid_price
 
