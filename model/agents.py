@@ -75,11 +75,11 @@ class Land(Agent):
         self.owner_type = 'Other'
 
     def step(self):
-
         if self.check_owners_match():
                 self.model.owner_matches += 1
         else:
             self.model.owner_doesnt_match += 1
+            logger.warning(f'Owners dont match for property: {self.unique_id}. Propertys owner {self.owner}. Owners properties {self.owner.properties_owned}')
 
         if not isinstance(self.owner, (Person, Investor)):
             logger.warning(f'Land {self.unique_id} owner not a person or investor: {self.owner}') # Note: will warn if no owner
@@ -128,15 +128,11 @@ class Land(Agent):
         return cost
 
     def check_owners_match(self):
-        if self.unique_id == self.owner.properties_owned[0].unique_id:
-            # logger.warning(f'Land {self.unique_id} owner matchs owner agents properties owned: {self.owner.properties_owned}. Property owner: {self.owner}')
-            if self != self.owner.properties_owned[0]:
-                logger.error(f'check_owners_match errors not caught ids match but agents dont')
-            return True
-        else:
-            # logger.warning(f'Land {self.unique_id} owner does not match owner agents properties owned: {self.owner.properties_owned}. Property owner: {self.owner}')
-            return False
-
+        for owned_property in self.owner.properties_owned:
+            if self.unique_id == owned_property.unique_id:
+                return True
+        return False
+ 
     def __str__(self):
         return f'Land {self.unique_id} (Dist. {self.distance_from_center}, Pw {self.warranted_price})'
 
@@ -189,7 +185,6 @@ class Person(Agent):
         self.bank                = self.model.bank 
         self.amenity             = 0.
 
-
         # If the agent initially owns a property, set residence and owners
         if self.residence:
             self.properties_owned.append(self.residence)
@@ -213,62 +208,83 @@ class Person(Agent):
         self.working_period     += 1
 
         premium = self.model.firm.wage_premium
-        # Newcomers, who don't find a home, leave the city
-        if (self.unique_id in self.workforce.newcomers):
-            if (self.residence == None):
-                if (self.count > 0):
-                    logger.debug(f'Newcomer {self.unique_id} removed, who owns {self.properties_owned}.')
+        # TODO check location is same as residence.
+
+        # People without residences, removed
+        if not isinstance (self.residence, Land):            
+            # Newcomers, who don't find a home, leave the city
+            if (self.unique_id in self.workforce.newcomers):
+                # if (self.residence == None):
+                if self.count > 0:
+                    # logger.debug(f'Newcomer {self.unique_id} removed, who owns {self.properties_owned}, count {self.count}')
                     self.remove()
+                    return  # Stop execution of the step function after removal
+            # Everyone who is not a newcomer, should have a residence
             else:
-                logger.error(f'Newcomer {self.unique_id} has a residence {self.residence.unique_id}, but was not removed from newcomer list.')
-        # Everyone who is not a newcomer
-        elif (self.residence) and (self.unique_id not in self.workforce.retiring):
-            # If it is worthwhile work
-            if premium > self.residence.transport_cost:
-                # Retire if past retirement age
-                if (self.working_period > self.model.working_periods):
+                logger.warning(f'Non newcomer, no residence: {self}, count {self.count}')
+                self.remove()
+                return  # Stop execution of the step function after removal
+
+        # People older than working age, retire
+        elif (self.working_period > self.model.working_periods):
+            self.workforce.remove(self, self.workforce.workers)
+
+            # In the city
+            if premium > self.residence.transport_cost:                
+                # If residence owned, list homes for sale
+                if (self.residence in self.properties_owned):
                     self.workforce.add(self, self.workforce.retiring)
-                    # List homes for sale
-                    if (self.residence in self.properties_owned):
-                        if self.residence.owner != self:
-                            logger.warning(f'Retiring agent believes it owns property, but does not. \n Agents properties owned: {self.properties_owned}. Properties owner: {self.residence.owner}')
-                        # TODO Contact bank. Decide: sell, rent or keep empty
-                        # CREATE LISTING - APPEND LISTING
-                        listing = Listing(self, self.residence)
-                        # self.model.realtor.sale_listings.append(listing)
-                        self.model.realtor.bids[listing] = []
-                        # TODO if residence is not owned, renter moves out
-                else:
-                    # Add the person to the workforce's workers dictionary if not already present
-                    self.workforce.add(self, self.workforce.workers)
-            # If it is not worthwhile to work
-            else:
-                # Remove the person from the workforce's workers dictionary if present
-                self.workforce.remove(self, self.workforce.workers)
-                if (self.working_period > self.model.working_periods):
-                    # Population age cycles to model an outside urban population
-                    self.working_period = 1 # TODO test demoographics
+                    # if self.residence.owner != self:
+                    #     logger.warning(f'Retiring agent believes it owns property, but does not. \n Agents properties owned: {self.properties_owned}. Properties owner: {self.residence.owner}')
+                    # TODO Contact bank. Decide: sell, rent or keep empty
+                    # CREATE LISTING - APPEND LISTING
+                    listing = Listing(self, self.residence)
+                    # self.model.realtor.sale_listings.append(listing)
+                    self.model.realtor.bids[listing] = []
 
-            # Update savings
-            self.savings += self.model.savings_per_step # TODO debt, wealth
-            self.wealth  = self.get_wealth()
-        elif self.unique_id in self.workforce.retiring:
-            if (self.residence):
+                # If resdidence not owned, cycle working period and savings # TODO check if this is right
+                else:
+                    self.working_period = 1
+                    self.savings        = 0
+
+            # Outside the city, cycle working period and savings for retiring agents  # TODO check if this is right
+            else:
+                self.working_period = 1
+                self.savings        = 0
+
+        # People of working age, work if it is worthwhile to work
+        if self.working_period < self.model.working_periods:
+            if self.residence:
                 if premium > self.residence.transport_cost:
-                    logger.warning(f'Removed retiring agent {self.unique_id}, working, with residence, properties owned {len(self.properties_owned)} which was still in model.')
-                    self.remove()
+                    self.workforce.add(self, self.workforce.workers)
                 else:
-                    logger.warning(f'Retiring agent {self.unique_id}, not working, with residence, still in model.')
+                    self.workforce.remove(self, self.workforce.workers)
+            elif self.unique_id not in self.workforce.newcomers:
+                logger.warning(f'Why no residence: {self}')
 
-            else:
-                logger.warning(f'Retiring agent {self.unique_id}, witout residence, still in model.')
+        # else:
+        #     logger.warning(f'Has land, below retirement age,')
+        # Update savings and wealth
+        self.savings += self.model.savings_per_step # TODO debt, wealth
+        self.wealth  = self.get_wealth()
 
-        else:
-            logger.debug(f'Agent {self.unique_id} has no residence.')
+        # if self.unique_id in self.workforce.retiring:        
+        #     if (self.residence):
+        #         if premium > self.residence.transport_cost:
+        #             logger.warning(f'Removed retiring agent {self.unique_id} in step, working, with residence, properties owned {len(self.properties_owned)} which was still in model.')
+        #             self.remove()
+        #         else:
+        #             logger.warning(f'Retiring agent {self.unique_id}, not working, with residence, still in model.')
+        #     else:
+        #         logger.warning(f'Retiring agent {self.unique_id}, witout residence, still in model.')
+        # else:
+        #     logger.debug(f'Agent {self.unique_id} has no residence.')
 
     def bid(self):
         """Newcomers bid on properties for use or investment value."""
         
+        # logger.debug(f'Newcomer bids: {self}, count {self.count}')
+
         # W = self.savings # TODO fix self.get_wealth() # TODO use wealth in mortgage share and borrowing rate
         S = self.savings
         r = self.borrowing_rate
@@ -298,7 +314,11 @@ class Person(Agent):
                 P_bid = 0.28 * (wage + r * S) / r_prime
 
             if P_bid > 0:
+                logger.warning(f'Newcomer bids: {self}, bid {P_bid}')
                 self.model.realtor.add_bid(self, listing, P_bid, bid_type)
+
+            else:
+                logger.warning(f'Newcomer doesnt bid: {self}, bid {P_bid}, sale_property {listing.sale_property.unique_id}')
 
             # # Old logic, replaced by version above
             # # Max desired bid
@@ -342,7 +362,7 @@ class Person(Agent):
         # x, y = self.pos
         # self.model.grid.remove_agent(x,y,self)
         self.model.grid.remove_agent(self)
-        logger.warning(f'Person {self.unique_id} removed from model')
+        logger.debug(f'Person {self.unique_id} removed from model')
         # TODO If agent owns property, get rid of property
 
     def __str__(self):
@@ -579,6 +599,11 @@ class Investor(Agent):
             logger.debug(f'Bank {self.unique_id} bids {P_bid} for property {listing.sale_property.unique_id}, if val is positive.')
             if P_bid > 0:
                 self.model.realtor.add_bid(self, listing, P_bid, bid_type)
+            else:
+                logger.warning(f'Investor doesnt bid: {self}')
+
+    def __str__(self):
+        return f'Investor {self.unique_id}'
 
 class Realtor(Agent):
     """Realtor agents connect sellers, buyers, and renters."""
@@ -630,7 +655,11 @@ class Realtor(Agent):
             # if isinstance(listing.seller, Investor):
             #     logger.warning(f'In sell_homes, sale_property.selller is Investor, id {listing.seller.unique_id}.')
 
+        logger.warning(f'Number of listings: {len(self.bids)}')
         for listing, property_bids in self.bids.items():
+            bid_info = [f'bidder {bid.bidder} bid {bid.bid_price}' for bid in property_bids]
+            logger.warning(f'Listed property: {listing.sale_property.unique_id} has bids: {len(property_bids)}, {", ".join(bid_info)}')
+            # logger.warning(f'Listed property: {listing.sale_property.unique_id} has bids: {len(property_bids)}, bidder {property_bids[0].bidder}')
             # property_bids = self.sale_listing_bids[listing]
             if property_bids:
                 property_bids.sort(key=lambda x: x.bid_price, reverse=True)
@@ -662,6 +691,10 @@ class Realtor(Agent):
 
     def complete_transactions(self, allocations):
         for allocation in allocations:
+            logger.warning(f'Property {allocation.sale_property.unique_id} sold to {allocation.buyer} for {allocation.final_price}')
+            if not isinstance(allocation.seller, Person):
+                logger.warning(f'Seller not a Person in complete_transaction: Seller {allocation.seller.unique_id}')
+
             # Record data for data_collection
             allocation.sale_property.realized_price = allocation.final_price
 
@@ -676,8 +709,8 @@ class Realtor(Agent):
             self.model.realized_price_data = self.model.realized_price_data.append(new_row, ignore_index=True)
 
             if isinstance(allocation.seller, Person):
-                self.handle_seller_departure(allocation)
-                logger.warning(f'In complete_transaction, before purchase, seller {allocation.seller.unique_id} was a person.')
+                pass
+                # self.handle_seller_departure(allocation)
             elif isinstance(allocation.seller, Investor):
                 logger.warning(f'In complete_transaction, before purchase, seller is Investor, id {allocation.seller.unique_id}.')
             else:
@@ -691,48 +724,65 @@ class Realtor(Agent):
             else:
                 logger.warning('In complete_transaction, buyer was neither a person nor an investor.')
 
-            # TODO handle purchase has already happened.
-            if isinstance(allocation.seller, Person):
-                self.handle_seller_departure(allocation)
-                logger.warning(f'In complete_transaction, after purchase, seller {allocation.seller.unique_id} was a person.')
-            elif isinstance(allocation.seller, Investor):
-                logger.warning(f'In complete_transaction, after purchase, seller is Investor, id {allocation.seller.unique_id}.')
-            else:
-                logger.warning(f'In complete_transaction, after purchase, seller {allocation.seller.unique_id} was not a person or investor. Seller {allocation.seller}.')                
+            self.handle_seller_departure(allocation)
+            # if isinstance(allocation.seller, Person):
+            #     logger.warning(f'Seller departure {allocation.seller}')
+                
+            # elif isinstance(allocation.seller, Investor):
+            #     logger.warning(f'In complete_transaction, after purchase, seller is Investor, id {allocation.seller.unique_id}.')
+            # else:
+            #     logger.warning(f'In complete_transaction, after purchase, seller {allocation.seller.unique_id} was not a person or investor. Seller {allocation.seller}.')                
 
     def handle_investor_purchase(self, allocation):
         """Handles the purchase of a property by an investor."""
         self.transfer_ownership(allocation.buyer, allocation.seller, allocation.sale_property)
+        allocation.sale_property.resident = None
+        allocation.buyer.residence = None
         logger.debug('Property %s sold to investor.', allocation.sale_property.unique_id)
         self.rental_listings.append(allocation.sale_property)
 
     def handle_person_purchase(self, allocation):
         """Handles the purchase of a property by a person."""
         self.transfer_ownership(allocation.buyer, allocation.seller, allocation.sale_property)
+        if not allocation.sale_property.check_residents_match:
+            logger.error(f'Sale property residence doesnt match before transfer: seller {seller.unique_id}, buyer {buyer.unique_id}')
         allocation.sale_property.resident = allocation.buyer
         allocation.buyer.residence = allocation.sale_property
         self.model.grid.move_agent(allocation.buyer, allocation.sale_property.pos)
+        if not allocation.sale_property.check_residents_match:
+            logger.error(f'Sale property residence doesnt match after transfer: seller {seller.unique_id}, buyer {buyer.unique_id}')
         logger.debug('Property %s sold to newcomer %s.', allocation.sale_property.unique_id, allocation.buyer.unique_id)
 
         if allocation.buyer.unique_id in self.workforce.newcomers:
+            logger.debug(f'Removing newcomer {self.unique_id}')
             self.workforce.remove(allocation.buyer, self.workforce.newcomers)
         # logger.debug(f'Time {self.model.time_step} New worker {buyer.unique_id} Loc {sale_property}') # TEMP
 
     def handle_seller_departure(self, allocation):
         """Handles the departure of a selling agent."""
-        if allocation.seller.unique_id in self.workforce.retiring:
-            logger.debug(f'Selling agent {self.unique_id} removed.')
-            allocation.seller.remove()
+        if isinstance(allocation.seller, Person):
+            if allocation.seller.unique_id in self.workforce.retiring:
+                logger.debug(f'Removing seller {self.unique_id}')
+                allocation.seller.remove()
+            else:
+                logger.warning(f'Seller a Person but not retiring, so not removed: Seller {allocation.seller.unique_id}')
+        elif isinstance(allocation.seller, Investor):
+            logger.warning(f'Seller an Investor in handle_seller_departure: Seller {allocation.seller.unique_id}')
         else:
-            logger.warning('Seller was not retiring, so was not removed from the model.')
+            logger.warning(f'Seller not an Investor or a Person in handle_seller_departure: Seller {allocation.seller.unique_id}')
 
     def transfer_ownership(self, buyer, seller, sale_property):
         """Transfers ownership of the property from seller to buyer."""
-        buyer.properties_owned.append(sale_property)
-        seller.properties_owned.remove(sale_property)
-        sale_property.owner = buyer
         if not sale_property.check_owners_match:
-            logger.error('Sale property doesnt match') # TODO - NEED AN OWNS VECTOR IN INVESTOR? AND DIFFERENT IF INVESTOR?
+            logger.error(f'Sale property ownership doesnt match before transfer: seller {seller.unique_id}, buyer {buyer.unique_id}')
+        buyer.properties_owned.append(sale_property)
+        if sale_property in seller.properties_owned:
+            seller.properties_owned.remove(sale_property)
+        else:
+            logger.error(f'Seller does not own property in transfer_ownership: seller {seller.unique_id}, buyer {buyer.unique_id}')
+        if not sale_property.check_owners_match:
+            logger.error('Sale property ownership doesnt match after transfer: seller {seller.unique_id}, buyer {buyer.unique_id}')
+        sale_property.owner = buyer
 
     def rent_homes(self):
         """Rent homes listed by investors to newcomers."""

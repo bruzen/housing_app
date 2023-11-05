@@ -250,7 +250,7 @@ class City(Model):
         self.time_step += 1
 
         # TODO remove. temp.
-        logger.info(f'Number of land agents that match owners land_owned {self.owner_matches} vs dont {self.owner_doesnt_match} ')
+        # logger.info(f'Number of land agents that match owners land_owned {self.owner_matches} vs dont {self.owner_doesnt_match} ')
         self.owner_matches = 0
         self.owner_doesnt_match = 0
 
