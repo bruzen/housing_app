@@ -124,14 +124,14 @@ class City(Model):
         else:
             self.params = default_parameters
 
-        # TODO Temp
-        self.owner_matches = 0
-        self.owner_doesnt_match = 0
+        # # TODO Temp
+        # self.owner_matches = 0
+        # self.owner_does_not_match = 0
 
         # Model
         self.model_name        = 'Housing Market'
         self.model_version     = '0.0.1'
-        self.model_description = 'Agent-based housing market model with rent and urban aglomeration.'
+        self.model_description = 'Agent-based housing market model with rent and urban agglomeration.'
         self.num_steps = num_steps        
         self.time_step = 1.
         self.height = self.params['height']
@@ -249,10 +249,11 @@ class City(Model):
 
         self.time_step += 1
 
+
         # TODO remove. temp.
-        # logger.info(f'Number of land agents that match owners land_owned {self.owner_matches} vs dont {self.owner_doesnt_match} ')
-        self.owner_matches = 0
-        self.owner_doesnt_match = 0
+        # logger.info(f'Number of land agents that match owners land_owned {self.owner_matches} vs dont {self.owner_does_not_match} ')
+        # self.owner_matches = 0
+        # self.owner_does_not_match = 0
 
         logger.info(f'\n \n \n Step {self.schedule.steps}. \n')
         self.step_price_data.clear()
@@ -640,7 +641,7 @@ class City(Model):
             
         return p_dot
 
-# TODO MAKE A WEGHTED MODE FOR THE TWO VARIABLES
+# TODO MAKE A WEIGHTED MODE FOR THE TWO VARIABLES
 # Assume you have the trained models regr1 and regr2
 # Assume you have data for new_data1 and new_data2 for both models
 # p is the weight parameter (a value between 0 and 1)
@@ -712,16 +713,16 @@ class Workforce:
             getattr(agent, method)()
 
 # FUNCTION FOR SAVINGS FOR NEWCOMERS AND INITIAL RESIDENTS
-        # rural_home_value = a * subsistence_wage / r # The bank rate r since this is the bank's assement of value. a is the housing share, and a * subsistence_wage is the value of the housing services since we've fixed the subsistence wage and all houses are the same.
+        # rural_home_value = a * subsistence_wage / r # The bank rate r since this is the bank's assessment of value. a is the housing share, and a * subsistence_wage is the value of the housing services since we've fixed the subsistence wage and all houses are the same.
         # MODEL 1 UNIFORM
         # Max savings/wealth outside the city is twice the value of a rural home
         # Range of savings =  min: 0 max: 2* (a*subsistence_wage/r)
 
         # Newcomer max could be 1*rural_home_value + age_based_savings
-        # Intial residient max  age_based_savings
+        # Initial resident max  age_based_savings
         # Then we need to set the savings rate to a share of the subsistence wage and 
         # wage_based_savings = savings_rate * subsistence_wage * working_period
-        # value of a house with no mortgage = waranted_price: rural_home_value + locational_value
+        # value of a house with no mortgage = warranted_price: rural_home_value + locational_value
 
         # MODEL 2 LOGNORMAL
         # from scipy.stats import lognorm
@@ -752,7 +753,7 @@ class Workforce:
 # AVERAGE_WEALTH_CALCULATION
 # The value of average_wealth.
 # # value of a home + savings half way through a lifespan. 
-# # Value of house on average in the city - know the area and volume of a cone. Cone has ehight omega, the wage_premium
+# # Value of house on average in the city - know the area and volume of a cone. Cone has weight omega, the wage_premium
 # avg_wealth = rural_home_value + avg_locational_value + modifier_for_other_cities_or_capital_derived_wealth
 
 # where:

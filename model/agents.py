@@ -75,15 +75,13 @@ class Land(Agent):
         self.owner_type = 'Other'
 
     def step(self):
-        if self.check_owners_match():
-                self.model.owner_matches += 1
-        else:
-            self.model.owner_doesnt_match += 1
-            logger.warning(f'Owners dont match for property: {self.unique_id}. Propertys owner {self.owner}. Owners properties {self.owner.properties_owned}')
-
-        if not isinstance(self.owner, (Person, Investor)):
-            logger.warning(f'Land {self.unique_id} owner not a person or investor: {self.owner}') # Note: will warn if no owner
-
+        # # Check owners match, for debugging
+        # if self.check_owners_match():
+        #         self.model.owner_matches += 1
+        # else:
+        #     self.model.owner_does_not_match += 1
+        #     logger.warning(f'Owners dont match for property: {self.unique_id}. Property\'s owner {self.owner}. Owners properties {self.owner.properties_owned}')
+            
         # Prepare price data for the current step
         price_data = {
             'land_id': self.unique_id,
@@ -109,6 +107,7 @@ class Land(Agent):
             self.owner_type = 'Investor'
         else:
             self.owner_type = 'Other'
+            logger.warning(f'Land {self.unique_id} owner not a person or investor. Owner: {self.owner}') # Note: will warn if no owner
 
         # # TODO TEMP!
         # if np.random.random() < 0.2:
@@ -150,7 +149,7 @@ class Person(Agent):
     @property
     def individual_wealth_adjustment(self):
         """Individual wealth adjustment. Added on to the agent's mortgage 
-        borrowng rate. It depends on the agent's wealth.
+        borrowing rate. It depends on the agent's wealth.
 
         # TODO: Fix
  
@@ -189,15 +188,11 @@ class Person(Agent):
         if self.residence:
             self.properties_owned.append(self.residence)
             if self.residence.owner is not None:
-                logger.warning(f'Property {self.residence.unique_id} has \
-                                 owner {self.residence.owner}, now \
-                                 owned by {self.unique_id} in init.')
+                logger.warning(f'Overrode property {self.residence.unique_id} owner {self.residence.owner} in init. Property now owned by {self.unique_id}.')
             self.residence.owner = self
 
             if self.residence.resident is not None:
-                logger.warning(f'Property {self.residence.unique_id} has \
-                                 resident {self.residence.resident}, now \
-                                 assigned to {self.unique_id} in init.')
+                logger.warning(f'Overrode property {self.residence.unique_id} resident {self.residence.resident} in init. Property resident now {self.unique_id}.')
             self.residence.resident = self
 
         # Count time step and track whether agent is working
@@ -291,12 +286,15 @@ class Person(Agent):
         r_prime  = self.model.r_prime
         r_target = self.model.r_target # TODO this is personal but uses same as bank. Clarify.        
         wage     = self.model.firm.wage
+        standard_mortgage_share = 0.8 # TODO make his a parameter
+        # average_wealth = # TODO?
 
         # Max mortgage
         M = 0.28 * (wage + r * S) / r_prime
 
         # Max mortgage share
         m = 0.8 # TODO get mortgage share
+         # m = max_mortgage_share - lenders_wealth_sensitivity * average_wealth / W
 
         for listing in self.model.realtor.bids:
 
@@ -304,21 +302,25 @@ class Person(Agent):
             R_N      = listing.sale_property.net_rent # Need net rent for P_bid
             bid_type = 'value_limited'
             P_bid    = self.model.bank.get_max_bid(R_N, r, r_target, m, listing.sale_property.transport_cost)
+            # logger.warning(f'Max bid: {self}, bid {P_bid}, R_N {R_N}, r {r}, r {r_target}, m {m}, transport_cost {listing.sale_property.transport_cost}')
 
             if S/(1-m) <= P_bid:
                 bid_type = 'equity_limited'
                 P_bid = S/(1-m)
+                logger.warning(f'Newcomer bids EQUITY LIMITED: {self}, bid {P_bid}, S {S}, m {m}, .. ')
 
             if (0.28 * (wage + r * S) / r_prime)  <= P_bid:
                 bid_type = 'income_limited'
                 P_bid = 0.28 * (wage + r * S) / r_prime
+                logger.warning(f'Newcomer bids INCOME LIMITED: {self}, bid {P_bid}')
 
             if P_bid > 0:
-                logger.warning(f'Newcomer bids: {self}, bid {P_bid}')
+                # logger.warning(f'Newcomer bids: {self}, bid {P_bid}')
                 self.model.realtor.add_bid(self, listing, P_bid, bid_type)
 
             else:
-                logger.warning(f'Newcomer doesnt bid: {self}, bid {P_bid}, sale_property {listing.sale_property.unique_id}')
+                pass
+                # logger.warning(f'Newcomer doesnt bid: {self}, bid {P_bid}, sale_property {listing.sale_property.unique_id}')
 
             # # Old logic, replaced by version above
             # # Max desired bid
@@ -352,6 +354,7 @@ class Person(Agent):
 
     def get_wealth(self):
         # TODO Wealth is properties owned, minus mortgages owed, plus savings.
+        # W = self.resident_savings + self.P_expected - self.M
         return self.savings
 
     def remove(self):
@@ -567,7 +570,7 @@ class Bank(Agent):
             return R_NT / ((1 - m) * r_target/(delta**T) - p_dot +(1+r)**T*m) # Revised denominator from eqn 6:20
 
         else:
-            logger.error(f'Get_max_bid error Rn {R_N}, r {r}, r_target {r_target}, m {m}, p_dot {p_dot}')
+            logger.error(f'Get_max_bid None error Rn {R_N}, r {r}, r_target {r_target}, m {m}, p_dot {p_dot}')
             return 0. # TODO Temp
 
 class Investor(Agent):
@@ -600,7 +603,7 @@ class Investor(Agent):
             if P_bid > 0:
                 self.model.realtor.add_bid(self, listing, P_bid, bid_type)
             else:
-                logger.warning(f'Investor doesnt bid: {self}')
+                logger.debug(f'Investor doesn\'t bid: {self}')
 
     def __str__(self):
         return f'Investor {self.unique_id}'
@@ -635,38 +638,20 @@ class Realtor(Agent):
         self.bids[listing].append(bid)
 
     def sell_homes(self):
-        # TODO maybe if DEBUG?
-        # for key, value in self.bids.items():
-        #     logger.debug(f'Key: {key}')
-        #     for bid in value:
-        #         logger.debug(f'  {bid}')
-
-        # unique_ids = [str(bid.sale_property.unique_id) for bid in bid_list]
-        # property_string = ', '.join(unique_ids)
-
-        # logger.warning(f'Properties for sale: {property_string}')
-
-        # Allocate proeprties based on bids
+        # Allocate properties based on bids
         allocations = []
-
-            # # TODO TEMP SHOULD BE ENFORCED ELSEWHERE
-            # if not isinstance(listing.sale_property, Land):
-            #     logger.error(f'listing in sell_homes {listing.sale_property} is not Land')
-            # if isinstance(listing.seller, Investor):
-            #     logger.warning(f'In sell_homes, sale_property.selller is Investor, id {listing.seller.unique_id}.')
 
         logger.warning(f'Number of listings: {len(self.bids)}')
         for listing, property_bids in self.bids.items():
-            bid_info = [f'bidder {bid.bidder} bid {bid.bid_price}' for bid in property_bids]
-            logger.warning(f'Listed property: {listing.sale_property.unique_id} has bids: {len(property_bids)}, {", ".join(bid_info)}')
-            # logger.warning(f'Listed property: {listing.sale_property.unique_id} has bids: {len(property_bids)}, bidder {property_bids[0].bidder}')
-            # property_bids = self.sale_listing_bids[listing]
+            # bid_info = [f'bidder {bid.bidder} bid {bid.bid_price}' for bid in property_bids]
+            # logger.warning(f'Listed property: {listing.sale_property.unique_id} has bids: {len(property_bids)}, {", ".join(bid_info)}')
+
             if property_bids:
                 property_bids.sort(key=lambda x: x.bid_price, reverse=True)
                 highest_bid              = property_bids[0]
                 highest_bid_price        = property_bids[0].bid_price
                 second_highest_bid_price = property_bids[1].bid_price if len(property_bids) > 1 else 0
-                # second_highest_bid_price = property_bids[1] if len(property_bids) > 1 else 0
+
                 final_price = highest_bid_price # TODO decide highest price here or elsewhere?
 
                 # elif isinstance(sale_property.owner, Person):
@@ -681,7 +666,7 @@ class Realtor(Agent):
                                         )
                 allocations.append(allocation)
             # TODO *** compute final price given wtp
-            # TODO what if property doesn't sell? Is it relisted by origional owner? Is the price different?
+            # TODO what if property doesn't sell? Is it relisted by original owner? Is the price different?
 
         # Complete transaction and clear existing bids
         self.complete_transactions(allocations)
@@ -691,9 +676,9 @@ class Realtor(Agent):
 
     def complete_transactions(self, allocations):
         for allocation in allocations:
-            logger.warning(f'Property {allocation.sale_property.unique_id} sold to {allocation.buyer} for {allocation.final_price}')
-            if not isinstance(allocation.seller, Person):
-                logger.warning(f'Seller not a Person in complete_transaction: Seller {allocation.seller.unique_id}')
+            logger.warning(f'Property {allocation.sale_property.unique_id} sold by seller {allocation.seller} to {allocation.buyer} for {allocation.final_price}')
+            # if not isinstance(allocation.seller, Person):
+            #     logger.debug(f'Seller not a Person in complete_transaction: Seller {allocation.seller.unique_id}')
 
             # Record data for data_collection
             allocation.sale_property.realized_price = allocation.final_price
@@ -708,13 +693,13 @@ class Realtor(Agent):
             }
             self.model.realized_price_data = self.model.realized_price_data.append(new_row, ignore_index=True)
 
-            if isinstance(allocation.seller, Person):
-                pass
-                # self.handle_seller_departure(allocation)
-            elif isinstance(allocation.seller, Investor):
-                logger.warning(f'In complete_transaction, before purchase, seller is Investor, id {allocation.seller.unique_id}.')
-            else:
-                logger.warning(f'In complete_transaction, before purchase, seller {allocation.seller.unique_id} was not a person or investor. Seller {allocation.seller}.')
+            # if isinstance(allocation.seller, Person):
+            #     pass
+            #     # self.handle_seller_departure(allocation)
+            # elif isinstance(allocation.seller, Investor):
+            #     logger.debug(f'In complete_transaction, before purchase, seller is Investor, id {allocation.seller.unique_id}.')
+            # else:
+            #     logger.debug(f'In complete_transaction, before purchase, seller {allocation.seller.unique_id} was not a person or investor. Seller {allocation.seller}.')
 
             # logger.debug(f'Time {self.model.time_step}, Property {allocation.property.unique_id}, Price {allocation.property.realized_price}')
             if isinstance(allocation.buyer, Investor):
@@ -726,12 +711,12 @@ class Realtor(Agent):
 
             self.handle_seller_departure(allocation)
             # if isinstance(allocation.seller, Person):
-            #     logger.warning(f'Seller departure {allocation.seller}')
+            #     logger.debug(f'Seller departure {allocation.seller}')
                 
             # elif isinstance(allocation.seller, Investor):
-            #     logger.warning(f'In complete_transaction, after purchase, seller is Investor, id {allocation.seller.unique_id}.')
+            #     logger.debug(f'In complete_transaction, after purchase, seller is Investor, id {allocation.seller.unique_id}.')
             # else:
-            #     logger.warning(f'In complete_transaction, after purchase, seller {allocation.seller.unique_id} was not a person or investor. Seller {allocation.seller}.')                
+            #     logger.debug(f'In complete_transaction, after purchase, seller {allocation.seller.unique_id} was not a person or investor. Seller {allocation.seller}.')                
 
     def handle_investor_purchase(self, allocation):
         """Handles the purchase of a property by an investor."""
@@ -745,12 +730,12 @@ class Realtor(Agent):
         """Handles the purchase of a property by a person."""
         self.transfer_ownership(allocation.buyer, allocation.seller, allocation.sale_property)
         if not allocation.sale_property.check_residents_match:
-            logger.error(f'Sale property residence doesnt match before transfer: seller {seller.unique_id}, buyer {buyer.unique_id}')
+            logger.error(f'Sale property residence doesn\'t match before transfer: seller {seller.unique_id}, buyer {buyer.unique_id}')
         allocation.sale_property.resident = allocation.buyer
         allocation.buyer.residence = allocation.sale_property
         self.model.grid.move_agent(allocation.buyer, allocation.sale_property.pos)
         if not allocation.sale_property.check_residents_match:
-            logger.error(f'Sale property residence doesnt match after transfer: seller {seller.unique_id}, buyer {buyer.unique_id}')
+            logger.error(f'Sale property residence doesn\'t match after transfer: seller {seller.unique_id}, buyer {buyer.unique_id}')
         logger.debug('Property %s sold to newcomer %s.', allocation.sale_property.unique_id, allocation.buyer.unique_id)
 
         if allocation.buyer.unique_id in self.workforce.newcomers:
@@ -762,7 +747,7 @@ class Realtor(Agent):
         """Handles the departure of a selling agent."""
         if isinstance(allocation.seller, Person):
             if allocation.seller.unique_id in self.workforce.retiring:
-                logger.debug(f'Removing seller {self.unique_id}')
+                # logger.debug(f'Removing seller {self.unique_id}')
                 allocation.seller.remove()
             else:
                 logger.warning(f'Seller a Person but not retiring, so not removed: Seller {allocation.seller.unique_id}')
@@ -774,14 +759,14 @@ class Realtor(Agent):
     def transfer_ownership(self, buyer, seller, sale_property):
         """Transfers ownership of the property from seller to buyer."""
         if not sale_property.check_owners_match:
-            logger.error(f'Sale property ownership doesnt match before transfer: seller {seller.unique_id}, buyer {buyer.unique_id}')
+            logger.error(f'Sale property ownership doesn\'t match before transfer: seller {seller.unique_id}, buyer {buyer.unique_id}')
         buyer.properties_owned.append(sale_property)
         if sale_property in seller.properties_owned:
             seller.properties_owned.remove(sale_property)
         else:
             logger.error(f'Seller does not own property in transfer_ownership: seller {seller.unique_id}, buyer {buyer.unique_id}')
         if not sale_property.check_owners_match:
-            logger.error('Sale property ownership doesnt match after transfer: seller {seller.unique_id}, buyer {buyer.unique_id}')
+            logger.error('Sale property ownership doesn\'t match after transfer: seller {seller.unique_id}, buyer {buyer.unique_id}')
         sale_property.owner = buyer
 
     def rent_homes(self):
