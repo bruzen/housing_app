@@ -124,6 +124,10 @@ class City(Model):
         else:
             self.params = default_parameters
 
+        # TODO Temp
+        self.owner_matches = 0
+        self.owner_doesnt_match = 0
+
         # Model
         self.model_name        = 'Housing Market'
         self.model_version     = '0.0.1'
@@ -245,6 +249,11 @@ class City(Model):
 
         self.time_step += 1
 
+        # TODO remove. temp.
+        # logger.info(f'Number of land agents that match owners land_owned {self.owner_matches} vs dont {self.owner_doesnt_match} ')
+        self.owner_matches = 0
+        self.owner_doesnt_match = 0
+
         logger.info(f'\n \n \n Step {self.schedule.steps}. \n')
         self.step_price_data.clear()
 
@@ -254,7 +263,7 @@ class City(Model):
         self.warranted_price_data = pd.concat([self.warranted_price_data, new_df], 
                                           ignore_index=True)
 
-        self.p_dot       = self.get_p_dot()
+        self.p_dot       = 0.03 #  self.get_p_dot() # TODO Fix TEMP
 
         # Firms update wages
         self.schedule.step_breed(Firm)
