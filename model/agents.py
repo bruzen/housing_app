@@ -74,22 +74,16 @@ class Land(Agent):
         # self.owner_types = np.array(['Person', 'Investor', 'Bank', 'Other']) # TEMP - move to model? Have agent type list?
 
         if isinstance(self.owner, Person):
-            self.owner_type = 'Person'
+            self.owner_type = 1 # 'Person'
         elif isinstance(self.owner, Investor):
-            self.owner_type = 'Investor'
+            self.owner_type = 2 # 'Investor'
         else:
-            self.owner_type = 'Other'
-            logger.warning(f'Land {self.unique_id} owner not a person or investor. Owner: {self.owner}') # Note: will warn if no owner
+            self.owner_type = 3 #'Other'
+            logger.warning(f'Land {self.unique_id} owner not a person or investor. Owner: {self.owner}')
 
 
     def step(self):
-        # # Check owners match, for debugging
-        # if self.check_owners_match():
-        #         self.model.owner_matches += 1
-        # else:
-        #     self.model.owner_does_not_match += 1
-        #     logger.warning(f'Owners dont match for property: {self.unique_id}. Property\'s owner {self.owner}. Owners properties {self.owner.properties_owned}')
-            
+
         # Prepare price data for the current step
         price_data = {
             'land_id': self.unique_id,
@@ -146,23 +140,12 @@ class Land(Agent):
 
         # Update the owner type
         if isinstance(self.owner, Person):
-            self.owner_type = 'Person'
+            self.owner_type = 1 # 'Person'
         elif isinstance(self.owner, Investor):
-            self.owner_type = 'Investor'
+            self.owner_type = 2 # 'Investor'
         else:
-            self.owner_type = 'Other'
+            self.owner_type = 3 # 'Other'
             logger.warning(f'Land {self.unique_id} owner not a person or investor. Owner: {self.owner}')
-
-    # def transfer_ownership(self, buyer, seller, sale_property):
-    #     """Transfers ownership of the property from seller to buyer."""
-    #     buyer.properties_owned.append(sale_property)
-    #     if sale_property in seller.properties_owned:
-    #         seller.properties_owned.remove(sale_property)
-    #     else:
-    #         logger.error(f'Seller does not own property in transfer_ownership: seller {seller.unique_id}, buyer {buyer.unique_id}')
-    #     if not sale_property.check_owners_match:
-    #         logger.error('Sale property ownership doesn\'t match after transfer: seller {seller.unique_id}, buyer {buyer.unique_id}')
-    #     sale_property.owner = buyer
 
     def check_owners_match(self):
         for owned_property in self.owner.properties_owned:
