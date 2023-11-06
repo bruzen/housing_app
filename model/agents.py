@@ -72,7 +72,15 @@ class Land(Agent):
         self.realized_price           = - 1 # random.randint(1, 10000)
         # TODO want to make distance from center, warranted price, realized price.
         # self.owner_types = np.array(['Person', 'Investor', 'Bank', 'Other']) # TEMP - move to model? Have agent type list?
-        self.owner_type = 'Other'
+
+        if isinstance(self.owner, Person):
+            self.owner_type = 'Person'
+        elif isinstance(self.owner, Investor):
+            self.owner_type = 'Investor'
+        else:
+            self.owner_type = 'Other'
+            logger.warning(f'Land {self.unique_id} owner not a person or investor. Owner: {self.owner}') # Note: will warn if no owner
+
 
     def step(self):
         # # Check owners match, for debugging
@@ -101,14 +109,7 @@ class Land(Agent):
         # random_index = np.random.randint(0, len(self.owner_types))
         # Get the random owner type
         # self.owner_type = self.owner_types[random_index]
-        if isinstance(self.owner, Person):
-            self.owner_type = 'Person'
-        elif isinstance(self.owner, Investor):
-            self.owner_type = 'Investor'
-        else:
-            self.owner_type = 'Other'
-            logger.warning(f'Land {self.unique_id} owner not a person or investor. Owner: {self.owner}') # Note: will warn if no owner
-
+ 
         # # TODO TEMP!
         # if np.random.random() < 0.2:
         #     self.owner_type = 'Investor'
@@ -125,6 +126,43 @@ class Land(Agent):
     def calculate_transport_cost(self):
         cost = self.distance_from_center * self.model.transport_cost_per_dist
         return cost
+
+    def change_owner(self, new_owner, old_owner):
+
+        if not self.check_owners_match:
+            owner_properties = ' '.join(str(prop.unique_id) if hasattr(prop, 'unique_id') else str(prop) for prop in self.owner.properties_owned)
+            logger.error(f'In change_owner, property owner does not match an owner in owners properties_owned list: property {self.unique_id}, property\'s owner {self.owner.unique_id}, owner\'s properties {owner_properties} ')
+
+        if not self.owner == old_owner:
+            logger.error(f'In change_owner, the old_owner must own a property in order to transfer ownership: property {self.unique_id}, old_owner {old_owner.unique_id}, property\'s owner {self.owner.unique_id}')
+
+        self.owner = new_owner
+
+        # Remove the land from the old owner's properties_owned list
+        old_owner.properties_owned.remove(self)
+
+        # Add the land to the new owner's properties_owned list
+        new_owner.properties_owned.append(self)
+
+        # Update the owner type
+        if isinstance(self.owner, Person):
+            self.owner_type = 'Person'
+        elif isinstance(self.owner, Investor):
+            self.owner_type = 'Investor'
+        else:
+            self.owner_type = 'Other'
+            logger.warning(f'Land {self.unique_id} owner not a person or investor. Owner: {self.owner}')
+
+    # def transfer_ownership(self, buyer, seller, sale_property):
+    #     """Transfers ownership of the property from seller to buyer."""
+    #     buyer.properties_owned.append(sale_property)
+    #     if sale_property in seller.properties_owned:
+    #         seller.properties_owned.remove(sale_property)
+    #     else:
+    #         logger.error(f'Seller does not own property in transfer_ownership: seller {seller.unique_id}, buyer {buyer.unique_id}')
+    #     if not sale_property.check_owners_match:
+    #         logger.error('Sale property ownership doesn\'t match after transfer: seller {seller.unique_id}, buyer {buyer.unique_id}')
+    #     sale_property.owner = buyer
 
     def check_owners_match(self):
         for owned_property in self.owner.properties_owned:
@@ -237,7 +275,7 @@ class Person(Agent):
                     # self.model.realtor.sale_listings.append(listing)
                     self.model.realtor.bids[listing] = []
 
-                # If resdidence not owned, cycle working period and savings # TODO check if this is right
+                # If residence not owned, cycle working period and savings # TODO check if this is right
                 else:
                     self.working_period = 1
                     self.savings        = 0
@@ -298,7 +336,7 @@ class Person(Agent):
 
         for listing in self.model.realtor.bids:
 
-            #First Calculate value of purchase (max bid)
+            # First Calculate value of purchase (max bid)
             R_N      = listing.sale_property.net_rent # Need net rent for P_bid
             bid_type = 'value_limited'
             P_bid    = self.model.bank.get_max_bid(R_N, r, r_target, m, listing.sale_property.transport_cost)
@@ -307,7 +345,7 @@ class Person(Agent):
             if S/(1-m) <= P_bid:
                 bid_type = 'equity_limited'
                 P_bid = S/(1-m)
-                logger.warning(f'Newcomer bids EQUITY LIMITED: {self}, bid {P_bid}, S {S}, m {m}, .. ')
+                # logger.warning(f'Newcomer bids EQUITY LIMITED: {self.unique_id}, bid {P_bid}') #, S {S}, m {m}, .. ')
 
             if (0.28 * (wage + r * S) / r_prime)  <= P_bid:
                 bid_type = 'income_limited'
@@ -720,7 +758,7 @@ class Realtor(Agent):
 
     def handle_investor_purchase(self, allocation):
         """Handles the purchase of a property by an investor."""
-        self.transfer_ownership(allocation.buyer, allocation.seller, allocation.sale_property)
+        allocation.sale_property.change_owner(allocation.buyer, allocation.seller)
         allocation.sale_property.resident = None
         allocation.buyer.residence = None
         logger.debug('Property %s sold to investor.', allocation.sale_property.unique_id)
@@ -728,7 +766,7 @@ class Realtor(Agent):
 
     def handle_person_purchase(self, allocation):
         """Handles the purchase of a property by a person."""
-        self.transfer_ownership(allocation.buyer, allocation.seller, allocation.sale_property)
+        allocation.sale_property.change_owner(allocation.buyer, allocation.seller)
         if not allocation.sale_property.check_residents_match:
             logger.error(f'Sale property residence doesn\'t match before transfer: seller {seller.unique_id}, buyer {buyer.unique_id}')
         allocation.sale_property.resident = allocation.buyer
@@ -755,19 +793,6 @@ class Realtor(Agent):
             logger.warning(f'Seller an Investor in handle_seller_departure: Seller {allocation.seller.unique_id}')
         else:
             logger.warning(f'Seller not an Investor or a Person in handle_seller_departure: Seller {allocation.seller.unique_id}')
-
-    def transfer_ownership(self, buyer, seller, sale_property):
-        """Transfers ownership of the property from seller to buyer."""
-        if not sale_property.check_owners_match:
-            logger.error(f'Sale property ownership doesn\'t match before transfer: seller {seller.unique_id}, buyer {buyer.unique_id}')
-        buyer.properties_owned.append(sale_property)
-        if sale_property in seller.properties_owned:
-            seller.properties_owned.remove(sale_property)
-        else:
-            logger.error(f'Seller does not own property in transfer_ownership: seller {seller.unique_id}, buyer {buyer.unique_id}')
-        if not sale_property.check_owners_match:
-            logger.error('Sale property ownership doesn\'t match after transfer: seller {seller.unique_id}, buyer {buyer.unique_id}')
-        sale_property.owner = buyer
 
     def rent_homes(self):
         """Rent homes listed by investors to newcomers."""
