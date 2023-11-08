@@ -1,7 +1,7 @@
 # TODO List
 
 ## High Priority 
-- [***] Why is is_working crazy in heatmaps?  With no owner investors (all People buyers), some people in the city (maybe after sale) do not work. Do people move in and start working after buying - do any of them get removed by accident. (Maybe handle_person_purchase - should make sure it results in workers - not all do, but some? maybe. why?).  Realized population looks wrong?
+- [***] Why is is_working crazy in heatmaps? Why does city not grow? With no owner investors (all People buyers), some people in the city (maybe after sale) do not work. Do people move in and start working after buying - do any of them get removed by accident. (Maybe handle_person_purchase - should make sure it results in workers - not all do, but some? maybe. why?).  Realized population looks wrong?
 - [ ] Show most recent realized_price in heatmap, with x on top if just sold
 - [ ] Why are newcomer agents bidding 0? Maybe they need savings.
 - [ ] Add distributions for newcomer initial savings and mean wealth calculations for wealth adjustment
@@ -28,6 +28,7 @@
 - [ ] Make a hover over that shows person data for the heatmap - do I store more in person - id/x/y
 - [ ] Fix test_auction for new plot? iPython notebook used some error messages I removed
 - [ ] Display bid type (e.g. equity_limited etc)
+- [ ] Consider sigmoid transitions for get_bid transition
   
 
 ## DiR
@@ -37,7 +38,11 @@
 - [ ] Include warranted price, and effect of more bids in shaping final price
 - [ ] How many newcomers to create. Maybe draw 50 items from the distribution and take the max from those drawn?  - TODO - number of bids is meaningless--. as are low bids because I'm just making incoming agents based on the number of properties for sale. (Could be a distribution of potential newcomers instead of full agents - just some data structure with the initial savings etc.)
 - [ ] WHY ARE BIDS 0
-
+- [ ] Talk through:
+        self.rent_captured_by_finance  = 0 # TODO implement. make a marker for agents in the city
+        self.share_captured_by_finance = 0 # TODO implement.
+        self.urban_surplus   = 0 # TODO implement
+- [ ] 
 
 ## Orienting
 
@@ -48,8 +53,8 @@
 
 ## Consider for Future Work
 
+- [ ] Do we only count amenity for workers, or those in the urban boundary?
 - [ ] Add capital gains, tax first time buyer subsidy -  Add transaction costs in WTP - it is the unfair floor that is the piece tht does the work.
-
 - [ ] Add differential income
 - [ ] How to do the resilience experiment?
 - [ ] Size without population and/or density in different areas. 
@@ -72,7 +77,7 @@
 - [x] 239 TODO if residence is not owned, renter moves out
 - [x] Fix get_max_bid
 - [x] Weird now warranted price is flat and realized not - or on top?
-
+- [ ] FIX TO IN WORKERS-- RECORD WORKERS, NEWCOMERS, RETIRING
 
 ## Done
 

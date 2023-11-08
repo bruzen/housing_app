@@ -228,7 +228,7 @@ class Person(Agent):
         # TODO check location is same as residence.
 
         # People without residences leave
-        if not isinstance (self.residence, Land):            
+        if not isinstance (self.residence, Land):
             # Newcomers, who don't find a home, leave the city
             if (self.unique_id in self.workforce.newcomers):
                 # if (self.residence == None):
@@ -242,12 +242,11 @@ class Person(Agent):
                 self.remove()
                 return  # Stop execution of the step function after removal
 
-        # People older than working age, retire
-        elif (self.working_period > self.model.working_periods):
-            self.workforce.remove(self, self.workforce.workers)
+        # People older than working age retire,  if flag True
+        elif self.model.agents_retire and (self.working_period > self.model.working_periods):
 
             # In the city
-            if premium > self.residence.transport_cost:                
+            if premium > self.residence.transport_cost:
                 # If residence owned, list homes for sale
                 if (self.residence in self.properties_owned):
                     self.workforce.add(self, self.workforce.retiring_urban)
@@ -278,6 +277,8 @@ class Person(Agent):
                     self.workforce.remove(self, self.workforce.workers)
             elif self.unique_id not in self.workforce.newcomers:
                 logger.warning(f'Why no residence: {self}')
+        else:
+            self.workforce.remove(self, self.workforce.workers)
 
         # else:
         #     logger.warning(f'Has land, below retirement age,')

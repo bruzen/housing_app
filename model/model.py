@@ -73,7 +73,7 @@ class City(Model):
             'height':15,
 
             # FLAGS
-            'init_city_extent': 10.,  # f CUT OR CHANGE?
+            'housing_market_on':   True,  # Set flag to False for debugging to check firm behaviour with now housing market
             'center_city':     False, # Flag for city center in center if True, or bottom corner if False
             # 'random_init_age': False,  # Flag for randomizing initial age. If False, all workers begin at age 0
             'random_init_age': True,  # Flag for randomizing initial age. If False, all workers begin at age 0
@@ -99,7 +99,7 @@ class City(Model):
             'adjn': 0.25,
             'adjF': 0.15,
             'adjw': 0.15, 
-            #'dist': 1, 
+            'dist': 1,
             'init_agglomeration_population': 100000.0,
             'init_F': 100.0,
             'init_k': 100.0,
@@ -110,6 +110,7 @@ class City(Model):
             'working_periods': 40,        # in years
             'savings_rate': 0.3,
             'discount_rate': 0.07,        # 1/delta
+            'r_prime': 0.05,
             'r_margin': 0.01,
             'property_tax_rate': 0.04,     # tau, annual rate, was c
             'housing_services_share': 0.3, # a
@@ -133,8 +134,9 @@ class City(Model):
         self.time_step = 1.
         self.height = self.params['height']
         self.width  = self.params['width']
+        # If housing_market_on, there is a housing market when agents retire
+        self.housing_market_on = self.params['housing_market_on']
         # If self.center_city is True, it places the city in the center; otherwise, it places it in the bottom corner.
-        self.center_city = self.params['center_city'] # put city in the bottom corner TODO check flag's logic
         self.center_city   = self.params['center_city'] # put city in the bottom corner TODO check flag's logic
         if self.center_city:
             self.center    = (width//2, height//2)
