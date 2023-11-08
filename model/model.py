@@ -124,10 +124,6 @@ class City(Model):
         else:
             self.params = default_parameters
 
-        # # TODO Temp
-        # self.owner_matches = 0
-        # self.owner_does_not_match = 0
-
         # Model
         self.model_name        = 'Housing Market'
         self.model_version     = '0.0.1'
@@ -249,12 +245,6 @@ class City(Model):
 
         self.time_step += 1
 
-
-        # TODO remove. temp.
-        # logger.info(f'Number of land agents that match owners land_owned {self.owner_matches} vs dont {self.owner_does_not_match} ')
-        # self.owner_matches = 0
-        # self.owner_does_not_match = 0
-
         logger.info(f'\n \n \n Step {self.schedule.steps}. \n')
         self.step_price_data.clear()
 
@@ -272,8 +262,8 @@ class City(Model):
         # People work, retire, and list homes to sell
         self.schedule.step_breed(Person)
 
-        for i in self.workforce.retiring:
-            # Add agents to replace retiring workers
+        for i in self.workforce.retiring_urban:
+            # Add agents to replace retiring_urban workers
             person = self.create_newcomer()
             person.bid()
 
@@ -326,18 +316,14 @@ class City(Model):
 
         self.run_id    = self.get_run_id(self.model_name, self.timestamp, self.model_version)
 
-        # TODO FIX TO IN WORKERS-- RECORD WORKERS, NEWCOMERS, RETIRING
         # Define what data the model will collect in each time step
         model_reporters      = {
-#           "rents":                     capture_rents,
             "workers":                   lambda m: m.firm.N,
             "MPL":                       lambda m: m.firm.MPL,
-            #"MPK":                       lambda m: m.firm.MPK,
             "time_step":                 lambda m: m.time_step,
             "companies":                 lambda m: m.schedule.get_breed_count(Firm),
             "city_extent_calc":          lambda m: m.city_extent_calc,
             "people":                    lambda m: m.schedule.get_breed_count(Person),
-            "worker_agents":             lambda m: m.workforce.get_agent_count(m.workforce.workers),
             "market_rent":               lambda m: m.market_rent,
             "net_rent":                  lambda m: m.net_rent,
             "potential_dissipated_rent": lambda m: m.potential_dissipated_rent,
@@ -350,14 +336,7 @@ class City(Model):
             "removed_agents":            lambda m: m.removed_agents,
             "n":                         lambda m: m.firm.n,
             "y":                         lambda m: m.firm.y,
-            #"n_target":                  lambda m: m.firm.n_target,
-            # "y_target":                  lambda m: m.firm.y_target,
-            # "k_target":                  lambda m: m.firm.k_target, 
-            # # "self.firm_adjustment_parameter": lambda m: m.firm.firm_adjustment_parameter,
             "F_target":                  lambda m: m.firm.F_target,
-            # "F_next":                    lambda m: m.firm.F_next,
-            # "N_target_total":            lambda m: m.firm.N_target_total,
-            # "F_next_total":              lambda m: m.firm.F_next_total,
             "F":                         lambda m: m.firm.F,
             "k":                         lambda m: m.firm.k,
             "N":                         lambda m: m.firm.N,
@@ -366,11 +345,10 @@ class City(Model):
             "wage_premium":              lambda m: m.firm.wage_premium,
             "subsistence_wage":          lambda m: m.firm.subsistence_wage,
             "wage":                      lambda m: m.firm.wage,
-
-            # "A_F":                     lambda m: m.firm.A_F,
-
-            # "price_model_coefficients":  lambda m: m.price_model.coef,
-            # "price_model_intercept":     lambda m: m.price_model.intercept,
+            # "worker_agents":           lambda m: m.workforce.get_agent_count(m.workforce.workers),
+            "worker_agents":             lambda m: len(m.workforce.workers),
+            "newcomer_agents":           lambda m: len(m.workforce.newcomers),
+            "retiring_urban_agents":     lambda m: len(m.workforce.retiring_urban),
             # "workers":        lambda m: len(
             #     [a for a in self.schedule.agents_by_breed[Person].values()
             #              if a.is_working == 1]
@@ -384,17 +362,16 @@ class City(Model):
             "id":                lambda a: a.unique_id,
             "x":                 lambda a: a.pos[0],
             "y":                 lambda a: a.pos[1],
-            "distance_from_center": lambda a: getattr(a, "distance_from_center", None) if isinstance(a, Land) else None,
-            # "wage":               lambda a: getattr(a, "wage", None) if isinstance(a, Land) else None,
-            "is_working":           lambda a: None if not isinstance(a, Person) else 1 if a.unique_id in a.workforce.workers else 0,
-            # "is_working":         lambda a: getattr(a, "is_working", None),
-            "working_period":    lambda a: getattr(a, "working_period", None),
-            # "property_tax_rate":  lambda a: getattr(a, "property_tax_rate", None),
-            "net_rent":          lambda a: getattr(a, "net_rent", None) if isinstance(a, Land) else None,
-            "warranted_rent":    lambda a: getattr(a, "warranted_rent", None) if isinstance(a, Land) else None,
+            "is_working":        lambda a: None if not isinstance(a, Person) else 1 if a.unique_id in a.workforce.workers else 0,  # TODO does this need to be in model? e.g. a.model.workforce
+            # "is_working_check":  lambda a: None if not isinstance(a, Person) else 1 if a.model.firm.wage_premium > a.residence.transport_cost else 0,
+            "working_period":    lambda a: getattr(a, "working_period", None)  if isinstance(a, Person) else None,
+            "net_rent":          lambda a: getattr(a, "net_rent", None)        if isinstance(a, Land) else None,
+            "warranted_rent":    lambda a: getattr(a, "warranted_rent", None)  if isinstance(a, Land) else None,
             "warranted_price":   lambda a: getattr(a, "warranted_price", None) if isinstance(a, Land) else None,
-            "realized_price":   lambda a: getattr(a, "realized_price", None) if isinstance(a, Land) else None,
-            "owner_type":   lambda a: getattr(a, "owner_type", None) if isinstance(a, Land) else None,
+            "realized_price":    lambda a: getattr(a, "realized_price", None)  if isinstance(a, Land) else None,
+            "sold_this_step":    lambda a: getattr(a, "sold_this_step", None)  if isinstance(a, Land) else None,
+            "owner_type":        lambda a: getattr(a, "owner_type", None)      if isinstance(a, Land) else None,
+            "distance_from_center": lambda a: getattr(a, "distance_from_center", None) if isinstance(a, Land) else None,
         }
 
         self.datacollector  = DataCollector(model_reporters = model_reporters,
@@ -447,13 +424,11 @@ class City(Model):
 
     def record_step_data(self):
         # Calculations for data collection
-        # TODO: Check only one worker per house and that all workers have a residence
         self.rent_production = sum(
             agent.model.firm.wage_premium for agent in self.schedule.agents_by_breed[Person].values() 
             if agent.unique_id in agent.workforce.workers
         )
 
-        # TODO  Do we only count amenity for workers, or those in the urban boundary?
         self.rent_amenity    = sum(
             agent.amenity for agent in self.schedule.agents_by_breed[Person].values() 
             if agent.unique_id in agent.workforce.workers
@@ -469,9 +444,6 @@ class City(Model):
             if agent.resident and agent.resident.unique_id in agent.resident.workforce.workers
         )
         self.available_rent  = self.rent_production + self.rent_amenity - self.dissipated_rent # w - cd + A - total_dissipated # total-captured
-        self.rent_captured_by_finance  = 0 # TODO implement. make a marker for agents in the city
-        self.share_captured_by_finance = 0 # TODO implement.
-        self.urban_surplus   = 0 # TODO implement
 
         # Retrieve data
         self.datacollector.collect(self)
@@ -597,8 +569,10 @@ class City(Model):
 
     def get_p_dot(self):
         time_zero = 6
+
         if self.time_step < time_zero:
             p_dot = 0
+
         else:
             # Predict rate of change using the warranted price model
             # logger.debug(f'Len warranted_price_data {len(self.warranted_price_data)}')
@@ -631,33 +605,19 @@ class City(Model):
             data_threshold = 100
             w_r = min(len(self.realized_price_data) / data_threshold, 1.0)
 
-            # Alternative p_dot calculations
-            # p_dot = .001 
-            # p_dot = p * p_dot_warranted_price + (1 - p) * p_dot_realized_price # Old without, 0 term
-            # TODO consider sigmoid transitions
-
             # Linearly interpolate between 0 and the weighted rate of change
             p_dot = w_w * (w_r * p_dot_warranted_price + (1 - w_r) * p_dot_realized_price)
-            
+            # p_dot = p * p_dot_warranted_price + (1 - p) * p_dot_realized_price # Old without, 0 term
+
         return p_dot
-
-# TODO MAKE A WEIGHTED MODE FOR THE TWO VARIABLES
-# Assume you have the trained models regr1 and regr2
-# Assume you have data for new_data1 and new_data2 for both models
-# p is the weight parameter (a value between 0 and 1)
-
-
-
-# Blend the predictions using the weight parameter p
-
 
 class Workforce:
     """Manages a dictionary of working agents."""
 
     def __init__(self):
-        self.workers:   Dict[int, Person] = {}
-        self.retiring:  Dict[int, Person] = {}
-        self.newcomers: Dict[int, Person] = {}
+        self.workers:         Dict[int, Person] = {}
+        self.retiring_urban:  Dict[int, Person] = {}
+        self.newcomers:       Dict[int, Person] = {}
 
     def add(self, agent: Person, agent_dict: dict) -> None:
         if agent.unique_id not in agent_dict:
@@ -684,7 +644,7 @@ class Workforce:
     def remove_from_all(self, agent: Person) -> None:
         # Remove the agent from each dictionary using the `remove` method.
         self.remove(agent, self.workers)
-        self.remove(agent, self.retiring)
+        self.remove(agent, self.retiring_urban)
         self.remove(agent, self.newcomers)
 
     def get_agent_count(self, agents_dict: Dict[int, Person]) -> int:

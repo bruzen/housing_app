@@ -9,7 +9,7 @@ from mesa import Agent
 
 logging.basicConfig(filename='logfile.log',
                     filemode='w',
-                    level=logging.INFO,
+                    level=logging.DEBUG,
                     format='%(asctime)s %(name)s %(levelname)s:%(message)s')
 logger = logging.getLogger(__name__)
 
@@ -23,24 +23,13 @@ class Land(Agent):
     :param owner: The agent who owns this land parcel.
     """
 
-    @property
-    def warranted_rent(self):
-        wage_premium     = self.model.firm.wage_premium
-        subsistence_wage = self.model.firm.subsistence_wage
-        a                = self.model.housing_services_share
-        return wage_premium - self.transport_cost + a * subsistence_wage # TODO add amenity + A
-
     @property 
     def market_rent(self):
         return self.warranted_rent
 
     @property
     def net_rent(self):
-        return self.warranted_rent - self.maintenance - self.property_tax
-
-    @property
-    def warranted_price(self):
-        return self.warranted_rent / self.model.r_prime
+        return self.warranted_rent - self.maintenance - self.property_tax # TODO check we don't use net rent for warranted_price
     
     @property
     def appraised_price(self):
@@ -69,8 +58,10 @@ class Land(Agent):
         self.owner                = owner
         self.distance_from_center = self.calculate_distance_from_center()
         self.transport_cost       = self.calculate_transport_cost()
-        self.realized_price           = - 1 # random.randint(1, 10000)
-        # TODO want to make distance from center, warranted price, realized price.
+        self.realized_price       = - 1 # random.randint(1, 10000)
+        self.sold_this_step       = 0
+        self.warranted_rent       = self.get_warranted_rent()
+        self.warranted_price      = self.get_warranted_price()
         # self.owner_types = np.array(['Person', 'Investor', 'Bank', 'Other']) # TEMP - move to model? Have agent type list?
 
         if isinstance(self.owner, Person):
@@ -79,10 +70,11 @@ class Land(Agent):
             self.owner_type = 2 # 'Investor'
         else:
             self.owner_type = 3 #'Other'
-            logger.warning(f'Land {self.unique_id} owner not a person or investor. Owner: {self.owner}')
-
 
     def step(self):
+
+        self.warranted_rent  = self.get_warranted_rent()
+        self.warranted_price = self.get_warranted_price()
 
         # Prepare price data for the current step
         price_data = {
@@ -96,8 +88,8 @@ class Land(Agent):
         # Add the price data to the model's step price data
         self.model.step_price_data.append(price_data)
 
-        self.realized_price           = -1 # np.random.choice([np.random.uniform(0, 600000), -1], size=None, p=probabilities) # random.randint(1, 10000)
-        # TODO do something with old realized prixe
+        # self.realized_price           = -1 # Don't reset, so we show what it sold for
+        self.sold_this_step = 0
 
         # Generate a random index to select an owner type
         # random_index = np.random.randint(0, len(self.owner_types))
@@ -146,6 +138,15 @@ class Land(Agent):
         else:
             self.owner_type = 3 # 'Other'
             logger.warning(f'Land {self.unique_id} owner not a person or investor. Owner: {self.owner}')
+
+    def get_warranted_rent(self):
+        wage_premium     = self.model.firm.wage_premium
+        subsistence_wage = self.model.firm.subsistence_wage
+        a                = self.model.housing_services_share
+        return wage_premium - self.transport_cost + a * subsistence_wage # TODO add amenity + A
+
+    def get_warranted_price(self):
+        return self.warranted_rent / self.model.r_prime
 
     def check_owners_match(self):
         for owned_property in self.owner.properties_owned:
@@ -237,7 +238,7 @@ class Person(Agent):
                     return  # Stop execution of the step function after removal
             # Everyone who is not a newcomer, should have a residence
             else:
-                logger.warning(f'Non newcomer, no residence: {self}, count {self.count}')
+                logger.warning(f'Non-newcomer with no residence removed: {self}, count {self.count}')
                 self.remove()
                 return  # Stop execution of the step function after removal
 
@@ -249,9 +250,9 @@ class Person(Agent):
             if premium > self.residence.transport_cost:                
                 # If residence owned, list homes for sale
                 if (self.residence in self.properties_owned):
-                    self.workforce.add(self, self.workforce.retiring)
+                    self.workforce.add(self, self.workforce.retiring_urban)
                     # if self.residence.owner != self:
-                    #     logger.warning(f'Retiring agent believes it owns property, but does not. \n Agents properties owned: {self.properties_owned}. Properties owner: {self.residence.owner}')
+                    #     logger.warning(f'retiring_urban agent believes it owns property, but does not. \n Agents properties owned: {self.properties_owned}. Properties owner: {self.residence.owner}')
                     # TODO Contact bank. Decide: sell, rent or keep empty
                     # CREATE LISTING - APPEND LISTING
                     listing = Listing(self, self.residence)
@@ -263,7 +264,7 @@ class Person(Agent):
                     self.working_period = 1
                     self.savings        = 0
 
-            # Outside the city, cycle working period and savings for retiring agents  # TODO check if this is right
+            # Outside the city, cycle working period and savings for retiring_urban agents  # TODO check if this is right
             else:
                 self.working_period = 1
                 self.savings        = 0
@@ -284,15 +285,15 @@ class Person(Agent):
         self.savings += self.model.savings_per_step # TODO debt, wealth
         self.wealth  = self.get_wealth()
 
-        # if self.unique_id in self.workforce.retiring:        
+        # if self.unique_id in self.workforce.retiring_urban:        
         #     if (self.residence):
         #         if premium > self.residence.transport_cost:
-        #             logger.warning(f'Removed retiring agent {self.unique_id} in step, working, with residence, properties owned {len(self.properties_owned)} which was still in model.')
+        #             logger.warning(f'Removed retiring_urban agent {self.unique_id} in step, working, with residence, properties owned {len(self.properties_owned)} which was still in model.')
         #             self.remove()
         #         else:
-        #             logger.warning(f'Retiring agent {self.unique_id}, not working, with residence, still in model.')
+        #             logger.warning(f'retiring_urban agent {self.unique_id}, not working, with residence, still in model.')
         #     else:
-        #         logger.warning(f'Retiring agent {self.unique_id}, witout residence, still in model.')
+        #         logger.warning(f'retiring_urban agent {self.unique_id}, witout residence, still in model.')
         # else:
         #     logger.debug(f'Agent {self.unique_id} has no residence.')
 
@@ -662,10 +663,11 @@ class Realtor(Agent):
         # Allocate properties based on bids
         allocations = []
 
-        logger.warning(f'Number of listings: {len(self.bids)}')
+        logger.debug(f'Number of listed properties to sell: {len(self.bids)}')
         for listing, property_bids in self.bids.items():
+            # # Look at all bids for debugging
             # bid_info = [f'bidder {bid.bidder} bid {bid.bid_price}' for bid in property_bids]
-            # logger.warning(f'Listed property: {listing.sale_property.unique_id} has bids: {len(property_bids)}, {", ".join(bid_info)}')
+            # logger.debug(f'Listed property: {listing.sale_property.unique_id} has bids: {len(property_bids)}, {", ".join(bid_info)}')
 
             if property_bids:
                 property_bids.sort(key=lambda x: x.bid_price, reverse=True)
@@ -675,8 +677,6 @@ class Realtor(Agent):
 
                 final_price = highest_bid_price # TODO decide highest price here or elsewhere?
 
-                # elif isinstance(sale_property.owner, Person):
-                    # logger.warning(f'In sell_homes, seller {sale_property.owner.unique_id} was a person. Seller {sale_property.owner}.')
                 allocation = Allocation(
                                         buyer                    = highest_bid.bidder,
                                         seller                   = listing.seller,
@@ -697,12 +697,13 @@ class Realtor(Agent):
 
     def complete_transactions(self, allocations):
         for allocation in allocations:
-            logger.warning(f'Property {allocation.sale_property.unique_id} sold by seller {allocation.seller} to {allocation.buyer} for {allocation.final_price}')
+            logger.debug(f'Property {allocation.sale_property.unique_id} sold by seller {allocation.seller} to {allocation.buyer} for {allocation.final_price}')
             # if not isinstance(allocation.seller, Person):
             #     logger.debug(f'Seller not a Person in complete_transaction: Seller {allocation.seller.unique_id}')
 
             # Record data for data_collection
             allocation.sale_property.realized_price = allocation.final_price
+            allocation.sale_property.sold_this_step = 1 # Record that it sold
 
             # Record data for forecasting
             new_row = {
@@ -767,7 +768,7 @@ class Realtor(Agent):
     def handle_seller_departure(self, allocation):
         """Handles the departure of a selling agent."""
         if isinstance(allocation.seller, Person):
-            if allocation.seller.unique_id in self.workforce.retiring:
+            if allocation.seller.unique_id in self.workforce.retiring_urban:
                 # logger.debug(f'Removing seller {self.unique_id}')
                 allocation.seller.remove()
             else:
