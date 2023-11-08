@@ -227,7 +227,7 @@ class Person(Agent):
         premium = self.model.firm.wage_premium
         # TODO check location is same as residence.
 
-        # People without residences, removed
+        # People without residences leave
         if not isinstance (self.residence, Land):            
             # Newcomers, who don't find a home, leave the city
             if (self.unique_id in self.workforce.newcomers):
@@ -269,7 +269,7 @@ class Person(Agent):
                 self.working_period = 1
                 self.savings        = 0
 
-        # People of working age, work if it is worthwhile to work
+        # People of working age work, if it is worthwhile to work
         if self.working_period < self.model.working_periods:
             if self.residence:
                 if premium > self.residence.transport_cost:

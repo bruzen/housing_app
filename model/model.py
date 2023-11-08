@@ -69,53 +69,54 @@ class City(Model):
         default_parameters = {
             'run_notes': 'Debugging model.',
             'subfolder': None,
-            'width': 50,
-            'height': 1,
-            'center_city': False,     # Flag for city center in center if True, or bottom corner if False
-            'random_init_age': False, # Flag for randomizing initial age. If False, all workers begin at age 0
+            'width': 15,
+            'height':15,
+
+            # FLAGS
             'init_city_extent': 10.,  # f CUT OR CHANGE?
+            'center_city':     False, # Flag for city center in center if True, or bottom corner if False
+            # 'random_init_age': False,  # Flag for randomizing initial age. If False, all workers begin at age 0
+            'random_init_age': True,  # Flag for randomizing initial age. If False, all workers begin at age 0
+
+            # LABOUR MARKET AND FIRM PARAMETERS
+            'subsistence_wage': 40000., # psi
+            'init_city_extent': 10.,    # CUT OR CHANGE?
             'seed_population': 400,
-            'density': 300,
-            'subsistence_wage': 40000.,
-            'init_wage_premium_ratio': 1.2,
-            # 'workforce_rural_firm': 100,
-            # 'alpha_F': 0.18,
-            # 'beta_F': 0.72,  # beta and was lambda, workers_share of aglom surplus
-            # 'beta_city': 1.12,
-            # 'gamma': 0.02,  # FIX value
-            # 'Z': 0.5,  # CUT? Scales new entrants
+            'init_wage_premium_ratio': 0.2, # 1.2, ###
+
+            # PARAMETERS MOST LIKELY TO AFFECT SCALE
+            'c': 300.0,                            ###
+            'price_of_output': 10,                 ######
+            'density':600,                         #####
+            'A': 3000,                             ### 
             'alpha': 0.18,
-            'beta':  0.73,
-            'gamma': 0.11,
-            'price_of_output': 4., 
-            'r_prime': 0.05,  # 0.03
-            # 'firm_adjustment_parameter': 0.25,
-            # 'wage_adjustment_parameter': 0.5,
-            'mortgage_period': 5.0,  # T, in years
-            'working_periods': 40,  # in years
-            'savings_rate': 0.3,
-            'discount_rate': 0.07, # 1/delta
-            'r_margin': 0.01,
-            'property_tax_rate': 0.04,  # tau, annual rate, was c
-            'housing_services_share': 0.3,  # a
-            'maintenance_share': 0.2,  # b
-            'max_mortgage_share': 0.9,
-            'ability_to_carry_mortgage': 0.28,
-            'wealth_sensitivity': 0.1,
-            'A': 500,
-            'overhead': 2,
+            'beta':  0.75,
+            'gamma': 0.12, ### reduced from .14
+            'overhead': 1,
             'mult': 1.2,
-            'c': 200.0,
-            'adjN': 0.15,   #### Sept 28 raise adj factors from 15, 15, 25, 15, 15
-            'adjk': 0.15,
+            'adjN': 0.15,
+            'adjk': 0.05,
             'adjn': 0.25,
             'adjF': 0.15,
-            'adjw': 0.15,
-            'dist': 1.0,
-            'init_agglomeration_population': 0.0,
+            'adjw': 0.15, 
+            #'dist': 1, 
+            'init_agglomeration_population': 100000.0,
             'init_F': 100.0,
             'init_k': 100.0,
             'init_n': 100.0,
+
+            # HOUSING AND MORTGAGE MARKET PARAMETERS
+            'mortgage_period': 5.0,       # T, in years
+            'working_periods': 40,        # in years
+            'savings_rate': 0.3,
+            'discount_rate': 0.07,        # 1/delta
+            'r_margin': 0.01,
+            'property_tax_rate': 0.04,     # tau, annual rate, was c
+            'housing_services_share': 0.3, # a
+            'maintenance_share': 0.2,      # b
+            'max_mortgage_share': 0.9,
+            'ability_to_carry_mortgage': 0.28,
+            'wealth_sensitivity': 0.1,
         }
 
         # Merge default parameters with provided parameters
@@ -134,6 +135,7 @@ class City(Model):
         self.width  = self.params['width']
         # If self.center_city is True, it places the city in the center; otherwise, it places it in the bottom corner.
         self.center_city = self.params['center_city'] # put city in the bottom corner TODO check flag's logic
+        self.center_city   = self.params['center_city'] # put city in the bottom corner TODO check flag's logic
         if self.center_city:
             self.center    = (width//2, height//2)
         else:
