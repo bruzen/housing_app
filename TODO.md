@@ -29,6 +29,7 @@
 - [ ] Fix test_auction for new plot? iPython notebook used some error messages I removed
 - [ ] Display bid type (e.g. equity_limited etc)
 - [ ] Consider sigmoid transitions for get_bid transition
+- [ ] Add change_resident function like change_owner func
   
 
 ## DiR

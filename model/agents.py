@@ -242,8 +242,8 @@ class Person(Agent):
                 self.remove()
                 return  # Stop execution of the step function after removal
 
-        # People older than working age retire,  if flag True
-        elif self.model.agents_retire and (self.working_period > self.model.working_periods):
+        # People older than working age retire, if flag housing_market_on True
+        elif self.model.housing_market_on and (self.working_period > self.model.working_periods):
 
             # In the city
             if premium > self.residence.transport_cost:
