@@ -220,12 +220,19 @@ class Person(Agent):
         # Count time step and track whether agent is working
         self.count               = 0
 
+        self.is_working_check    = 0
+
     def step(self):
         self.count              += 1
         self.working_period     += 1
 
         premium = self.model.firm.wage_premium
         # TODO check location is same as residence.
+
+        if premium > self.residence.transport_cost:
+            self.is_working_check = 1
+        else:
+            self.is_working_check = 0
 
         # People without residences leave
         if not isinstance (self.residence, Land):

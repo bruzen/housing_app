@@ -367,7 +367,7 @@ class City(Model):
             "x":                 lambda a: a.pos[0],
             "y":                 lambda a: a.pos[1],
             "is_working":        lambda a: None if not isinstance(a, Person) else 1 if a.unique_id in a.workforce.workers else 0,  # TODO does this need to be in model? e.g. a.model.workforce
-            # "is_working_check":  lambda a: None if not isinstance(a, Person) else 1 if a.model.firm.wage_premium > a.residence.transport_cost else 0,
+            "is_working_check":  lambda a: None if not isinstance(a, Person) else a.is_working_check,
             "working_period":    lambda a: getattr(a, "working_period", None)  if isinstance(a, Person) else None,
             "net_rent":          lambda a: getattr(a, "net_rent", None)        if isinstance(a, Land) else None,
             "warranted_rent":    lambda a: getattr(a, "warranted_rent", None)  if isinstance(a, Land) else None,
