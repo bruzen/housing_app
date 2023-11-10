@@ -151,7 +151,7 @@ class City(Model):
             self.working_periods  = self.params['working_periods']
             logger.debug(f'Demographics on, working periods {self.working_periods}, 2x time steps {self.num_steps}') #, params working periods {self.params['working_periods']}')
         else:
-            self.working_periods = 2 * self.num_steps
+            self.working_periods = 10 * self.num_steps
             logger.debug(f'Demographics off, working periods {self.working_periods}')
         self.savings_per_step = self.params['subsistence_wage'] * self.params['savings_rate']
 
@@ -230,7 +230,7 @@ class City(Model):
             self.unique_id      += 1
             # TODO maybe control flow for this with a flag passed in
             if self.params['random_init_age']:
-                init_working_period  = self.random.randint(0, self.working_periods - 1) # TODO randomize working period
+                init_working_period  = self.random.randint(0, self.params['working_periods'] - 1) # TODO randomize working period
             else:
                 init_working_period  = 0
             savings = init_working_period * self.savings_per_step 
