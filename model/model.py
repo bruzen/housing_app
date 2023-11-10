@@ -73,7 +73,7 @@ class City(Model):
             'height':15,
 
             # FLAGS
-            'housing_market_on':   True,  # Set flag to False for debugging to check firm behaviour with now housing market
+            'demographics_on': True,  # Set flag to False for debugging to check firm behaviour without demographics or housing market
             'center_city':     False, # Flag for city center in center if True, or bottom corner if False
             # 'random_init_age': False,  # Flag for randomizing initial age. If False, all workers begin at age 0
             'random_init_age': True,  # Flag for randomizing initial age. If False, all workers begin at age 0
@@ -134,8 +134,7 @@ class City(Model):
         self.time_step = 1.
         self.height = self.params['height']
         self.width  = self.params['width']
-        # If housing_market_on, there is a housing market when agents retire
-        self.housing_market_on = self.params['housing_market_on']
+
         # If self.center_city is True, it places the city in the center; otherwise, it places it in the bottom corner.
         self.center_city   = self.params['center_city'] # put city in the bottom corner TODO check flag's logic
         if self.center_city:
@@ -147,7 +146,13 @@ class City(Model):
         self.transport_cost_per_dist = self.params['init_wage_premium_ratio'] * self.params['subsistence_wage'] / self.params['init_city_extent'] # c
 
         # People
-        self.working_periods  = self.params['working_periods']
+        # If demographics_on, there is a housing market when agents retire # self.demographics_on = self.params['demographics_on']
+        if self.params['demographics_on']:
+            self.working_periods  = self.params['working_periods']
+            logger.debug(f'Demographics on, working periods {self.working_periods}, 2x time steps {self.num_steps}') #, params working periods {self.params['working_periods']}')
+        else:
+            self.working_periods = 2 * self.num_steps
+            logger.debug(f'Demographics off, working periods {self.working_periods}')
         self.savings_per_step = self.params['subsistence_wage'] * self.params['savings_rate']
 
         # Housing market model

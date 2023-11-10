@@ -286,12 +286,12 @@ class Person(Agent):
         # else:
         #     logger.debug(f'Agent {self.unique_id} has no residence.')
 
-        # # TODO use is_working_check to perform any checks
-        # if self.residence:
-        #     if premium > self.residence.transport_cost:
-        #         self.is_working_check = 1
-        #     else:
-        #         self.is_working_check = 0
+        # TODO use is_working_check to perform any checks
+        if self.residence:
+            if premium > self.residence.transport_cost:
+                self.is_working_check = 1
+            else:
+                self.is_working_check = 0
 
     def bid(self):
         """Newcomers bid on properties for use or investment value."""
