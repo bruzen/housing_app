@@ -225,99 +225,87 @@ class Person(Agent):
     def step(self):
         self.count              += 1
         self.working_period     += 1
+        premium                  = self.model.firm.wage_premium
 
-        premium = self.model.firm.wage_premium
-        # TODO check location is same as residence.
-
-        if premium > self.residence.transport_cost:
-            self.is_working_check = 1
-        else:
-            self.is_working_check = 0
-
-        # People without residences leave
+        # Non-residents
         if not isinstance (self.residence, Land):
-            # Newcomers, who don't find a home, leave the city
+            # Newcomers who don't find a home leave the city
             if (self.unique_id in self.workforce.newcomers):
                 # if (self.residence == None):
                 if self.count > 0:
                     # logger.debug(f'Newcomer {self.unique_id} removed, who owns {self.properties_owned}, count {self.count}')
                     self.remove()
                     return  # Stop execution of the step function after removal
-            # Everyone who is not a newcomer, should have a residence
+            # Everyone who is not a newcomer leaves if they have no residence
             else:
                 logger.warning(f'Non-newcomer with no residence removed: {self}, count {self.count}')
                 self.remove()
                 return  # Stop execution of the step function after removal
 
-        # People older than working age retire, if flag housing_market_on True
-        elif self.model.housing_market_on and (self.working_period > self.model.working_periods):
-
-            # In the city
-            if premium > self.residence.transport_cost:
-                # If residence owned, list homes for sale
-                if (self.residence in self.properties_owned):
-                    self.workforce.add(self, self.workforce.retiring_urban)
-                    # if self.residence.owner != self:
-                    #     logger.warning(f'retiring_urban agent believes it owns property, but does not. \n Agents properties owned: {self.properties_owned}. Properties owner: {self.residence.owner}')
-                    # TODO Contact bank. Decide: sell, rent or keep empty
-                    # CREATE LISTING - APPEND LISTING
+        # Urban workers
+        elif premium > self.residence.transport_cost:
+            self.workforce.add(self, self.workforce.workers)
+            # Agents list properties a step before they stop working for consistent worker numbers
+            if self.working_period >= self.model.working_periods:
+                if self.residence in self.properties_owned:
+                    self.workforce.add(self, self.workforce.retiring_urban_owner)
                     listing = Listing(self, self.residence)
-                    # self.model.realtor.sale_listings.append(listing)
                     self.model.realtor.bids[listing] = []
-
-                # If residence not owned, cycle working period and savings # TODO check if this is right
+                    # TODO Contact bank. Decide: sell, rent or keep empty
+            if self.working_period > self.model.working_periods:
+                if self.residence in self.properties_owned:
+                    self.workforce.remove(self, self.workforce.workers)
+                    logger.warning(f'Urban homeowner still in model: {self}, working_period {self.working_period}')
                 else:
                     self.working_period = 1
                     self.savings        = 0
+                    # TODO what should reset savings/age be for new renters? This simply resets keeping the initial distribution of ages cycling outside the city
 
-            # Outside the city, cycle working period and savings for retiring_urban agents  # TODO check if this is right
-            else:
-                self.working_period = 1
-                self.savings        = 0
-
-        # People of working age work, if it is worthwhile to work
-        if self.working_period < self.model.working_periods:
-            if self.residence:
-                if premium > self.residence.transport_cost:
-                    self.workforce.add(self, self.workforce.workers)
-                else:
-                    self.workforce.remove(self, self.workforce.workers)
-            elif self.unique_id not in self.workforce.newcomers:
-                logger.warning(f'Why no residence: {self}')
+        # Rural population
         else:
             self.workforce.remove(self, self.workforce.workers)
-
-        # else:
-        #     logger.warning(f'Has land, below retirement age,')
+            if self.working_period > self.model.working_periods:
+                self.working_period = 1
+                self.savings        = 0
+                # TODO what should reset savings/age be? This simply resets keeping the initial distribution of ages cycling outside the city
+                
         # Update savings and wealth
         self.savings += self.model.savings_per_step # TODO debt, wealth
-        self.wealth  = self.get_wealth()
+        # self.wealth  = self.get_wealth()
 
-        # if self.unique_id in self.workforce.retiring_urban:        
+        # TODo consider doing additional check for retiring agents who are still in model
+        # if self.unique_id in self.workforce.retiring_urban_owner:        
         #     if (self.residence):
         #         if premium > self.residence.transport_cost:
-        #             logger.warning(f'Removed retiring_urban agent {self.unique_id} in step, working, with residence, properties owned {len(self.properties_owned)} which was still in model.')
+        #             logger.warning(f'Removed retiring_urban_owner agent {self.unique_id} in step, working, with residence, properties owned {len(self.properties_owned)} which was still in model.')
         #             self.remove()
         #         else:
-        #             logger.warning(f'retiring_urban agent {self.unique_id}, not working, with residence, still in model.')
+        #             logger.warning(f'retiring_urban_owner agent {self.unique_id}, not working, with residence, still in model.')
         #     else:
-        #         logger.warning(f'retiring_urban agent {self.unique_id}, witout residence, still in model.')
+        #         logger.warning(f'retiring_urban_owner agent {self.unique_id}, witout residence, still in model.')
         # else:
         #     logger.debug(f'Agent {self.unique_id} has no residence.')
+
+        # # TODO use is_working_check to perform any checks
+        # if self.residence:
+        #     if premium > self.residence.transport_cost:
+        #         self.is_working_check = 1
+        #     else:
+        #         self.is_working_check = 0
 
     def bid(self):
         """Newcomers bid on properties for use or investment value."""
         
         # logger.debug(f'Newcomer bids: {self}, count {self.count}')
 
-        # W = self.savings # TODO fix self.get_wealth() # TODO use wealth in mortgage share and borrowing rate
+        # W = self.savings # TODO fix self.get_wealth()
         S = self.savings
         r = self.borrowing_rate
         r_prime  = self.model.r_prime
         r_target = self.model.r_target # TODO this is personal but uses same as bank. Clarify.        
         wage     = self.model.firm.wage
-        standard_mortgage_share = 0.8 # TODO make his a parameter
-        # average_wealth = # TODO?
+        standard_mortgage_share = 0.8 # TODO make this a parameter
+        # average_wealth = # TODO? put in calculation
 
         # Max mortgage
         M = 0.28 * (wage + r * S) / r_prime
@@ -776,7 +764,7 @@ class Realtor(Agent):
     def handle_seller_departure(self, allocation):
         """Handles the departure of a selling agent."""
         if isinstance(allocation.seller, Person):
-            if allocation.seller.unique_id in self.workforce.retiring_urban:
+            if allocation.seller.unique_id in self.workforce.retiring_urban_owner:
                 # logger.debug(f'Removing seller {self.unique_id}')
                 allocation.seller.remove()
             else:

@@ -266,8 +266,8 @@ class City(Model):
         # People work, retire, and list homes to sell
         self.schedule.step_breed(Person)
 
-        for i in self.workforce.retiring_urban:
-            # Add agents to replace retiring_urban workers
+        for i in self.workforce.retiring_urban_owner:
+            # Add agents to replace retiring_urban_owner workers
             person = self.create_newcomer()
             person.bid()
 
@@ -352,7 +352,7 @@ class City(Model):
             # "worker_agents":           lambda m: m.workforce.get_agent_count(m.workforce.workers),
             "worker_agents":             lambda m: len(m.workforce.workers),
             "newcomer_agents":           lambda m: len(m.workforce.newcomers),
-            "retiring_urban_agents":     lambda m: len(m.workforce.retiring_urban),
+            "retiring_urban_owner":      lambda m: len(m.workforce.retiring_urban_owner),
             # "workers":        lambda m: len(
             #     [a for a in self.schedule.agents_by_breed[Person].values()
             #              if a.is_working == 1]
@@ -619,9 +619,9 @@ class Workforce:
     """Manages a dictionary of working agents."""
 
     def __init__(self):
-        self.workers:         Dict[int, Person] = {}
-        self.retiring_urban:  Dict[int, Person] = {}
-        self.newcomers:       Dict[int, Person] = {}
+        self.workers:               Dict[int, Person] = {}
+        self.retiring_urban_owner:  Dict[int, Person] = {}
+        self.newcomers:             Dict[int, Person] = {}
 
     def add(self, agent: Person, agent_dict: dict) -> None:
         if agent.unique_id not in agent_dict:
@@ -648,7 +648,7 @@ class Workforce:
     def remove_from_all(self, agent: Person) -> None:
         # Remove the agent from each dictionary using the `remove` method.
         self.remove(agent, self.workers)
-        self.remove(agent, self.retiring_urban)
+        self.remove(agent, self.retiring_urban_owner)
         self.remove(agent, self.newcomers)
 
     def get_agent_count(self, agents_dict: Dict[int, Person]) -> int:
