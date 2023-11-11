@@ -113,7 +113,6 @@ class Land(Agent):
         return cost
 
     def change_owner(self, new_owner, old_owner):
-
         if not self.check_owners_match:
             owner_properties = ' '.join(str(prop.unique_id) if hasattr(prop, 'unique_id') else str(prop) for prop in self.owner.properties_owned)
             logger.error(f'In change_owner, property owner does not match an owner in owners properties_owned list: property {self.unique_id}, property\'s owner {self.owner.unique_id}, owner\'s properties {owner_properties} ')
@@ -143,6 +142,7 @@ class Land(Agent):
         subsistence_wage = self.model.firm.subsistence_wage
         a                = self.model.housing_services_share
         return max(wage_premium - self.transport_cost, 0)
+        # Note, we set the rural land value to zero to study the urban land market, with the agricultural price, warranted rent would be:
         # return max(wage_premium - self.transport_cost + a * subsistence_wage, 0)
         # TODO add amenity + A
         # TODO should it be positive outside the city? How to handle markets outside the city if it is?
