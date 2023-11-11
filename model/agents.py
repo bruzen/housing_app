@@ -72,7 +72,6 @@ class Land(Agent):
             self.owner_type = 3 #'Other'
 
     def step(self):
-
         self.warranted_rent  = self.get_warranted_rent()
         self.warranted_price = self.get_warranted_price()
 
@@ -143,7 +142,8 @@ class Land(Agent):
         wage_premium     = self.model.firm.wage_premium
         subsistence_wage = self.model.firm.subsistence_wage
         a                = self.model.housing_services_share
-        return max(wage_premium - self.transport_cost + a * subsistence_wage, 0)
+        return max(wage_premium - self.transport_cost, 0)
+        # return max(wage_premium - self.transport_cost + a * subsistence_wage, 0)
         # TODO add amenity + A
         # TODO should it be positive outside the city? How to handle markets outside the city if it is?
 
