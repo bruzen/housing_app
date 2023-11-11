@@ -143,7 +143,9 @@ class Land(Agent):
         wage_premium     = self.model.firm.wage_premium
         subsistence_wage = self.model.firm.subsistence_wage
         a                = self.model.housing_services_share
-        return wage_premium - self.transport_cost + a * subsistence_wage # TODO add amenity + A
+        return max(wage_premium - self.transport_cost + a * subsistence_wage, 0)
+        # TODO add amenity + A
+        # TODO should it be positive outside the city? How to handle markets outside the city if it is?
 
     def get_warranted_price(self):
         return self.warranted_rent / self.model.r_prime
@@ -252,6 +254,8 @@ class Person(Agent):
                     listing = Listing(self, self.residence)
                     self.model.realtor.bids[listing] = []
                     # TODO Contact bank. Decide: sell, rent or keep empty
+                    logger.debug(f'Agent is retiring: {self}, period {self.working_period}')
+
             if self.working_period > self.model.working_periods:
                 if self.residence in self.properties_owned:
                     self.workforce.remove(self, self.workforce.workers)
