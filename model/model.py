@@ -131,7 +131,7 @@ class City(Model):
         self.model_version     = '0.0.1'
         self.model_description = 'Agent-based housing market model with rent and urban agglomeration.'
         self.num_steps = num_steps        
-        self.time_step = 1.
+        self.time_step = 0.
         self.height = self.params['height']
         self.width  = self.params['width']
 
@@ -245,6 +245,7 @@ class City(Model):
             self.unique_id  += 1
 
         self.setup_data_collection()
+        # self.record_step_data()
 
     def step(self):
         """ The model step function runs in each time step when the model
@@ -288,6 +289,33 @@ class City(Model):
         # Advance model time
         self.schedule.step_time()
 
+        # Do checks TEMP
+        for cell in self.grid.coord_iter():
+            pos                 = (cell[1], cell[2])
+            cell_contents       = self.grid.get_cell_list_contents(pos)
+            persons_at_position = [agent for agent in cell_contents if isinstance(agent, Person)]
+
+            if len(persons_at_position) > 1:
+                num_not_in_newcomers = [agent for agent in persons_at_position if agent not in self.workforce.newcomers]
+                if len(num_not_in_newcomers) > 1:
+                    # Extra non-newcomers
+                    unique_ids = [str(agent.unique_id) for agent in num_not_in_newcomers]
+                    comma_separated_unique_ids = ', '.join(unique_ids)
+                    logging.warning(f'More than one Person agent in self.workforce.newcomers at location {pos}, agents are {comma_separated_unique_ids}')
+                else len(num_not_in_newcomers == 0):
+                    # Only newcomers    
+                    logging.warning(f'Only newcomers at location {pos}, agents are {comma_separated_unique_ids}')
+                # else:
+                #     # Newcomers
+                #     unique_ids = [str(agent.unique_id) for agent in persons_at_position]
+                #     comma_separated_unique_ids = ', '.join(unique_ids)
+                #     logging.debug(f'More than one Person agent at location {pos}, agents are {comma_separated_unique_ids}')
+                # TODO Could check that non-newcomer is resident etc.
+
+            elif len(persons_at_position) == 0:
+                # There are no people
+                logging.warning(f'No Person agents at location {pos}')
+
         self.record_step_data()
 
     def run_model(self):
@@ -303,7 +331,7 @@ class City(Model):
         self.rent_amenity    = 0.
         self.market_rent     = 0.
         self.net_rent        = 0.
-        self.potential_dissipated_rent  = 0.
+        self.potential_dissipated_rent = 0.
         self.dissipated_rent = 0.
         self.available_rent  = 0.
         self.rent_captured_by_finance  = 0.
@@ -379,7 +407,7 @@ class City(Model):
             "warranted_price":   lambda a: getattr(a, "warranted_price", None) if isinstance(a, Land) else None,
             "realized_price":    lambda a: getattr(a, "realized_price", None)  if isinstance(a, Land) else None,
             "sold_this_step":    lambda a: getattr(a, "sold_this_step", None)  if isinstance(a, Land) else None,
-            "owner_type":        lambda a: getattr(a, "owner_type", None)      if isinstance(a, Land) else None,
+            "ownership_type":    lambda a: getattr(a, "ownership_type", None)  if isinstance(a, Land) else None,
             "distance_from_center": lambda a: getattr(a, "distance_from_center", None) if isinstance(a, Land) else None,
         }
 
@@ -494,12 +522,16 @@ class City(Model):
         
         return subfolder
 
-    def create_newcomer(self):
+    def create_newcomer(self, pos=None):
         """Create newcomer at the center with no residence or property."""
         self.unique_id  += 1
-        person           = Person(self.unique_id, self, self.center, 
+
+        if pos is None:
+            pos = self.center
+
+        person           = Person(self.unique_id, self, pos, 
                                   residence_owned = None)
-        self.grid.place_agent(person, self.center)
+        self.grid.place_agent(person, pos)
         self.schedule.add(person)
         self.workforce.add(person, self.workforce.newcomers)
         return person
