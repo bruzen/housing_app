@@ -302,7 +302,7 @@ class City(Model):
                     unique_ids = [str(agent.unique_id) for agent in num_not_in_newcomers]
                     comma_separated_unique_ids = ', '.join(unique_ids)
                     logging.warning(f'More than one Person agent in self.workforce.newcomers at location {pos}, agents are {comma_separated_unique_ids}')
-                else len(num_not_in_newcomers == 0):
+                elif len(num_not_in_newcomers == 0):
                     # Only newcomers    
                     logging.warning(f'Only newcomers at location {pos}, agents are {comma_separated_unique_ids}')
                 # else:
@@ -714,7 +714,7 @@ class Workforce:
             getattr(agent, method)()
 
 # FUNCTION FOR SAVINGS FOR NEWCOMERS AND INITIAL RESIDENTS
-        # rural_home_value = a * subsistence_wage / r # The bank rate r since this is the bank's assessment of value. a is the housing share, and a * subsistence_wage is the value of the housing services since we've fixed the subsistence wage and all houses are the same.
+        
         # MODEL 1 UNIFORM
         # Max savings/wealth outside the city is twice the value of a rural home
         # Range of savings =  min: 0 max: 2* (a*subsistence_wage/r)
@@ -751,11 +751,4 @@ class Workforce:
         # combine Model  1, 2 or 3 with finite number of students with debt 
         # range of savings = {-100 to 0}
 
-# AVERAGE_WEALTH_CALCULATION
-# The value of average_wealth.
-# # value of a home + savings half way through a lifespan. 
-# # Value of house on average in the city - know the area and volume of a cone. Cone has weight omega, the wage_premium
-# avg_wealth = rural_home_value + avg_locational_value + modifier_for_other_cities_or_capital_derived_wealth
 
-# where:
-# avg_locational_value = omega / (3 * r_prime)
