@@ -598,6 +598,27 @@ class Bank(Agent):
             logger.error(f'Get_max_bid None error Rn {R_N}, r {r}, r_target {r_target}, m {m}, p_dot {p_dot}')
             return 0. # TODO Temp
 
+    def get_average_wealth(self):
+        rural_home_value     = self.get_rural_home_value()
+        avg_locational_value = self.model.firm.wage_premium / (3 * self.model.r_prime)
+        return rural_home_value + avg_locational_value
+        # AVERAGE_WEALTH_CALCULATION
+        # The value of average_wealth.
+        # # value of a home + savings half way through a lifespan.
+        # # Value of house on average in the city - know the area and volume of a cone. Cone has weight omega, the wage_premium
+        # avg_wealth = rural_home_value + avg_locational_value + modifier_for_other_cities_or_capital_derived_wealth
+        # where:
+        # avg_locational_value = omega / (3 * r_prime)
+        # TODO consider adding modifier_for_other_cities_or_capital_derived_wealth
+        # TODO check if we need to adjust if not center_city
+
+    def get_rural_home_value(self):
+        # r is the bank rate since this is the bank's assessment of value. a is the housing share, and a * subsistence_wage is the value of the housing services since we've fixed the subsistence wage and all houses are the same.
+        a                = self.model.housing_services_share
+        subsistence_wage = self.model.firm.subsistence_wage
+        r                = self.model.r_prime
+        return a * subsistence_wage / r
+
 class Investor(Agent):
 
     # @property
