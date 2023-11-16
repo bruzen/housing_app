@@ -135,6 +135,10 @@ class City(Model):
         self.height = self.params['height']
         self.width  = self.params['width']
 
+        # # Set the random seed for reproducibility
+        # self.random_seed = 42
+        # self.random.seed(self.random_seed)
+
         # If self.center_city is True, it places the city in the center; otherwise, it places it in the bottom corner.
         self.center_city   = self.params['center_city'] # put city in the bottom corner TODO check flag's logic
         if self.center_city:
