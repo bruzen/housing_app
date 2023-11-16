@@ -533,12 +533,57 @@ class City(Model):
         if pos is None:
             pos = self.center
 
-        person           = Person(self.unique_id, self, pos, 
+        savings = self.get_newcomer_init_savings()
+        
+        person           = Person(self.unique_id, self, pos,
+                                  savings = savings,
                                   residence_owned = None)
         self.grid.place_agent(person, pos)
         self.schedule.add(person)
         self.workforce.add(person, self.workforce.newcomers)
         return person
+
+    def get_newcomer_init_savings(self):
+        savings = self.random.uniform(0, 2*self.bank.get_rural_home_value())
+        return savings
+
+        # DISTRIBUTION FUNCTIONS FOR SAVINGS
+        
+        # MODEL 1 UNIFORM
+        # Max savings/wealth outside the city is twice the value of a rural home
+        # Range of savings =  min: 0 max: 2* (a*subsistence_wage/r)
+
+        # Newcomer max could be 1*rural_home_value + age_based_savings
+        # Initial resident max  age_based_savings
+        # Then we need to set the savings rate to a share of the subsistence wage and 
+        # wage_based_savings = savings_rate * subsistence_wage * working_period
+        # value of a house with no mortgage = warranted_price: rural_home_value + locational_value
+
+        # MODEL 2 LOGNORMAL
+        # from scipy.stats import lognorm
+        # # Standard deviation is 1/3 of the value of a rural home
+        # stddev = a*subsistence_wage/(3*r) # Standard deviation
+        # # Mean is 0.8 the value of a rural home
+        # mean = 0.8 * a*subsistence_wage/r # Mean
+        # # Draft lognormal function
+        # dist=lognorm(a*subsistence_wage/(3*r),loc=0.8 * a*subsistence_wage/r)
+        # which should give us a lognorm distribution object with the mean and standard deviation we specify. 
+        # We can then inspect the pdf or cdf like this:
+        # import numpy as np
+        # import pylab as pl
+        # x=np.linspace(0,6,200)
+        # pl.plot(x,dist.pdf(x))
+        # pl.plot(x,dist.cdf(x))
+
+        # MODEL 3 EXPONENTIAL
+        # np.random.exponential(0.8 * a*subsistence_wage/(r * ln(0.5)), 1)
+        # mean for the exponential: 0.8/ln(.5) * rural_home_value
+        # draw 1 from this distribution
+
+        # MODEL 4 MIXTURE  
+        # Introduce people with debt and debt size E.g. students
+        # combine Model  1, 2 or 3 with finite number of students with debt 
+        # range of savings = {-100 to 0}
 
     def get_distance_to_center(self, pos):
         return distance.euclidean(pos, self.center)
@@ -716,43 +761,3 @@ class Workforce:
         for agent_key in agent_keys:
             agent = agents_dict[agent_key]
             getattr(agent, method)()
-
-# FUNCTION FOR SAVINGS FOR NEWCOMERS AND INITIAL RESIDENTS
-        
-        # MODEL 1 UNIFORM
-        # Max savings/wealth outside the city is twice the value of a rural home
-        # Range of savings =  min: 0 max: 2* (a*subsistence_wage/r)
-
-        # Newcomer max could be 1*rural_home_value + age_based_savings
-        # Initial resident max  age_based_savings
-        # Then we need to set the savings rate to a share of the subsistence wage and 
-        # wage_based_savings = savings_rate * subsistence_wage * working_period
-        # value of a house with no mortgage = warranted_price: rural_home_value + locational_value
-
-        # MODEL 2 LOGNORMAL
-        # from scipy.stats import lognorm
-        # # Standard deviation is 1/3 of the value of a rural home
-        # stddev = a*subsistence_wage/(3*r) # Standard deviation
-        # # Mean is 0.8 the value of a rural home
-        # mean = 0.8 * a*subsistence_wage/r # Mean
-        # # Draft lognormal function
-        # dist=lognorm(a*subsistence_wage/(3*r),loc=0.8 * a*subsistence_wage/r)
-        # which should give us a lognorm distribution object with the mean and standard deviation we specify. 
-        # We can then inspect the pdf or cdf like this:
-        # import numpy as np
-        # import pylab as pl
-        # x=np.linspace(0,6,200)
-        # pl.plot(x,dist.pdf(x))
-        # pl.plot(x,dist.cdf(x))
-
-        # MODEL 3 EXPONENTIAL
-        # np.random.exponential(0.8 * a*subsistence_wage/(r * ln(0.5)), 1)
-        # mean for the exponential: 0.8/ln(.5) * rural_home_value
-        # draw 1 from this distribution
-
-        # MODEL 4 MIXTURE  
-        # Introduce people with debt and debt size E.g. students
-        # combine Model  1, 2 or 3 with finite number of students with debt 
-        # range of savings = {-100 to 0}
-
-

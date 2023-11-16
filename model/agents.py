@@ -775,18 +775,21 @@ class Realtor(Agent):
     def handle_person_purchase(self, allocation):
         """Handles the purchase of a property by a person."""
         allocation.sale_property.change_owner(allocation.buyer, allocation.seller)
-        if not allocation.sale_property.check_residents_match:
-            logger.error(f'Sale property residence doesn\'t match before transfer: seller {seller.unique_id}, buyer {buyer.unique_id}')
+        # if not allocation.sale_property.check_residents_match:
+        #     logger.error(f'Sale property residence doesn\'t match before transfer: seller {seller.unique_id}, buyer {buyer.unique_id}')
         allocation.sale_property.resident = allocation.buyer
         allocation.buyer.residence = allocation.sale_property
         self.model.grid.move_agent(allocation.buyer, allocation.sale_property.pos)
-        if not allocation.sale_property.check_residents_match:
-            logger.error(f'Sale property residence doesn\'t match after transfer: seller {seller.unique_id}, buyer {buyer.unique_id}')
+        # if not allocation.sale_property.check_residents_match:
+        #     logger.error(f'Sale property residence doesn\'t match after transfer: seller {seller.unique_id}, buyer {buyer.unique_id}')
         logger.debug('Property %s sold to newcomer %s.', allocation.sale_property.unique_id, allocation.buyer.unique_id)
 
         # if self.residence: # Already checked since residence assigned
-        if self.model.firm.wage_premium > self.residence.transport_cost:
-            self.workforce.add(self, self.workforce.workers)
+        if self.model.firm.wage_premium > allocation.sale_property.transport_cost:
+            self.workforce.add(allocation.buyer, self.workforce.workers)
+            logger.debug(f'Person purchase: add person to workforce')
+        else:
+            logger.debug(f'Person purchase: don\'t add person to workforce')
 
         if allocation.buyer.unique_id in self.workforce.newcomers:
             logger.debug(f'Removing newcomer {allocation.buyer.unique_id}')
