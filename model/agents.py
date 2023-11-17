@@ -292,11 +292,16 @@ class Person(Agent):
             # TODO Temp
             if isinstance(self.residence.owner, Person):
                 self.residence.ownership_type = 1 # 'Person'
+                if premium > self.residence.transport_cost:
+                    self.model.urban_resident_owners_count += 1
             elif isinstance(self.residence.owner, Investor):
                 self.residence.ownership_type = 2 # 'Investor'
+                if premium > self.residence.transport_cost:
+                    self.model.urban_investor_owners_count += 1
             else:
                 self.residence.ownership_type = 3 #'Other'
-
+                if premium > self.residence.transport_cost:
+                    self.model.urban_other_owners_count += 1
 
     def bid(self):
         """Newcomers bid on properties for use or investment value."""

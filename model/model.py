@@ -135,6 +135,11 @@ class City(Model):
         self.height = self.params['height']
         self.width  = self.params['width']
 
+        # Initialize counters
+        self.urban_investor_owners_count = 0
+        self.urban_resident_owners_count = 0
+        self.urban_other_owners_count    = 0
+
         # # Set the random seed for reproducibility
         # self.random_seed = 42
         # self.random.seed(self.random_seed)
@@ -258,6 +263,11 @@ class City(Model):
         """
 
         self.time_step += 1
+
+        # Reset counters
+        self.urban_investor_owners_count = 0
+        self.urban_resident_owners_count = 0
+        self.urban_other_owners_count    = 0
 
         logger.info(f'\n \n \n Step {self.schedule.steps}. \n')
         self.step_price_data.clear()
@@ -390,6 +400,10 @@ class City(Model):
             "worker_agents":             lambda m: len(m.workforce.workers),
             "newcomer_agents":           lambda m: len(m.workforce.newcomers),
             "retiring_urban_owner":      lambda m: len(m.workforce.retiring_urban_owner),
+            "urban_resident_owners":     lambda m: m.urban_resident_owners_count,
+            "urban_investor_owners":     lambda m: m.urban_investor_owners_count,
+            "urban_other_owners":        lambda m: m.urban_other_owners_count,
+            "investor_ownership_share": lambda m: (m.urban_investor_owners_count / m.urban_resident_owners_count) if m.urban_resident_owners_count != 0 else 0,
             # "workers":        lambda m: len(
             #     [a for a in self.schedule.agents_by_breed[Person].values()
             #              if a.is_working == 1]
