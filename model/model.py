@@ -544,7 +544,8 @@ class City(Model):
         return person
 
     def get_newcomer_init_savings(self):
-        savings = self.random.uniform(0, 2*self.bank.get_rural_home_value())
+        # savings = self.random.uniform(0, 2*self.bank.get_rural_home_value())
+        savings = 0.
         return savings
 
         # DISTRIBUTION FUNCTIONS FOR SAVINGS
@@ -576,7 +577,7 @@ class City(Model):
         # pl.plot(x,dist.cdf(x))
 
         # MODEL 3 EXPONENTIAL
-        # np.random.exponential(0.8 * a*subsistence_wage/(r * ln(0.5)), 1)
+        # use self.random - np.random.exponential(0.8 * a*subsistence_wage/(r * ln(0.5)), 1)
         # mean for the exponential: 0.8/ln(.5) * rural_home_value
         # draw 1 from this distribution
 
@@ -756,7 +757,7 @@ class Workforce:
         """
         agent_keys = list(agents_dict.keys())
         if shuffle_agents:
-            random.shuffle(agent_keys)
+            self.model.random.shuffle(agent_keys)
 
         for agent_key in agent_keys:
             agent = agents_dict[agent_key]
