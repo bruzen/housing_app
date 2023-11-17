@@ -81,8 +81,8 @@ class Land(Agent):
         self.model.step_price_data.append(price_data)
 
         # TODO Flip
-        # self.realized_price         = - 1 # Reset to show realized price in just this time_step
-        self.realized_all_steps_price = - 1 # 
+        self.realized_price         = - 1 # Reset to show realized price in just this time_step
+        # self.realized_all_steps_price = - 1 # 
 
         if self.resident is None:
             logger.warning(f'Land has no resident: {self.unique_id}, pos {self.pos}, resident {self.resident}, owner {self.owner}')
@@ -288,7 +288,6 @@ class Person(Agent):
                 self.is_working_check = 1
             else:
                 self.is_working_check = 0
-
 
             # TODO Temp
             if isinstance(self.residence.owner, Person):
