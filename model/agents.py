@@ -167,19 +167,20 @@ class Person(Agent):
 
         # TODO: Fix
  
-        Formula for interest rate they get: r_target + K/(W-W_min) - K/(W_mean-W_min)
-        Formula for adjustment: K/(W-W_min) - K/(W_mean-W_min)
+        Formula for interest rate they get: r_target + K/(W-W_min) - K/(W_avg-W_min)
+        Formula for adjustment: K/(W-W_min) - K/(W_avg-W_min)
         K is wealth sensitivity parameter
 
         Returns:
         The individual wealth adjustment value.
         """
         # r_target = self.model.r_target
-        # K        = self.model.wealth_sensitivity
-        # W        = self.get_wealth() 
-        # W_min
-        # W_mean
-        return 0.002
+        K        = self.model.wealth_sensitivity
+        W        = self.get_wealth() 
+        W_min    = 10000. # TODO could be 0 or 20K
+        W_avg    = self.model.bank.get_average_wealth()
+        return K / (W - W_min) - K / (W_avg - W_min)
+        # return 0.002
 
     def __init__(self, unique_id, model, pos, init_working_period = 0,
                  savings = 0., debt = 0.,
