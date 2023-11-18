@@ -278,7 +278,7 @@ class City(Model):
         self.warranted_price_data = pd.concat([self.warranted_price_data, new_df], 
                                           ignore_index=True)
 
-        self.p_dot       = 0.03 #  self.get_p_dot() # TODO Fix TEMP
+        self.p_dot     =  self.get_p_dot() # TODO Fix TEMP was 0.3
 
         # Firms update wages
         self.schedule.step_breed(Firm)
