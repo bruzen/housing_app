@@ -606,7 +606,10 @@ class Bank(Agent):
     def get_average_wealth(self):
         rural_home_value     = self.get_rural_home_value()
         avg_locational_value = self.model.firm.wage_premium / (3 * self.model.r_prime)
+        if not self.model.center_city:
+            avg_locational_value = avg_locational_value/4
         return rural_home_value + avg_locational_value
+    
         # AVERAGE_WEALTH_CALCULATION
         # The value of average_wealth.
         # # value of a home + savings half way through a lifespan.
