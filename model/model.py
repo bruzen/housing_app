@@ -272,6 +272,9 @@ class City(Model):
         logger.info(f'\n \n \n Step {self.schedule.steps}. \n')
         self.step_price_data.clear()
 
+        # Firms update wages
+        self.schedule.step_breed(Firm)
+
         # Land records locational rents and calculates price forecast
         self.schedule.step_breed(Land)
         new_df = pd.DataFrame(self.step_price_data)
@@ -280,9 +283,6 @@ class City(Model):
 
         self.p_dot     =  self.get_p_dot() # TODO Fix TEMP was 0.3
 
-        # Firms update wages
-        self.schedule.step_breed(Firm)
-    
         # People work, retire, and list homes to sell
         self.schedule.step_breed(Person)
 
