@@ -403,7 +403,7 @@ class City(Model):
             "urban_resident_owners":     lambda m: m.urban_resident_owners_count,
             "urban_investor_owners":     lambda m: m.urban_investor_owners_count,
             "urban_other_owners":        lambda m: m.urban_other_owners_count,
-            "investor_ownership_share": lambda m: (m.urban_investor_owners_count / m.urban_resident_owners_count) if m.urban_resident_owners_count != 0 else 0,
+            "investor_ownership_share":  lambda m: m.urban_investor_owners_count / (m.urban_resident_owners_count + m.urban_investor_owners_count) if (m.urban_resident_owners_count + m.urban_investor_owners_count) != 0 else 1,
             # "workers":        lambda m: len(
             #     [a for a in self.schedule.agents_by_breed[Person].values()
             #              if a.is_working == 1]
