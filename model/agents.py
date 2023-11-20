@@ -63,10 +63,28 @@ class Land(Agent):
         self.realized_price           = - 1
         self.realized_all_steps_price = - 1
         self.ownership_type           = - 1
+        self.p_dot                    = 0.3
 
     def step(self):
         self.warranted_rent  = self.get_warranted_rent()
         self.warranted_price = self.get_warranted_price()
+        
+        try:
+            # Calculate self.p_dot
+            self.p_dot = (1 / self.model.r_prime * self.model.firm.wage_delta / self.warranted_price) ** self.model.mortgage_period
+
+            # # Additional error checks if needed
+            # if self.p_dot < 0:
+            #     # Handle the case where the result is negative
+            #     print("Warning: The result is negative.")
+        except ZeroDivisionError:
+            # Handle division by zero
+            # print("Error: Division by zero occurred.")
+            self.p_dot =  0 # None  # or set to a default value
+        except Exception as e:
+            # Handle other exceptions
+            logger.error(f"An error occurred: {str(e)}")
+            self.p_dot = 0 # None  # or set to a default value
 
         # Prepare price data for the current step
         price_data = {
@@ -330,7 +348,7 @@ class Person(Agent):
             # First Calculate value of purchase (max bid)
             R_N      = listing.sale_property.net_rent # Need net rent for P_bid
             bid_type = 'value_limited'
-            P_bid    = self.model.bank.get_max_bid(R_N, r, r_target, m, listing.sale_property.transport_cost)
+            P_bid    = self.model.bank.get_max_bid(R_N, r, r_target, m, listing.sale_property.p_dot, listing.sale_property.transport_cost)
             # logger.warning(f'Max bid: {self.unique_id}, bid {P_bid}, R_N {R_N}, r {r}, r {r_target}, m {m}, transport_cost {listing.sale_property.transport_cost}')
 
             if S/(1-m) <= P_bid:
@@ -487,6 +505,7 @@ class Firm(Agent):
         self.wage_premium = init_wage_premium_ratio * self.subsistence_wage 
         self.wage         = self.wage_premium + self.subsistence_wage
         self.MPL          = self.beta  * self.y / self.n  # marginal value product of labour known to firms
+        self.wage_delta   = 0.0
 
     def step(self):
         # GET POPULATION AND OUTPUT TODO replace N with agent count
@@ -501,6 +520,7 @@ class Firm(Agent):
         self.wage = (1 - self.adjw) * self.wage + self.adjw * self.wage_target # assume a partial adjustment process
         
         # FIND POPULATION AT NEW WAGE
+        old_wage_premium  = self.wage_premium
         self.wage_premium = self.wage - self.subsistence_wage # find wage available for transportation
         #self.dist = self.wage_premium / self.c  # find calculated extent of city at wage
         #self.N = self.dist * self.model.height * self.density / self.mult # calculate total firm population from city size # TODO make this expected pop
@@ -515,6 +535,8 @@ class Firm(Agent):
         self.k_target = self.alpha * self.y_target/self.r
         self.k = (1 - self.adjk) * self.k + self.adjk * self.k_target
     
+        # CALCULATE P_DOT
+        self.wage_delta = (self.wage_premium - old_wage_premium)
         #self.F_target = self.F * self.n_target/self.n  #this is completely argbitrary but harmless
         # self.F_target = self.F*(self.n_target/self.n)**.5 # TODO name the .5
         ####self.F_target = (1-self.adjF)*self.F + self.adjF*self.F*(self.n_target/self.n) 
@@ -589,10 +611,9 @@ class Bank(Agent):
         super().__init__(unique_id, model)
         self.pos = pos
 
-    def get_max_bid(self, R_N, r, r_target, m, transport_cost):
+    def get_max_bid(self, R_N, r, r_target, m, p_dot, transport_cost):
         T      = self.model.mortgage_period
         delta  = self.model.delta
-        p_dot  = self.model.p_dot #(transport_cost)
 
         if R_N is not None and r is not None and r_target is not None and m is not None and p_dot is not None:
             R_NT   = ((1 + r)**T - 1) / r * R_N
@@ -650,7 +671,7 @@ class Investor(Agent):
 
         for listing in self.model.realtor.bids:
             R_N      = listing.sale_property.net_rent
-            P_bid    = self.model.bank.get_max_bid(R_N, r, r_target, m, listing.sale_property.transport_cost)
+            P_bid    = self.model.bank.get_max_bid(R_N, r, r_target, m, listing.sale_property.p_dot, listing.sale_property.transport_cost)
             bid_type = 'investor'
             # mortgage = m * P_bid
             logger.debug(f'Bank {self.unique_id} bids {P_bid} for property {listing.sale_property.unique_id}, if val is positive.')

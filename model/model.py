@@ -174,9 +174,8 @@ class City(Model):
         self.max_mortgage_share        = self.params['max_mortgage_share']
         self.ability_to_carry_mortgage = self.params['ability_to_carry_mortgage']
         self.wealth_sensitivity        = self.params['wealth_sensitivity']
-        self.p_dot                     = 0.0 # Price adjustment rate. TODO fix here? rename?
-        self.warranted_price_model     = None
-        self.realized_price_model      = None
+        # self.warranted_price_model     = None
+        # self.realized_price_model      = None
 
         # Add workforce manager to track workers, newcomers, and retiring agents
         self.workforce = Workforce()
@@ -280,9 +279,7 @@ class City(Model):
         new_df = pd.DataFrame(self.step_price_data)
         self.warranted_price_data = pd.concat([self.warranted_price_data, new_df], 
                                           ignore_index=True)
-
-        self.p_dot     =  self.get_p_dot() # TODO Fix TEMP was 0.3
-
+    
         # People work, retire, and list homes to sell
         self.schedule.step_breed(Person)
 
@@ -383,7 +380,6 @@ class City(Model):
             "rent_captured_by_finance":  lambda m: m.rent_captured_by_finance,
             "share_captured_by_finance": lambda m: m.share_captured_by_finance,
             "urban_surplus":             lambda m: m.urban_surplus,
-            "p_dot":                     lambda m: m.p_dot,
             "removed_agents":            lambda m: m.removed_agents,
             "n":                         lambda m: m.firm.n,
             "y":                         lambda m: m.firm.y,
@@ -419,13 +415,14 @@ class City(Model):
             "y":                 lambda a: a.pos[1],
             "is_working":        lambda a: None if not isinstance(a, Person) else 1 if a.unique_id in a.workforce.workers else 0,  # TODO does this need to be in model? e.g. a.model.workforce
             "is_working_check":  lambda a: None if not isinstance(a, Person) else a.is_working_check,
-            "working_period":    lambda a: getattr(a, "working_period", None)  if isinstance(a, Person) else None,
-            "net_rent":          lambda a: getattr(a, "net_rent", None)        if isinstance(a, Land) else None,
-            "warranted_rent":    lambda a: getattr(a, "warranted_rent", None)  if isinstance(a, Land) else None,
-            "warranted_price":   lambda a: getattr(a, "warranted_price", None) if isinstance(a, Land) else None,
-            "realized_price":    lambda a: getattr(a, "realized_price", None)  if isinstance(a, Land) else None,
-            "sold_this_step":    lambda a: getattr(a, "sold_this_step", None)  if isinstance(a, Land) else None,
-            "ownership_type":    lambda a: getattr(a, "ownership_type", None)  if isinstance(a, Land) else None,
+            "working_period":    lambda a: getattr(a, "working_period", None)  if isinstance(a, Person)       else None,
+            "p_dot":             lambda a: getattr(a, "p_dot", None)           if isinstance(a, Land)         else None,
+            "net_rent":          lambda a: getattr(a, "net_rent", None)        if isinstance(a, Land)         else None,
+            "warranted_rent":    lambda a: getattr(a, "warranted_rent", None)  if isinstance(a, Land)         else None,
+            "warranted_price":   lambda a: getattr(a, "warranted_price", None) if isinstance(a, Land)         else None,
+            "realized_price":    lambda a: getattr(a, "realized_price", None)  if isinstance(a, Land)         else None,
+            "sold_this_step":    lambda a: getattr(a, "sold_this_step", None)  if isinstance(a, Land)         else None,
+            "ownership_type":    lambda a: getattr(a, "ownership_type", None)  if isinstance(a, Land)         else None,
             "distance_from_center": lambda a: getattr(a, "distance_from_center", None) if isinstance(a, Land) else None,
         }
 
@@ -602,119 +599,6 @@ class City(Model):
 
     def get_distance_to_center(self, pos):
         return distance.euclidean(pos, self.center)
-
-    # If there were more data, we might use k-folds
-    # def get_price_model(self):
-    #     x = self.warranted_price_data[['time_step', 'transport_cost', 'wage']]
-
-    #     # Dependent variable
-    #     y = self.warranted_price_data['warranted_price']
-
-    #     # Define the number of folds for cross-validation
-    #     num_folds = 5
-
-    #     # Initialize the k-fold cross-validator
-    #     kf = KFold(n_splits=num_folds, shuffle=True, random_state=42)
-
-    #     # Initialize lists to store the coefficients for each fold
-    #     coef_list = []
-
-    #     # Perform k-fold cross-validation
-    #     for train_index, test_index in kf.split(x):
-    #         x_train, x_test = x.iloc[train_index], x.iloc[test_index]
-    #         y_train, y_test = y.iloc[train_index], y.iloc[test_index]
-
-    #         # Create and train the Linear Regression model
-    #         regression_model = LinearRegression()
-    #         regression_model.fit(x_train, y_train)
-
-    #         # Store the coefficients for this fold
-    #         coef_list.append(regression_model.coef_)
-
-    #     # Calculate the average coefficients across all folds
-    #     # average_coef = np.mean(coef_list, axis=0)
-    #     self.price_model_coef = np.mean(coef_list, axis=0)
-    #     self.price_model_intercept  = np.mean(intercept_list)  # Calculate average intercept
-
-    #     return self.price_model_coef
-
-    # def get_p_dot(self, transport_cost):
-    #     """Rate of growth for property price"""
-    #     # Make p_dot zero for the first 10 steps or so.
-    #     if self.time_step < 5:
-    #         p_dot = 0
-    #     else: 
-    #         # p_dot = np.dot(self.price_model, [self.time_step, transport_cost, self.firm.wage])
-    #         coef_time_step, coef_transport_cost, coef_wage = self.price_model
-    #         p_dot = (
-    #             coef_time_step * self.time_step +
-    #             coef_transport_cost * transport_cost +
-    #             coef_wage * self.firm.wage
-    #         )
-    #     return p_dot
-
-    # # Alternative model, using statsmodels
-    # x = sm.add_constant(x) # adding a constant
-    # model = sm.OLS(y, x).fit()
-    # predictions = model.predict(x)
-
-    def get_warranted_price_model(self):
-        x_w = self.warranted_price_data[['time_step','transport_cost','wage']] # Independent variables
-        warranted_price       = self.warranted_price_data['warranted_price']   # Dependent variable
-        warranted_price_model = LinearRegression()
-        warranted_price_model.fit(x_w, warranted_price)
-        return warranted_price_model
-
-    def get_realized_price_model(self):
-        x_r = self.realized_price_data[['time_step','transport_cost','wage']] # Independent variables
-        realized_price       = self.realized_price_data['realized_price']     # Dependent variable
-        realized_price_model = LinearRegression()
-        realized_price_model.fit(x_r, realized_price)
-        return realized_price_model
-
-    def get_p_dot(self):
-        time_zero = 6
-
-        if self.time_step < time_zero:
-            p_dot = 0
-
-        else:
-            # Predict rate of change using the warranted price model
-            # logger.debug(f'Len warranted_price_data {len(self.warranted_price_data)}')
-            warranted_price_model = self.get_warranted_price_model()
-            if warranted_price_model is None:
-                # Handle the case where the model is not created or trained
-                logger.error("Error: Warranted price model is not initialized.")
-                p_dot_warranted_price = 0
-            else:
-                p_dot_warranted_price = warranted_price_model.coef_[0]
-
-            # Predict rate of change using the realized price model        
-            if len(self.realized_price_data) > 10:
-                # logger.debug(f'Len realized_price_data {len(self.realized_price_data)}')
-                realized_price_model = self.get_realized_price_model()
-                if realized_price_model is None:
-                    # Handle the case where the model is not created or trained
-                    logger.error("Error: Realized price model is not initialized.")
-                    p_dot_realized_price = 0
-                else:
-                    p_dot_realized_price = realized_price_model.coef_[0]
-            else:
-                p_dot_realized_price = 0
-
-            # The influence of the weighted model prediction increases over time
-            time_threshold = time_zero * 2
-            w_w = min(1.0, self.time_step / time_threshold)
-
-            # The influence of p_dot_realized_price on p_dot increases as the quantity of realized price data grows. 
-            data_threshold = 100
-            w_r = min(len(self.realized_price_data) / data_threshold, 1.0)
-
-            # Linearly interpolate between 0 and the weighted rate of change
-            p_dot = w_w * (w_r * p_dot_warranted_price + (1 - w_r) * p_dot_realized_price)
-            # p_dot = p * p_dot_warranted_price + (1 - p) * p_dot_realized_price # Old without, 0 term
-
-        return p_dot
 
 class Workforce:
     """Manages a dictionary of working agents."""
