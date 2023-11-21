@@ -865,21 +865,21 @@ class Listing:
         self, 
         seller: Union[Person, Investor],
         sale_property: Land, 
-        list_price: Union[float, int] = 0.0,
+        reservation_price: Union[float, int] = 0.0,
     ):
         if not isinstance(seller, (Person, Investor)):
             logger.error(f'Bidder in Listing {seller.unique_id} is not a Person or Investor, {seller}')
         if not isinstance(sale_property, Land):
             logger.error(f'sale_property in Listing {sale_property.unique_id} is not Land, {sale_property}')
-        if not isinstance(list_price, (float, int)):
-            logger.error(f'list_price in Listing must be a numeric value.')
+        if not isinstance(reservation_price, (float, int)):
+            logger.error(f'reservation_price in Listing must be a numeric value.')
                
         self.seller = seller
         self.sale_property = sale_property
-        self.list_price = list_price
+        self.reservation_price = reservation_price
 
     def __str__(self):
-        return f'Seller: {self.seller}, Property: {self.sale_property}, List Price: {self.list_price}'
+        return f'Seller: {self.seller}, Property: {self.sale_property}, List Price: {self.reservation_price}'
 
 class Bid:
     def __init__(
