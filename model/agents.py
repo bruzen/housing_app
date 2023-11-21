@@ -68,7 +68,10 @@ class Land(Agent):
     def step(self):
         self.warranted_rent  = self.get_warranted_rent()
         self.warranted_price = self.get_warranted_price()
-        self.p_dot           = self.get_p_dot()
+        if (self.model.firm.wage_premium > self.transport_cost):
+            self.p_dot       = self.get_p_dot()
+        else:
+            self.p_dot       = None 
 
         # Prepare price data for the current step
         price_data = {
@@ -138,6 +141,7 @@ class Land(Agent):
         return max(wage_premium - self.transport_cost + a * subsistence_wage, 0)
         # TODO add amenity + A
         # TODO should it be positive outside the city? How to handle markets outside the city if it is?
+        # TODO but outside the city, any concern with transportation cost is only speculative - how to handle
 
     def get_warranted_price(self):
         return self.warranted_rent / self.model.r_prime
@@ -146,6 +150,10 @@ class Land(Agent):
         try:
             # Calculate self.p_dot
             p_dot = (1 / self.model.r_prime * self.model.firm.wage_delta / self.warranted_price) ** self.model.mortgage_period
+
+            # Handle the case where the result is negative # TODO how to best handle?
+            if p_dot < 0:
+                p_dot = 0.
 
         except ZeroDivisionError:
             # Handle division by zero
