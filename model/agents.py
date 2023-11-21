@@ -63,28 +63,12 @@ class Land(Agent):
         self.realized_price           = - 1
         self.realized_all_steps_price = - 1
         self.ownership_type           = - 1
-        self.p_dot                    = 0.3
+        self.p_dot                    = None
 
     def step(self):
         self.warranted_rent  = self.get_warranted_rent()
         self.warranted_price = self.get_warranted_price()
-        
-        try:
-            # Calculate self.p_dot
-            self.p_dot = (1 / self.model.r_prime * self.model.firm.wage_delta / self.warranted_price) ** self.model.mortgage_period
-
-            # # Additional error checks if needed
-            # if self.p_dot < 0:
-            #     # Handle the case where the result is negative
-            #     print("Warning: The result is negative.")
-        except ZeroDivisionError:
-            # Handle division by zero
-            # print("Error: Division by zero occurred.")
-            self.p_dot =  0 # None  # or set to a default value
-        except Exception as e:
-            # Handle other exceptions
-            logger.error(f"An error occurred: {str(e)}")
-            self.p_dot = 0 # None  # or set to a default value
+        self.p_dot           = self.get_p_dot()
 
         # Prepare price data for the current step
         price_data = {
@@ -157,6 +141,21 @@ class Land(Agent):
 
     def get_warranted_price(self):
         return self.warranted_rent / self.model.r_prime
+
+    def get_p_dot(self):
+        try:
+            # Calculate self.p_dot
+            p_dot = (1 / self.model.r_prime * self.model.firm.wage_delta / self.warranted_price) ** self.model.mortgage_period
+
+        except ZeroDivisionError:
+            # Handle division by zero
+            p_dot = None
+            logging.error(f"ZeroDivisionError at time_step {self.model.time_step} for Land ID {self.unique_id}, warranted_price {self.warranted_price}")
+        except Exception as e:
+            # Handle other exceptions
+            logger.error(f"An error occurred: {str(e)}")
+            p_dot = None
+        return p_dot
 
     def check_owners_match(self):
         for owned_property in self.owner.properties_owned:
