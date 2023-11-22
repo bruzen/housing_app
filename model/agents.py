@@ -149,7 +149,7 @@ class Land(Agent):
     def get_p_dot(self):
         try:
             # Calculate self.p_dot
-            p_dot = (1 / self.model.r_prime * self.model.firm.wage_delta / self.warranted_price) ** self.model.mortgage_period
+            p_dot = (1 / self.model.r_prime * self.model.firm.wage_delta) ** self.model.mortgage_period
 
             # Handle the case where the result is negative # TODO how to best handle?
             if p_dot < 0:
