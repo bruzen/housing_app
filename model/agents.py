@@ -149,7 +149,8 @@ class Land(Agent):
     def get_p_dot(self):
         try:
             # Calculate self.p_dot
-            p_dot = (1 / self.model.r_prime * self.model.firm.wage_delta) ** self.model.mortgage_period
+            # p_dot = (1 / self.model.r_prime * self.model.firm.wage_delta) ** self.model.mortgage_period
+            p_dot = (1 / self.model.r_prime * self.model.firm.wage_delta / self.warranted_price) ** self.model.mortgage_period
 
             # Handle the case where the result is negative # TODO how to best handle?
             if p_dot < 0:
@@ -742,19 +743,24 @@ class Realtor(Agent):
             # logger.debug(f'Listed property: {listing.sale_property.unique_id} has bids: {len(property_bids)}, {", ".join(bid_info)}')
 
             reservation_price = listing.reservation_price
-
             if property_bids:
                 property_bids.sort(key=lambda x: x.bid_price, reverse=True)
                 highest_bid              = property_bids[0]
                 highest_bid_price        = property_bids[0].bid_price
                 second_highest_bid_price = property_bids[1].bid_price if len(property_bids) > 1 else 0
 
-                if highest_bid_price > reservation_price:
-                    final_price = reservation_price + 0.5 * (highest_bid_price - reservation_price)
-                    # TODO add more conditions
-                    # if 1 bid go half way between bid and reservation_price  
-                    # if more bids go to 2nd highest bid... # TODO note adding a second investor would lead to this jumping to the next level
-    
+                using_reservation_price = False
+                if using_reservation_price:
+                    if highest_bid_price > reservation_price:
+                        final_price = reservation_price + 0.5 * (highest_bid_price - reservation_price)
+                        # TODO add more conditions: If 1 bid go half way between bid and reservation_price. If more bids go to 2nd highest bid
+                    else:
+                        logger.debug('Reservation price above bid for property {listing.sale_property.unique_id}')
+                        final_price = None
+                else:
+                    final_price = highest_bid_price
+
+                if final_price:
                     allocation = Allocation(
                                             buyer                    = highest_bid.bidder,
                                             seller                   = listing.seller,
@@ -764,10 +770,6 @@ class Realtor(Agent):
                                             second_highest_bid_price = second_highest_bid_price,
                                             )
                     allocations.append(allocation)
-                else:
-                    logger.debug('Reservation price above bid for property {listing.sale_property.unique_id}')
-            # TODO *** compute final price given wtp
-            # TODO what if property doesn't sell? Is it relisted by original owner? Is the price different?
 
         # Complete transaction and clear existing bids
         self.complete_transactions(allocations)
