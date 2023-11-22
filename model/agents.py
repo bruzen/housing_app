@@ -269,7 +269,16 @@ class Person(Agent):
             if self.working_period >= self.model.working_periods:
                 if self.residence in self.properties_owned:
                     self.workforce.add(self, self.workforce.retiring_urban_owner)
-                    listing = Listing(self, self.residence)
+
+                    # P_bid    = self.model.bank.get_max_bid(R_N, r, r_target, m, listing.sale_property.p_dot, listing.sale_property.transport_cost)            
+                    reservation_price = self.model.bank.get_reservation_price(
+                        R_N = self.residence.net_rent, 
+                        r = self.model.r_prime, 
+                        r_target = self.model.r_target, 
+                        m =  0.8, 
+                        p_dot =  self.residence.p_dot, 
+                        transport_cost = self.residence.transport_cost)
+                    listing = Listing(self, self.residence, reservation_price)
                     self.model.realtor.bids[listing] = []
                     # TODO Contact bank. Decide: sell, rent or keep empty
                     logger.debug(f'Agent is retiring: {self.unique_id}, period {self.working_period}')
@@ -340,14 +349,13 @@ class Person(Agent):
         r_prime  = self.model.r_prime
         r_target = self.model.r_target # TODO this is personal but uses same as bank. Clarify.        
         wage     = self.model.firm.wage
-        standard_mortgage_share = 0.8 # TODO make this a parameter
         # average_wealth = # TODO? put in calculation
 
         # Max mortgage
         M = 0.28 * (wage + r * S) / r_prime
 
         # Max mortgage share
-        m = 0.8 # TODO get mortgage share
+        m = 0.8 # TODO get mortgage share # standard_mortgage_share = 0.8 # TODO make this a parameter
          # m = max_mortgage_share - lenders_wealth_sensitivity * average_wealth / W
 
         for listing in self.model.realtor.bids:
@@ -618,6 +626,10 @@ class Bank(Agent):
         super().__init__(unique_id, model)
         self.pos = pos
 
+    def get_reservation_price(self, R_N, r, r_target, m, p_dot, transport_cost):
+        # TODO is it the same as max bid?
+        return self.get_max_bid(R_N, r, r_target, m, p_dot, transport_cost)
+
     def get_max_bid(self, R_N, r, r_target, m, p_dot, transport_cost):
         T      = self.model.mortgage_period
         delta  = self.model.delta
@@ -729,23 +741,31 @@ class Realtor(Agent):
             # bid_info = [f'bidder {bid.bidder} bid {bid.bid_price}' for bid in property_bids]
             # logger.debug(f'Listed property: {listing.sale_property.unique_id} has bids: {len(property_bids)}, {", ".join(bid_info)}')
 
+            reservation_price = listing.reservation_price
+
             if property_bids:
                 property_bids.sort(key=lambda x: x.bid_price, reverse=True)
                 highest_bid              = property_bids[0]
                 highest_bid_price        = property_bids[0].bid_price
                 second_highest_bid_price = property_bids[1].bid_price if len(property_bids) > 1 else 0
 
-                final_price = highest_bid_price # TODO decide highest price here or elsewhere?
-
-                allocation = Allocation(
-                                        buyer                    = highest_bid.bidder,
-                                        seller                   = listing.seller,
-                                        sale_property            = listing.sale_property,
-                                        final_price              = final_price,
-                                        highest_bid_price        = highest_bid.bid_price,
-                                        second_highest_bid_price = second_highest_bid_price,
-                                        )
-                allocations.append(allocation)
+                if highest_bid_price > reservation_price:
+                    final_price = reservation_price + 0.5 * (highest_bid_price - reservation_price)
+                    # TODO add more conditions
+                    # if 1 bid go half way between bid and reservation_price  
+                    # if more bids go to 2nd highest bid... # TODO note adding a second investor would lead to this jumping to the next level
+    
+                    allocation = Allocation(
+                                            buyer                    = highest_bid.bidder,
+                                            seller                   = listing.seller,
+                                            sale_property            = listing.sale_property,
+                                            final_price              = final_price,
+                                            highest_bid_price        = highest_bid.bid_price,
+                                            second_highest_bid_price = second_highest_bid_price,
+                                            )
+                    allocations.append(allocation)
+                else:
+                    logger.debug('Reservation price above bid for property {listing.sale_property.unique_id}')
             # TODO *** compute final price given wtp
             # TODO what if property doesn't sell? Is it relisted by original owner? Is the price different?
 
