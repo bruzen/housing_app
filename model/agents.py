@@ -148,9 +148,10 @@ class Land(Agent):
 
     def get_p_dot(self):
         try:
-            # Calculate self.p_dot
             # p_dot = (1 / self.model.r_prime * self.model.firm.wage_delta) ** self.model.mortgage_period
-            p_dot = (1 / self.model.r_prime * self.model.firm.wage_delta / self.warranted_price) ** self.model.mortgage_period
+            # p_dot = (1 / self.model.r_prime * self.model.firm.wage_delta / self.warranted_price) ** self.model.mortgage_period
+            p_dot = (self.model.firm.wage_delta / self.model.r_prime) * ((self.model.firm.wage_premium / self.model.firm.old_wage_premium)**self.model.mortgage_period - 1)
+            #       size of change, capitalized, scaled for period t: (ratio of new to old)**T  - 1, ex .05 omega/.05 * (1.05^5 - 1)
 
             # Handle the case where the result is negative # TODO how to best handle?
             if p_dot < 0:
@@ -522,6 +523,7 @@ class Firm(Agent):
         self.wage         = self.wage_premium + self.subsistence_wage
         self.MPL          = self.beta  * self.y / self.n  # marginal value product of labour known to firms
         self.wage_delta   = 0.0
+        self.old_wage_premium = -1
 
     def step(self):
         # GET POPULATION AND OUTPUT TODO replace N with agent count
@@ -536,7 +538,7 @@ class Firm(Agent):
         self.wage = (1 - self.adjw) * self.wage + self.adjw * self.wage_target # assume a partial adjustment process
         
         # FIND POPULATION AT NEW WAGE
-        old_wage_premium  = self.wage_premium
+        self.old_wage_premium  = self.wage_premium
         self.wage_premium = self.wage - self.subsistence_wage # find wage available for transportation
         #self.dist = self.wage_premium / self.c  # find calculated extent of city at wage
         #self.N = self.dist * self.model.height * self.density / self.mult # calculate total firm population from city size # TODO make this expected pop
@@ -552,7 +554,7 @@ class Firm(Agent):
         self.k = (1 - self.adjk) * self.k + self.adjk * self.k_target
     
         # CALCULATE P_DOT
-        self.wage_delta = (self.wage_premium - old_wage_premium)
+        self.wage_delta = (self.wage_premium - self.old_wage_premium)
         #self.F_target = self.F * self.n_target/self.n  #this is completely argbitrary but harmless
         # self.F_target = self.F*(self.n_target/self.n)**.5 # TODO name the .5
         ####self.F_target = (1-self.adjF)*self.F + self.adjF*self.F*(self.n_target/self.n) 
