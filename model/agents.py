@@ -150,8 +150,8 @@ class Land(Agent):
         try:
             # p_dot = (1 / self.model.r_prime * self.model.firm.wage_delta) ** self.model.mortgage_period
             # p_dot = (1 / self.model.r_prime * self.model.firm.wage_delta / self.warranted_price) ** self.model.mortgage_period
-            p_dot = (self.model.firm.wage_delta / self.model.r_prime) * ((self.model.firm.wage_premium / self.model.firm.old_wage_premium)**self.model.mortgage_period - 1)
-            #       size of change, capitalized, scaled for period t: (ratio of new to old)**T  - 1, ex .05 omega/.05 * (1.05^5 - 1)
+            p_dot = self.model.firm.wage_delta * ((self.model.firm.wage_premium / self.model.firm.old_wage_premium)**self.model.mortgage_period - 1)
+            # size of change, capitalized, scaled for period t: (ratio of new to old)**T  - 1, ex .05 omega/.05 * (1.05^5 - 1)
 
             # Handle the case where the result is negative # TODO how to best handle?
             if p_dot < 0:
