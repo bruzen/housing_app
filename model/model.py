@@ -123,7 +123,9 @@ class City(Model):
         self.model_description = 'Agent-based housing market model with rent and urban agglomeration.'
         self.num_steps = num_steps
 
-        logging.basicConfig(filename='logfile.log',
+        self.setup_run_data_collection()
+
+        logging.basicConfig(filename=self.log_filename,
                     filemode='w',
                     level=logging.DEBUG,
                     format='%(asctime)s %(name)s %(levelname)s:%(message)s')
@@ -251,7 +253,7 @@ class City(Model):
 
             self.unique_id  += 1
 
-        self.setup_data_collection()
+        self.setup_mesa_data_collection()
         # self.record_step_data()
 
     def step(self):
@@ -313,7 +315,7 @@ class City(Model):
                     comma_separated_unique_ids = ', '.join(unique_ids)
                     logging.warning(f'More than one Person agent in self.workforce.newcomers at location {pos}, agents are {comma_separated_unique_ids}')
                 elif len(num_not_in_newcomers == 0):
-                    # Only newcomers    
+                    # Only newcomers
                     logging.warning(f'Only newcomers at location {pos}, agents are {comma_separated_unique_ids}')
                 # else:
                 #     # Newcomers
@@ -334,7 +336,53 @@ class City(Model):
 
         self.record_run_data_to_file()
 
-    def setup_data_collection (self):
+    def setup_run_data_collection(self):
+        # Setup data collection
+        if 'timestamp' in self.params and self.params['timestamp'] is not None:
+            timestamp = self.params['timestamp']
+        else:
+            timestamp = datetime.datetime.now().strftime("%Y-%m-%d_%H%M%S")
+        self.timestamp = timestamp
+
+        if 'subfolder' in self.params and self.params['subfolder'] is not None:
+            subfolder = self.params['subfolder']
+        else:
+            subfolder = self.get_subfolder(folder_name = "output_data", subfolder_name = "run_data")
+        self.subfolder = subfolder
+
+        log_folder = self.get_subfolder(folder_name = "output_data", subfolder_name = "logs")
+        self.run_id    = self.get_run_id(self.model_name, self.timestamp, self.model_version)
+        self.log_filename = os.path.join(log_folder, f'logfile_{self.run_id}.log')
+
+        # Price data for forecasting
+        self.warranted_price_data = pd.DataFrame(
+             columns=['land_id', 'warranted_price', 'time_step', 'transport_cost', 'wage'])
+        self.step_price_data = []
+        self.realized_price_data  = pd.DataFrame(
+             columns=['land_id', 'realized_price', 'time_step', 'transport_cost', 'wage'])
+
+        # Create the 'output_data' subfolder if it doesn't exist
+        if not os.path.exists(self.subfolder):
+            os.makedirs(self.subfolder)
+
+        agent_filename         = self.run_id + '_agent' + '.csv'
+        model_filename         = self.run_id + '_model' + '.csv'
+        self.agent_file_path   = os.path.join(self.subfolder, agent_filename)
+        self.model_file_path   = os.path.join(self.subfolder, model_filename)
+        self.metadata_file_path = os.path.join(self.subfolder, 'run_metadata.yaml')
+
+        print(self.get_git_commit_hash())
+
+        metadata = {
+            'model_description':     self.model_description,
+            'num_steps':             self.num_steps,
+            'git_version':           self.get_git_commit_hash(),
+            'simulation_parameters': self.params
+        }
+
+        self.record_metadata(metadata, self.metadata_file_path)
+
+    def setup_mesa_data_collection(self):
 
         # Variables for data collection
         self.rent_production = 0.
@@ -347,21 +395,6 @@ class City(Model):
         self.rent_captured_by_finance  = 0.
         self.share_captured_by_finance = 0.
         self.urban_surplus   = 0.
-
-        # Setup data collection
-        if 'timestamp' in self.params and self.params['timestamp'] is not None:
-            timestamp = self.params['timestamp']
-        else:
-            timestamp = datetime.datetime.now().strftime("%Y-%m-%d_%H%M%S")
-        self.timestamp = timestamp
-
-        if 'subfolder' in self.params and self.params['subfolder'] is not None:
-            subfolder = self.params['subfolder']
-        else:
-            subfolder = self.get_subfolder()
-        self.subfolder = subfolder    
-
-        self.run_id    = self.get_run_id(self.model_name, self.timestamp, self.model_version)
 
         # Define what data the model will collect in each time step
         model_reporters      = {
@@ -428,33 +461,6 @@ class City(Model):
 
         self.datacollector  = DataCollector(model_reporters = model_reporters,
                                             agent_reporters = agent_reporters)
-
-        # Price data for forecasting
-        self.warranted_price_data = pd.DataFrame(
-             columns=['land_id', 'warranted_price', 'time_step', 'transport_cost', 'wage'])   
-        self.step_price_data = []
-        self.realized_price_data  = pd.DataFrame(
-             columns=['land_id', 'realized_price', 'time_step', 'transport_cost', 'wage']) 
-
-        # Create the 'output_data' subfolder if it doesn't exist
-        if not os.path.exists(self.subfolder):
-            os.makedirs(self.subfolder)
-
-        agent_filename         = self.run_id + '_agent' + '.csv'
-        model_filename         = self.run_id + '_model' + '.csv'
-        self.agent_file_path   = os.path.join(self.subfolder, agent_filename)
-        self.model_file_path   = os.path.join(self.subfolder, model_filename)
-        self.metadata_file_path = os.path.join(self.subfolder, 'run_metadata.yaml')
-
-        print(self.get_git_commit_hash())
-        metadata = {
-            'model_description':     self.model_description,
-            'num_steps':             self.num_steps,
-            'git_version':           self.get_git_commit_hash(),
-            'simulation_parameters': self.params
-        }
-
-        self.record_metadata(metadata, self.metadata_file_path)
 
     def record_metadata(self, metadata, metadata_file_path):
         """Append metadata for each experiment to a metadata file."""
@@ -528,11 +534,9 @@ class City(Model):
         # Create the run_id
         return f"{formatted_model_name}_{timestamp}_{unique_id}_v{model_version.replace('.', '_')}"
 
-    def get_subfolder(self):
+    def get_subfolder(self, folder_name = "output_data", subfolder_name = "run_data"):
         # Create the subfolder path
-        output_data_folder = "output_data"
-        runs_folder = "runs"
-        subfolder = os.path.join(output_data_folder, runs_folder)
+        subfolder = os.path.join(folder_name, subfolder_name)
         
         # Create the subfolder if it doesn't exist
         os.makedirs(subfolder, exist_ok=True)
