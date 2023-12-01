@@ -7,7 +7,7 @@ import random
 import string
 from typing import Dict, List
 from contextlib import contextmanager
-# import subprocess
+import subprocess
 # import math
 import numpy as np
 import pandas as pd
@@ -445,9 +445,11 @@ class City(Model):
         self.model_file_path   = os.path.join(self.subfolder, model_filename)
         self.metadata_file_path = os.path.join(self.subfolder, 'run_metadata.yaml')
 
+        print(self.get_git_commit_hash())
         metadata = {
             'model_description':     self.model_description,
             'num_steps':             self.num_steps,
+            'git_version':           self.get_git_commit_hash(),
             'simulation_parameters': self.params
         }
 
@@ -535,6 +537,15 @@ class City(Model):
         os.makedirs(subfolder, exist_ok=True)
         
         return subfolder
+
+    def get_git_commit_hash(self):
+        try:
+            # Run 'git rev-parse HEAD' to get the commit hash
+            result = subprocess.check_output(['git', 'rev-parse', 'HEAD']).strip()
+            return result.decode('utf-8')
+        except subprocess.CalledProcessError as e:
+            print(f"Error: {e}")
+            return None
 
     def create_newcomer(self, pos=None):
         """Create newcomer at the center with no residence or property."""
