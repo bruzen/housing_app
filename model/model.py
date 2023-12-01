@@ -27,14 +27,6 @@ from mesa.datacollection import DataCollector
 from model.agents import Land, Person, Firm, Investor, Bank, Realtor
 from model.schedule import RandomActivationByBreed
 
-logging.basicConfig(filename='logfile.log',
-                    filemode='w',
-                    level=logging.DEBUG,
-                    format='%(asctime)s %(name)s %(levelname)s:%(message)s')
-logger = logging.getLogger(__name__)
-
-logging.getLogger('matplotlib').setLevel(logging.ERROR) 
-
 # def capture_rents(model):
 #     """Current rents for each location in the grid."""
 #     rent_grid = []
@@ -129,7 +121,16 @@ class City(Model):
         self.model_name        = 'Housing Market'
         self.model_version     = '0.0.1'
         self.model_description = 'Agent-based housing market model with rent and urban agglomeration.'
-        self.num_steps = num_steps        
+        self.num_steps = num_steps
+
+        logging.basicConfig(filename='logfile.log',
+                    filemode='w',
+                    level=logging.DEBUG,
+                    format='%(asctime)s %(name)s %(levelname)s:%(message)s')
+        self.logger = logging.getLogger(__name__)
+
+        logging.getLogger('matplotlib').setLevel(logging.ERROR) 
+
         self.time_step = 0.
         self.height = self.params['height']
         self.width  = self.params['width']
@@ -157,10 +158,10 @@ class City(Model):
         # If demographics_on, there is a housing market when agents retire # self.demographics_on = self.params['demographics_on']
         if self.params['demographics_on']:
             self.working_periods  = self.params['working_periods']
-            logger.debug(f'Demographics on, working periods {self.working_periods}, 2x time steps {self.num_steps}') #, params working periods {self.params['working_periods']}')
+            self.logger.debug(f'Demographics on, working periods {self.working_periods}, 2x time steps {self.num_steps}') #, params working periods {self.params['working_periods']}')
         else:
             self.working_periods = 10 * self.num_steps
-            logger.debug(f'Demographics off, working periods {self.working_periods}')
+            self.logger.debug(f'Demographics off, working periods {self.working_periods}')
         self.savings_per_step = self.params['subsistence_wage'] * self.params['savings_rate']
 
         # Housing market model
@@ -266,7 +267,7 @@ class City(Model):
         self.urban_resident_owners_count = 0
         self.urban_other_owners_count    = 0
 
-        logger.info(f'\n \n \n Step {self.schedule.steps}. \n')
+        self.logger.info(f'\n \n \n Step {self.schedule.steps}. \n')
         self.step_price_data.clear()
 
         # Firms update wages
