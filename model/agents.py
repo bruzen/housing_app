@@ -7,12 +7,6 @@ from scipy.spatial import distance
 
 from mesa import Agent
 
-logging.basicConfig(filename='logfile.log',
-                    filemode='w',
-                    level=logging.DEBUG,
-                    format='%(asctime)s %(name)s %(levelname)s:%(message)s')
-logger = logging.getLogger(__name__)
-
 class Land(Agent):
     """Land parcel.
 
@@ -92,7 +86,7 @@ class Land(Agent):
         # self.realized_all_steps_price = - 1 # 
 
         if self.resident is None:
-            logger.warning(f'Land has no resident: {self.unique_id}, pos {self.pos}, resident {self.resident}, owner {self.owner}')
+            self.model.logger.warning(f'Land has no resident: {self.unique_id}, pos {self.pos}, resident {self.resident}, owner {self.owner}')
 
     def calculate_distance_from_center(self, method='euclidean'):
         if method == 'euclidean':
@@ -110,10 +104,10 @@ class Land(Agent):
     def change_owner(self, new_owner, old_owner):
         if not self.check_owners_match:
             owner_properties = ' '.join(str(prop.unique_id) if hasattr(prop, 'unique_id') else str(prop) for prop in self.owner.properties_owned)
-            logger.error(f'In change_owner, property owner does not match an owner in owners properties_owned list: property {self.unique_id}, property\'s owner {self.owner.unique_id}, owner\'s properties {owner_properties} ')
+            self.model.logger.error(f'In change_owner, property owner does not match an owner in owners properties_owned list: property {self.unique_id}, property\'s owner {self.owner.unique_id}, owner\'s properties {owner_properties} ')
 
         if not self.owner == old_owner:
-            logger.error(f'In change_owner, the old_owner must own a property in order to transfer ownership: property {self.unique_id}, old_owner {old_owner.unique_id}, property\'s owner {self.owner.unique_id}')
+            self.model.logger.error(f'In change_owner, the old_owner must own a property in order to transfer ownership: property {self.unique_id}, old_owner {old_owner.unique_id}, property\'s owner {self.owner.unique_id}')
 
         self.owner = new_owner
 
@@ -130,7 +124,7 @@ class Land(Agent):
         #     self.ownership_type = 2 # 'Investor'
         # else:
         #     self.ownership_type = 3 # 'Other'
-        #     logger.warning(f'Land {self.unique_id} owner not a person or investor. Owner: {self.owner}')
+        #     self.model.logger.warning(f'Land {self.unique_id} owner not a person or investor. Owner: {self.owner}')
 
 
     def get_warranted_rent(self):
@@ -162,7 +156,7 @@ class Land(Agent):
             logging.error(f"ZeroDivisionError at time_step {self.model.time_step} for Land ID {self.unique_id}, old_wage_premium {self.model.firm.old_wage_premium}")
         except Exception as e:
             # Handle other exceptions
-            logger.error(f"An error occurred: {str(e)}")
+            self.model.logger.error(f"An error occurred: {str(e)}")
             p_dot = None
         return p_dot
 
@@ -229,11 +223,11 @@ class Person(Agent):
         if self.residence:
             self.properties_owned.append(self.residence)
             if self.residence.owner is not None:
-                logger.warning(f'Overrode property {self.residence.unique_id} owner {self.residence.owner} in init. Property now owned by {self.unique_id}.')
+                self.model.logger.warning(f'Overrode property {self.residence.unique_id} owner {self.residence.owner} in init. Property now owned by {self.unique_id}.')
             self.residence.owner = self
 
             if self.residence.resident is not None:
-                logger.warning(f'Overrode property {self.residence.unique_id} resident {self.residence.resident} in init. Property resident now {self.unique_id}.')
+                self.model.logger.warning(f'Overrode property {self.residence.unique_id} resident {self.residence.resident} in init. Property resident now {self.unique_id}.')
             self.residence.resident = self
 
         # Count time step and track whether agent is working
@@ -254,12 +248,12 @@ class Person(Agent):
             if (self.unique_id in self.workforce.newcomers):
                 # if (self.residence == None):
                 if self.count > 0:
-                    logger.debug(f'Newcomer removed {self.unique_id}') #  removed, who owns {self.properties_owned}, count {self.count}')
+                    self.model.logger.debug(f'Newcomer removed {self.unique_id}') #  removed, who owns {self.properties_owned}, count {self.count}')
                     self.remove()
                     return  # Stop execution of the step function after removal
             # Everyone who is not a newcomer leaves if they have no residence
             else:
-                logger.warning(f'Non-newcomer with no residence removed: {self.unique_id}, count {self.count}')
+                self.model.logger.warning(f'Non-newcomer with no residence removed: {self.unique_id}, count {self.count}')
                 self.remove()
                 return  # Stop execution of the step function after removal
 
@@ -281,12 +275,12 @@ class Person(Agent):
                         transport_cost = self.residence.transport_cost)
                     self.model.realtor.list_property_for_sale(self, self.residence, reservation_price)
                     # TODO Contact bank. Decide: sell, rent or keep empty
-                    logger.debug(f'Agent is retiring: {self.unique_id}, period {self.working_period}')
+                    self.model.logger.debug(f'Agent is retiring: {self.unique_id}, period {self.working_period}')
 
             if self.working_period > self.model.working_periods:
                 if self.residence in self.properties_owned:
                     self.workforce.remove(self, self.workforce.workers)
-                    logger.warning(f'Urban homeowner still in model: {self.unique_id}, working_period {self.working_period}')
+                    self.model.logger.warning(f'Urban homeowner still in model: {self.unique_id}, working_period {self.working_period}')
                 else:
                     self.working_period = 1
                     self.savings        = 0
@@ -308,14 +302,14 @@ class Person(Agent):
         # if self.unique_id in self.workforce.retiring_urban_owner:        
         #     if (self.residence):
         #         if premium > self.residence.transport_cost:
-        #             logger.warning(f'Removed retiring_urban_owner agent {self.unique_id} in step, working, with residence, properties owned {len(self.properties_owned)} which was still in model.')
+        #             self.model.logger.warning(f'Removed retiring_urban_owner agent {self.unique_id} in step, working, with residence, properties owned {len(self.properties_owned)} which was still in model.')
         #             self.remove()
         #         else:
-        #             logger.warning(f'retiring_urban_owner agent {self.unique_id}, not working, with residence, still in model.')
+        #             self.model.logger.warning(f'retiring_urban_owner agent {self.unique_id}, not working, with residence, still in model.')
         #     else:
-        #         logger.warning(f'retiring_urban_owner agent {self.unique_id}, witout residence, still in model.')
+        #         self.model.logger.warning(f'retiring_urban_owner agent {self.unique_id}, witout residence, still in model.')
         # else:
-        #     logger.debug(f'Agent {self.unique_id} has no residence.')
+        #     self.model.logger.debug(f'Agent {self.unique_id} has no residence.')
 
         # TODO TEMP? use is_working_check to perform any checks
         if self.residence:
@@ -341,7 +335,7 @@ class Person(Agent):
     def bid(self):
         """Newcomers bid on properties for use or investment value."""
         
-        # logger.debug(f'Newcomer bids: {self.unique_id}, count {self.count}')
+        # self.model.logger.debug(f'Newcomer bids: {self.unique_id}, count {self.count}')
 
         # W = self.savings # TODO fix self.get_wealth()
         S = self.savings
@@ -364,25 +358,25 @@ class Person(Agent):
             R_N      = listing.sale_property.net_rent # Need net rent for P_bid
             bid_type = 'value_limited'
             P_bid    = self.model.bank.get_max_bid(R_N, r, r_target, m, listing.sale_property.p_dot, listing.sale_property.transport_cost)
-            # logger.warning(f'Max bid: {self.unique_id}, bid {P_bid}, R_N {R_N}, r {r}, r {r_target}, m {m}, transport_cost {listing.sale_property.transport_cost}')
+            # self.model.logger.warning(f'Max bid: {self.unique_id}, bid {P_bid}, R_N {R_N}, r {r}, r {r_target}, m {m}, transport_cost {listing.sale_property.transport_cost}')
 
             if S/(1-m) <= P_bid:
                 bid_type = 'equity_limited'
                 P_bid = S/(1-m)
-                # logger.warning(f'Newcomer bids EQUITY LIMITED: {self.unique_id}, bid {P_bid}') #, S {S}, m {m}, .. ')
+                # self.model.logger.warning(f'Newcomer bids EQUITY LIMITED: {self.unique_id}, bid {P_bid}') #, S {S}, m {m}, .. ')
 
             if (0.28 * (wage + r * S) / r_prime)  <= P_bid:
                 bid_type = 'income_limited'
                 P_bid = 0.28 * (wage + r * S) / r_prime
-                logger.warning(f'Newcomer bids INCOME LIMITED: {self.unique_id}, bid {P_bid}')
+                self.model.logger.warning(f'Newcomer bids INCOME LIMITED: {self.unique_id}, bid {P_bid}')
 
             if P_bid > 0:
-                # logger.warning(f'Newcomer bids: {self.unique_id}, bid {P_bid}')
+                # self.model.logger.warning(f'Newcomer bids: {self.unique_id}, bid {P_bid}')
                 self.model.realtor.add_bid(self, listing, P_bid, bid_type)
 
             else:
                 pass
-                # logger.warning(f'Newcomer doesnt bid: {self.unique_id}, bid {P_bid}, sale_property {listing.sale_property.unique_id}')
+                # self.model.logger.warning(f'Newcomer doesnt bid: {self.unique_id}, bid {P_bid}, sale_property {listing.sale_property.unique_id}')
 
             # # Old logic, replaced by version above
             # # Max desired bid
@@ -427,7 +421,7 @@ class Person(Agent):
         # x, y = self.pos
         # self.model.grid.remove_agent(x,y,self)
         self.model.grid.remove_agent(self)
-        # logger.debug(f'Person {self.unique_id} removed from model')
+        # self.model.logger.debug(f'Person {self.unique_id} removed from model')
         # TODO If agent owns property, get rid of property
 
     def __str__(self):
@@ -640,7 +634,7 @@ class Bank(Agent):
             return R_NT / ((1 - m) * r_target/(delta**T) - p_dot +(1+r)**T*m) # Revised denominator from eqn 6:20
 
         else:
-            logger.error(f'Get_max_bid None error Rn {R_N}, r {r}, r_target {r_target}, m {m}, p_dot {p_dot}')
+            self.model.logger.error(f'Get_max_bid None error Rn {R_N}, r {r}, r_target {r_target}, m {m}, p_dot {p_dot}')
             return 0. # TODO Temp
 
     def get_average_wealth(self):
@@ -693,11 +687,11 @@ class Investor(Agent):
             P_bid    = self.model.bank.get_max_bid(R_N, r, r_target, m, listing.sale_property.p_dot, listing.sale_property.transport_cost)
             bid_type = 'investor'
             # mortgage = m * P_bid
-            logger.debug(f'Bank {self.unique_id} bids {P_bid} for property {listing.sale_property.unique_id}, if val is positive.')
+            self.model.logger.debug(f'Bank {self.unique_id} bids {P_bid} for property {listing.sale_property.unique_id}, if val is positive.')
             if P_bid > 0:
                 self.model.realtor.add_bid(self, listing, P_bid, bid_type)
             else:
-                logger.debug(f'Investor doesn\'t bid: {self.unique_id}')
+                self.model.logger.debug(f'Investor doesn\'t bid: {self.unique_id}')
 
     def __str__(self):
         return f'Investor {self.unique_id}'
@@ -725,13 +719,13 @@ class Realtor(Agent):
     def add_bid(self, bidder, listing, price, bid_type= ''):
         # Type check for bidder and property
         if not isinstance(bidder, (Person, Investor)):
-            logger.error(f'Bidder in add_bid {bidder.unique_id} is not a Person or Investor. {bidder}')
+            self.model.logger.error(f'Bidder in add_bid {bidder.unique_id} is not a Person or Investor. {bidder}')
         if not isinstance(listing, Listing):
-            logger.error(f'Listing in add_bid is not a Listing instance.')
+            self.model.logger.error(f'Listing in add_bid is not a Listing instance.')
         if not isinstance(price, (int, float)):
-            logger.error(f'Price in add_bid must be a numeric value (int or float).')
+            self.model.logger.error(f'Price in add_bid must be a numeric value (int or float).')
         if not isinstance(bid_type, (str)):
-            logger.error(f'Bid type in add_bid must be a string.')
+            self.model.logger.error(f'Bid type in add_bid must be a string.')
     
         bid = Bid(bidder, price, bid_type)
         self.bids[listing].append(bid)
@@ -740,11 +734,11 @@ class Realtor(Agent):
         # Allocate properties based on bids
         allocations = []
 
-        logger.debug(f'Number of listed properties to sell: {len(self.bids)}')
+        self.model.logger.debug(f'Number of listed properties to sell: {len(self.bids)}')
         for listing, property_bids in self.bids.items():
             # # Look at all bids for debugging
             # bid_info = [f'bidder {bid.bidder} bid {bid.bid_price}' for bid in property_bids]
-            # logger.debug(f'Listed property: {listing.sale_property.unique_id} has bids: {len(property_bids)}, {", ".join(bid_info)}')
+            # self.model.logger.debug(f'Listed property: {listing.sale_property.unique_id} has bids: {len(property_bids)}, {", ".join(bid_info)}')
 
             reservation_price = listing.reservation_price
             if property_bids:
@@ -759,7 +753,7 @@ class Realtor(Agent):
                         final_price = reservation_price + 0.5 * (highest_bid_price - reservation_price)
                         # TODO add more conditions: If 1 bid go half way between bid and reservation_price. If more bids go to 2nd highest bid
                     else:
-                        logger.debug('Reservation price above bid for property {listing.sale_property.unique_id}')
+                        self.model.logger.debug('Reservation price above bid for property {listing.sale_property.unique_id}')
                         final_price = None
                 else:
                     final_price = highest_bid_price
@@ -783,9 +777,9 @@ class Realtor(Agent):
 
     def complete_transactions(self, allocations):
         for allocation in allocations:
-            logger.debug(f'Property {allocation.sale_property.unique_id} sold by seller {allocation.seller} to {allocation.buyer} for {allocation.final_price}')
+            self.model.logger.debug(f'Property {allocation.sale_property.unique_id} sold by seller {allocation.seller} to {allocation.buyer} for {allocation.final_price}')
             # if not isinstance(allocation.seller, Person):
-            #     logger.debug(f'Seller not a Person in complete_transaction: Seller {allocation.seller.unique_id}')
+            #     self.model.logger.debug(f'Seller not a Person in complete_transaction: Seller {allocation.seller.unique_id}')
 
             # Record data for data_collection
             allocation.sale_property.realized_price = allocation.final_price
@@ -805,83 +799,83 @@ class Realtor(Agent):
             #     pass
             #     # self.handle_seller_departure(allocation)
             # elif isinstance(allocation.seller, Investor):
-            #     logger.debug(f'In complete_transaction, before purchase, seller is Investor, id {allocation.seller.unique_id}.')
+            #     self.model.logger.debug(f'In complete_transaction, before purchase, seller is Investor, id {allocation.seller.unique_id}.')
             # else:
-            #     logger.debug(f'In complete_transaction, before purchase, seller {allocation.seller.unique_id} was not a person or investor. Seller {allocation.seller}.')
+            #     self.model.logger.debug(f'In complete_transaction, before purchase, seller {allocation.seller.unique_id} was not a person or investor. Seller {allocation.seller}.')
 
-            # logger.debug(f'Time {self.model.time_step}, Property {allocation.property.unique_id}, Price {allocation.property.realized_price}')
+            # self.model.logger.debug(f'Time {self.model.time_step}, Property {allocation.property.unique_id}, Price {allocation.property.realized_price}')
             if isinstance(allocation.buyer, Investor):
                 self.handle_investor_purchase(allocation)
             elif isinstance(allocation.buyer, Person):
                 self.handle_person_purchase(allocation)
             else:
-                logger.warning('In complete_transaction, buyer was neither a person nor an investor.')
+                self.model.logger.warning('In complete_transaction, buyer was neither a person nor an investor.')
 
             self.handle_seller_departure(allocation)
             # if isinstance(allocation.seller, Person):
-            #     logger.debug(f'Seller departure {allocation.seller}')
+            #     self.model.logger.debug(f'Seller departure {allocation.seller}')
                 
             # elif isinstance(allocation.seller, Investor):
-            #     logger.debug(f'In complete_transaction, after purchase, seller is Investor, id {allocation.seller.unique_id}.')
+            #     self.model.logger.debug(f'In complete_transaction, after purchase, seller is Investor, id {allocation.seller.unique_id}.')
             # else:
-            #     logger.debug(f'In complete_transaction, after purchase, seller {allocation.seller.unique_id} was not a person or investor. Seller {allocation.seller}.')                
+            #     self.model.logger.debug(f'In complete_transaction, after purchase, seller {allocation.seller.unique_id} was not a person or investor. Seller {allocation.seller}.')                
 
     def handle_investor_purchase(self, allocation):
         """Handles the purchase of a property by an investor."""
         allocation.sale_property.change_owner(allocation.buyer, allocation.seller)
         allocation.sale_property.resident = None
         allocation.buyer.residence = None
-        logger.debug('Property %s sold to investor.', allocation.sale_property.unique_id)
+        self.model.logger.debug('Property %s sold to investor.', allocation.sale_property.unique_id)
         self.rental_listings.append(allocation.sale_property)
 
     def handle_person_purchase(self, allocation):
         """Handles the purchase of a property by a person."""
         allocation.sale_property.change_owner(allocation.buyer, allocation.seller)
         # if not allocation.sale_property.check_residents_match:
-        #     logger.error(f'Sale property residence doesn\'t match before transfer: seller {seller.unique_id}, buyer {buyer.unique_id}')
+        #     self.model.logger.error(f'Sale property residence doesn\'t match before transfer: seller {seller.unique_id}, buyer {buyer.unique_id}')
         allocation.sale_property.resident = allocation.buyer
         allocation.buyer.residence = allocation.sale_property
         self.model.grid.move_agent(allocation.buyer, allocation.sale_property.pos)
         # if not allocation.sale_property.check_residents_match:
-        #     logger.error(f'Sale property residence doesn\'t match after transfer: seller {seller.unique_id}, buyer {buyer.unique_id}')
-        logger.debug('Property %s sold to newcomer %s.', allocation.sale_property.unique_id, allocation.buyer.unique_id)
+        #     self.model.logger.error(f'Sale property residence doesn\'t match after transfer: seller {seller.unique_id}, buyer {buyer.unique_id}')
+        self.model.logger.debug('Property %s sold to newcomer %s.', allocation.sale_property.unique_id, allocation.buyer.unique_id)
 
         # if self.residence: # Already checked since residence assigned
         if self.model.firm.wage_premium > allocation.sale_property.transport_cost:
             self.workforce.add(allocation.buyer, self.workforce.workers)
-            logger.debug(f'Person purchase: add person to workforce')
+            self.model.logger.debug(f'Person purchase: add person to workforce')
         else:
-            logger.debug(f'Person purchase: don\'t add person to workforce')
+            self.model.logger.debug(f'Person purchase: don\'t add person to workforce')
 
         if allocation.buyer.unique_id in self.workforce.newcomers:
-            logger.debug(f'Removing newcomer {allocation.buyer.unique_id}')
+            self.model.logger.debug(f'Removing newcomer {allocation.buyer.unique_id}')
             self.workforce.remove(allocation.buyer, self.workforce.newcomers)
         else:
-            logger.warning(f'Person buyer was not a newcomer: {allocation.buyer.unique_id}')
-        # logger.debug(f'Time {self.model.time_step} New worker {buyer.unique_id} Loc {sale_property}') # TEMP
+            self.model.logger.warning(f'Person buyer was not a newcomer: {allocation.buyer.unique_id}')
+        # self.model.logger.debug(f'Time {self.model.time_step} New worker {buyer.unique_id} Loc {sale_property}') # TEMP
 
     def handle_seller_departure(self, allocation):
         """Handles the departure of a selling agent."""
         if isinstance(allocation.seller, Person):
             if allocation.seller.unique_id in self.workforce.retiring_urban_owner:
-                logger.debug(f'Removing seller {self.unique_id}')
+                self.model.logger.debug(f'Removing seller {self.unique_id}')
                 allocation.seller.remove()
             else:
-                logger.warning(f'Seller a Person but not retiring, so not removed: Seller {allocation.seller.unique_id}')
+                self.model.logger.warning(f'Seller a Person but not retiring, so not removed: Seller {allocation.seller.unique_id}')
         elif isinstance(allocation.seller, Investor):
-            logger.warning(f'Seller an Investor in handle_seller_departure: Seller {allocation.seller.unique_id}')
+            self.model.logger.warning(f'Seller an Investor in handle_seller_departure: Seller {allocation.seller.unique_id}')
         else:
-            logger.warning(f'Seller not an Investor or a Person in handle_seller_departure: Seller {allocation.seller.unique_id}')
+            self.model.logger.warning(f'Seller not an Investor or a Person in handle_seller_departure: Seller {allocation.seller.unique_id}')
 
     def rent_homes(self):
         """Rent homes listed by investors to newcomers."""
-        logger.debug(f'{len(self.rental_listings)} properties to rent.')
+        self.model.logger.debug(f'{len(self.rental_listings)} properties to rent.')
         for rental in self.rental_listings:
             renter = self.model.create_newcomer(rental.pos)
             rental.resident = renter
             renter.residence = rental
             self.workforce.remove(renter, self.workforce.newcomers)
-            logger.debug(f'Newly created renter {renter.unique_id} lives at '
+            self.model.logger.debug(f'Newly created renter {renter.unique_id} lives at '
                          f'property {renter.residence.unique_id} which has '
                          f'resident {rental.resident.unique_id}, owner {rental.owner.unique_id}, pos {renter.pos}.')
         self.rental_listings.clear()
@@ -894,11 +888,11 @@ class Listing:
         reservation_price: Union[float, int] = 0.0,
     ):
         if not isinstance(seller, (Person, Investor)):
-            logger.error(f'Bidder in Listing {seller.unique_id} is not a Person or Investor, {seller}')
+            self.model.logger.error(f'Bidder in Listing {seller.unique_id} is not a Person or Investor, {seller}')
         if not isinstance(sale_property, Land):
-            logger.error(f'sale_property in Listing {sale_property.unique_id} is not Land, {sale_property}')
+            self.model.logger.error(f'sale_property in Listing {sale_property.unique_id} is not Land, {sale_property}')
         if not isinstance(reservation_price, (float, int)):
-            logger.error(f'reservation_price in Listing must be a numeric value.')
+            self.model.logger.error(f'reservation_price in Listing must be a numeric value.')
                
         self.seller = seller
         self.sale_property = sale_property
@@ -915,11 +909,11 @@ class Bid:
         bid_type: str = '',
     ):
         if not isinstance(bidder, (Person, Investor)):
-            logger.error(f'Bidder in Bid {bidder.unique_id} is not a Person or Investor, {bidder}')
+            self.model.logger.error(f'Bidder in Bid {bidder.unique_id} is not a Person or Investor, {bidder}')
         if not isinstance(bid_price, (float, int)):
-            logger.error(f'Price in Bid must be a numeric value.')
+            self.model.logger.error(f'Price in Bid must be a numeric value.')
         if not isinstance(bid_type, (str)):
-            logger.error(f'Price in Bid must be a numeric value.')
+            self.model.logger.error(f'Price in Bid must be a numeric value.')
                
         self.bidder = bidder
         self.bid_price = bid_price
@@ -939,17 +933,17 @@ class Allocation:
         second_highest_bid_price: Union[float, int] = 0.0,
     ):
         if not isinstance(buyer, (Person, Investor)):
-            logger.error(f'Successful buyer {buyer.unique_id} in Allocation must be of type Person or Investor.')
+            self.model.logger.error(f'Successful buyer {buyer.unique_id} in Allocation must be of type Person or Investor.')
         if not isinstance(seller, (Person, Investor)):
-            logger.error(f'Seller {seller.unique_id} in Allocation must be of type Person or Investor.')
+            self.model.logger.error(f'Seller {seller.unique_id} in Allocation must be of type Person or Investor.')
         if not isinstance(sale_property, Land):
-            logger.error(f'Property {property.unique_id} in Allocation must be of type Land.')
+            self.model.logger.error(f'Property {property.unique_id} in Allocation must be of type Land.')
         if not isinstance(final_price, (float, int)):
-            logger.error(f'Final price in Allocation must be a numeric value.')
+            self.model.logger.error(f'Final price in Allocation must be a numeric value.')
         if not isinstance(highest_bid_price, (float, int)):
-            logger.error(f'Highest bid in Allocation must be a numeric value.')
+            self.model.logger.error(f'Highest bid in Allocation must be a numeric value.')
         if not isinstance(second_highest_bid_price, (float, int)):
-            logger.error(f'Second highest bid in Allocation must be a numeric value.')
+            self.model.logger.error(f'Second highest bid in Allocation must be a numeric value.')
 
         self.buyer                    = buyer
         self.seller                   = seller
