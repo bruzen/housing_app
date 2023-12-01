@@ -68,6 +68,8 @@ class Land(Agent):
     def step(self):
         self.warranted_rent  = self.get_warranted_rent()
         self.warranted_price = self.get_warranted_price()
+
+        # self.p_dot = None # Calculate when properties are listed for sale
         if (self.model.firm.wage_premium > self.transport_cost):
             self.p_dot       = self.get_p_dot()
         else:
@@ -277,8 +279,7 @@ class Person(Agent):
                         m =  0.8, 
                         p_dot =  self.residence.p_dot, 
                         transport_cost = self.residence.transport_cost)
-                    listing = Listing(self, self.residence, reservation_price)
-                    self.model.realtor.bids[listing] = []
+                    self.model.realtor.list_property_for_sale(self, self.residence, reservation_price)
                     # TODO Contact bank. Decide: sell, rent or keep empty
                     logger.debug(f'Agent is retiring: {self.unique_id}, period {self.working_period}')
 
@@ -715,6 +716,11 @@ class Realtor(Agent):
 
     def step(self):
         pass
+
+    def list_property_for_sale(self, seller, sale_property, reservation_price):
+        listing = Listing(seller, sale_property, reservation_price)
+        self.bids[listing] = []
+        sale_property.get_p_dot()
 
     def add_bid(self, bidder, listing, price, bid_type= ''):
         # Type check for bidder and property
