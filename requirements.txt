@@ -1,13 +1,11 @@
-vega-datasets
 mesa
 jupyter
 streamlit
 numpy
 pandas
-scikit-learn
-statsmodels
 scipy
 pysal
 plotly
+kaleido
 matplotlib==3.4.3
 pyyaml==5.4.1
