@@ -349,10 +349,14 @@ class City(Model):
         else:
             subfolder = self.get_subfolder(folder_name = "output_data", subfolder_name = "run_data")
         self.subfolder = subfolder
-
+        
+        # Create folder and filename for logging
         log_folder = self.get_subfolder(folder_name = "output_data", subfolder_name = "logs")
         self.run_id    = self.get_run_id(self.model_name, self.timestamp, self.model_version)
         self.log_filename = os.path.join(log_folder, f'logfile_{self.run_id}.log')
+
+        # Create folder for plots
+        self.figures_folder = self.get_subfolder(folder_name = "output_data", subfolder_name = "figures")
 
         # Price data for forecasting
         self.warranted_price_data = pd.DataFrame(
