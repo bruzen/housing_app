@@ -150,7 +150,7 @@ class Land(Agent):
         try:
             p_dot = (self.model.firm.wage_premium / self.model.firm.old_wage_premium)**self.model.mortgage_period - 1
 
-            # # Handle the case where the result is negative # TODO how to best handle?
+            # # Handle the case where the result is negative
             # if p_dot < 0:
             #     p_dot = 0.
 
@@ -467,7 +467,6 @@ class Firm(Agent):
                  adjF,
                  adjw,
                  dist,
-                 init_agglomeration_population,
                  init_F,
                  init_k,
                  init_n,
@@ -515,7 +514,6 @@ class Firm(Agent):
         #self.n_target = 100        
         #self.y_target = 10000
         self.N = self.F * self.n
-        self.agglomeration_population = init_agglomeration_population # population TODO change this will be confused with price
         self.wage_premium = init_wage_premium_ratio * self.subsistence_wage 
         self.wage         = self.wage_premium + self.subsistence_wage
         self.MPL          = self.beta  * self.y / self.n  # marginal value product of labour known to firms
@@ -524,10 +522,9 @@ class Firm(Agent):
 
     def step(self):
         # GET POPULATION AND OUTPUT TODO replace N with agent count
-        self.N = self.get_N() # TODO make sure all relevant populations are tracked - n, N, N adjustedx4/not, agent count, agglomeration_population
-        self.agglomeration_population = self.mult * self.N + self.seed_population
+        self.N = self.get_N()
         self.n =  self.N / self.F # distribute workforce across firms
-        self.y = self.A * self.agglomeration_population**self.gamma *  self.k**self.alpha * self.n**self.beta
+        self.y = self.A * self.N**self.gamma *  self.k**self.alpha * self.n**self.beta
 
         # ADJUST WAGE
         self.MPL = self.beta  * self.y / self.n  # marginal value product of labour known to firms
@@ -546,7 +543,7 @@ class Firm(Agent):
         self.F = (1 - self.adjF) * self.F + self.adjF * self.F_target
  
         # ADJUST CAPITAL STOCK 
-        self.y_target = self.price_of_output * self.A * self.agglomeration_population**self.gamma *  self.k**self.alpha * self.n**self.beta
+        self.y_target = self.price_of_output * self.A * self.N**self.gamma *  self.k**self.alpha * self.n**self.beta
         self.k_target = self.alpha * self.y_target/self.r
         self.k = (1 - self.adjk) * self.k + self.adjk * self.k_target
     
@@ -617,7 +614,9 @@ class Firm(Agent):
         # TODO handle divide by zero errors
         if N == 0:
             N = 1
-        return N
+        # TODO make sure all relevant populations are tracked - n, N, N adjusted x 4/not, agent count, N
+        agglomeration_population = self.mult * N + self.seed_population
+        return agglomeration_population
 
 class Bank(Agent):
     def __init__(self, unique_id, model, pos,

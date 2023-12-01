@@ -100,7 +100,6 @@ class City(Model):
             'adjF': 0.15,
             'adjw': 0.15, 
             'dist': 1,
-            'init_agglomeration_population': 100000.0,
             'init_F': 100.0,
             'init_k': 100.0,
             'init_n': 100.0,
@@ -207,7 +206,6 @@ class City(Model):
                                     adjF=self.params['adjF'],
                                     adjw=self.params['adjw'],
                                     dist=self.params['dist'],
-                                    init_agglomeration_population=self.params['init_agglomeration_population'],
                                     init_F=self.params['init_F'],
                                     init_k=self.params['init_k'],
                                     init_n=self.params['init_n']
@@ -387,7 +385,7 @@ class City(Model):
             "F":                         lambda m: m.firm.F,
             "k":                         lambda m: m.firm.k,
             "N":                         lambda m: m.firm.N,
-            "agglomeration_population":  lambda m: m.firm.agglomeration_population,
+            # "agglomeration_population":  lambda m: m.firm.agglomeration_population, # TODO delete
             "Y":                         lambda m: m.firm.Y,
             "wage_premium":              lambda m: m.firm.wage_premium,
             "subsistence_wage":          lambda m: m.firm.subsistence_wage,
