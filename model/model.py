@@ -257,7 +257,7 @@ class City(Model):
         # self.record_step_data()
 
         # Run the firm for several steps to stabilize
-        for i in range(5):
+        for i in range(2):
             # People check if it's worthwhile to work
             self.schedule.step_breed(Person, step_name='check_worthwhile_to_work')
 
@@ -299,7 +299,7 @@ class City(Model):
             person.bid()
 
         # Investors bid on properties
-        
+        self.schedule.step_breed(Investor, step_name='bid')
 
         # Realtors sell homes
         self.schedule.step_breed(Realtor, step_name='sell_homes')
