@@ -256,6 +256,15 @@ class City(Model):
         self.setup_mesa_data_collection()
         # self.record_step_data()
 
+        # Run the firm for several steps to stabilize
+        for i in range(5):
+            # People check if it's worthwhile to work
+            self.schedule.step_breed(Person, step_name='check_worthwhile_to_work')
+
+            # Firms update wages
+            self.schedule.step_breed(Firm)   
+
+
     def step(self):
         """ The model step function runs in each time step when the model
         is executed. It calls the agent functions, then records results
@@ -290,7 +299,7 @@ class City(Model):
             person.bid()
 
         # Investors bid on properties
-        self.schedule.step_breed(Investor, step_name='bid')
+        
 
         # Realtors sell homes
         self.schedule.step_breed(Realtor, step_name='sell_homes')

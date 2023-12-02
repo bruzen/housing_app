@@ -332,6 +332,13 @@ class Person(Agent):
                 if premium > self.residence.transport_cost:
                     self.model.urban_other_owners_count += 1
 
+    def check_worthwhile_to_work(self):
+        premium = self.model.firm.wage_premium
+        if premium > self.residence.transport_cost:
+            self.workforce.add(self, self.workforce.workers)
+        else:
+            self.workforce.remove(self, self.workforce.workers)
+
     def bid(self):
         """Newcomers bid on properties for use or investment value."""
         
