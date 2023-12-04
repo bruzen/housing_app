@@ -183,8 +183,12 @@ class City(Model):
         self.workforce = Workforce()
         self.removed_agents = 0
 
+        # Add class to track retired agents that still own property
+        self.unique_id       = 1
+        self.retired_agents  = Retired_Agents(self, self.unique_id)
+
         # Add bank, firm, investor, and realtor
-        self.unique_id       = 1        
+        self.unique_id      += 1
         self.bank            = Bank(self.unique_id, self, self.center, self.r_prime)
         self.grid.place_agent(self.bank, self.center)
         self.schedule.add(self.bank)
@@ -259,7 +263,7 @@ class City(Model):
         # Run the firm for several steps to stabilize
         for i in range(2):
             # People check if it's worthwhile to work
-            self.schedule.step_breed(Person, step_name='check_worthwhile_to_work')
+            self.schedule.step_breed(Person, step_name='work_if_worthwhile_to_work')
 
             # Firms update wages
             self.schedule.step_breed(Firm)   
@@ -383,8 +387,6 @@ class City(Model):
         self.agent_file_path   = os.path.join(self.subfolder, agent_filename)
         self.model_file_path   = os.path.join(self.subfolder, model_filename)
         self.metadata_file_path = os.path.join(self.subfolder, 'run_metadata.yaml')
-
-        print(self.get_git_commit_hash())
 
         metadata = {
             'model_description':     self.model_description,
@@ -573,6 +575,7 @@ class City(Model):
             pos = self.center
 
         savings = self.get_newcomer_init_savings()
+        self.logger.warning(f'Newcomer savings {savings}')
         
         person           = Person(self.unique_id, self, pos,
                                   savings = savings,
@@ -583,8 +586,8 @@ class City(Model):
         return person
 
     def get_newcomer_init_savings(self):
-        # savings = self.random.uniform(0, 2*self.bank.get_rural_home_value())
-        savings = 0.
+        savings = self.random.uniform(0, 2*self.bank.get_rural_home_value())
+        # savings = 0.
         return savings
 
         # DISTRIBUTION FUNCTIONS FOR SAVINGS
@@ -688,3 +691,20 @@ class Workforce:
         for agent_key in agent_keys:
             agent = agents_dict[agent_key]
             getattr(agent, method)()
+
+class Retired_Agents:
+    def __init__(self, model, unique_id):
+        self.model              = model
+        self.unique_id          = unique_id
+        self.property_ownership = {}
+
+    def add_property(self, owner_id, property):
+        if owner_id not in self.property_ownership:
+            # If the agent is not already in the dictionary, add them with the new property
+            self.property_ownership[owner_id] = {
+                "properties": [property]
+            }
+        else:
+            # If the agent is already in the dictionary, append the new property to the existing list
+            self.property_ownership[owner_id]["properties"].append(property)
+            self.model.logger(f'Agent_id {owner_id} already exists in Retired_Agents. Added property to list of properties owned.')

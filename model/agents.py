@@ -332,7 +332,7 @@ class Person(Agent):
                 if premium > self.residence.transport_cost:
                     self.model.urban_other_owners_count += 1
 
-    def check_worthwhile_to_work(self):
+    def work_if_worthwhile_to_work(self):
         premium = self.model.firm.wage_premium
         if premium > self.residence.transport_cost:
             self.workforce.add(self, self.workforce.workers)
@@ -370,12 +370,12 @@ class Person(Agent):
             if S/(1-m) <= P_bid:
                 bid_type = 'equity_limited'
                 P_bid = S/(1-m)
-                # self.model.logger.warning(f'Newcomer bids EQUITY LIMITED: {self.unique_id}, bid {P_bid}') #, S {S}, m {m}, .. ')
+                self.model.logger.warning(f'Newcomer bid EQUITY LIMITED: {self.unique_id}, bid {P_bid}') #, S {S}, m {m}, .. ')
 
             if (0.28 * (wage + r * S) / r_prime)  <= P_bid:
                 bid_type = 'income_limited'
                 P_bid = 0.28 * (wage + r * S) / r_prime
-                self.model.logger.warning(f'Newcomer bids INCOME LIMITED: {self.unique_id}, bid {P_bid}')
+                self.model.logger.warning(f'Newcomer bid INCOME LIMITED: {self.unique_id}, bid {P_bid}')
 
             if P_bid > 0:
                 # self.model.logger.warning(f'Newcomer bids: {self.unique_id}, bid {P_bid}')
@@ -694,7 +694,7 @@ class Investor(Agent):
             P_bid    = self.model.bank.get_max_bid(R_N, r, r_target, m, listing.sale_property.p_dot, listing.sale_property.transport_cost)
             bid_type = 'investor'
             # mortgage = m * P_bid
-            self.model.logger.debug(f'Bank {self.unique_id} bids {P_bid} for property {listing.sale_property.unique_id}, if val is positive.')
+            self.model.logger.debug(f'Investor {self.unique_id} bids {P_bid} for property {listing.sale_property.unique_id}, if val is positive.')
             if P_bid > 0:
                 self.model.realtor.add_bid(self, listing, P_bid, bid_type)
             else:
@@ -746,7 +746,7 @@ class Realtor(Agent):
             # # Look at all bids for debugging
             # bid_info = [f'bidder {bid.bidder} bid {bid.bid_price}' for bid in property_bids]
             # self.model.logger.debug(f'Listed property: {listing.sale_property.unique_id} has bids: {len(property_bids)}, {", ".join(bid_info)}')
-
+            final_price = None
             reservation_price = listing.reservation_price
             if property_bids:
                 property_bids.sort(key=lambda x: x.bid_price, reverse=True)
@@ -761,22 +761,33 @@ class Realtor(Agent):
                         # TODO add more conditions: If 1 bid go half way between bid and reservation_price. If more bids go to 2nd highest bid
                     else:
                         self.model.logger.debug('Reservation price above bid for property {listing.sale_property.unique_id}')
-                        final_price = None
                 else:
                     final_price = highest_bid_price
 
-                if final_price:
-                    allocation = Allocation(
-                                            buyer                    = highest_bid.bidder,
-                                            seller                   = listing.seller,
-                                            sale_property            = listing.sale_property,
-                                            final_price              = final_price,
-                                            highest_bid_price        = highest_bid.bid_price,
-                                            second_highest_bid_price = second_highest_bid_price,
-                                            )
-                    allocations.append(allocation)
+            if final_price:
+                allocation = Allocation(
+                                        buyer                    = highest_bid.bidder,
+                                        seller                   = listing.seller,
+                                        sale_property            = listing.sale_property,
+                                        final_price              = final_price,
+                                        highest_bid_price        = highest_bid.bid_price,
+                                        second_highest_bid_price = second_highest_bid_price,
+                                        )
+                allocations.append(allocation)
+            
+            else:
+                # If no allocation rent homes TODO they could keep the home on the market
+                # self.model.logger.debug('No allocation')
+                self.model.logger.debug(f'Property {allocation.sale_property.unique_id}, {allocation.sale_property.pos} NOT sold by seller {allocation.seller}')
+                # List property  to rent it to a newcomer
+                self.rental_listings.append(listing.sale_property)
+                # Track ownership with retired_agents
+                self.model.retired_agents.add_property(listing.seller.unique_id, listing.sale_property)
+                listing.sale_property.owner = self.model.retired_agents
+                # Remove retiring agent from the model
+                listing.seller.remove()
 
-        # Complete transaction and clear existing bids
+        # Complete transactions for all listings and clear bids
         self.complete_transactions(allocations)
         self.bids.clear()
         # self.sale_listings.clear() # TODO check do we clear listings here?
@@ -784,7 +795,7 @@ class Realtor(Agent):
 
     def complete_transactions(self, allocations):
         for allocation in allocations:
-            self.model.logger.debug(f'Property {allocation.sale_property.unique_id} sold by seller {allocation.seller} to {allocation.buyer} for {allocation.final_price}')
+            self.model.logger.debug(f'Property {allocation.sale_property.unique_id}, {allocation.sale_property.pos} sold by seller {allocation.seller} to {allocation.buyer} for {allocation.final_price}')
             # if not isinstance(allocation.seller, Person):
             #     self.model.logger.debug(f'Seller not a Person in complete_transaction: Seller {allocation.seller.unique_id}')
 
@@ -855,7 +866,7 @@ class Realtor(Agent):
             self.model.logger.debug(f'Person purchase: don\'t add person to workforce')
 
         if allocation.buyer.unique_id in self.workforce.newcomers:
-            self.model.logger.debug(f'Removing newcomer {allocation.buyer.unique_id}')
+            self.model.logger.debug(f'Remove from newcomers list {allocation.buyer.unique_id}')
             self.workforce.remove(allocation.buyer, self.workforce.newcomers)
         else:
             self.model.logger.warning(f'Person buyer was not a newcomer: {allocation.buyer.unique_id}')
@@ -885,6 +896,8 @@ class Realtor(Agent):
             self.model.logger.debug(f'Newly created renter {renter.unique_id} lives at '
                          f'property {renter.residence.unique_id} which has '
                          f'resident {rental.resident.unique_id}, owner {rental.owner.unique_id}, pos {renter.pos}.')
+            
+            renter.work_if_worthwhile_to_work()
         self.rental_listings.clear()
 
 class Listing:
