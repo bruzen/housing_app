@@ -895,7 +895,7 @@ class Realtor(Agent):
         """Rent homes listed by investors to newcomers."""
         self.model.logger.debug(f'{len(self.rental_listings)} properties to rent.')
         for rental in self.rental_listings:
-            renter = self.model.create_newcomer(rental.pos)
+            renter = self.model.create_newcomer(pos = rental.pos)
             rental.resident = renter
             renter.residence = rental
             self.workforce.remove(renter, self.workforce.newcomers)

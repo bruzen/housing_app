@@ -297,10 +297,23 @@ class City(Model):
         # People work, retire, and list homes to sell
         self.schedule.step_breed(Person)
 
+        # Add agents to replace retiring_urban_owner workers
+        # Draw 50 values from the distribution of initial savings
+        savings_values = [self.get_newcomer_init_savings() for _ in range(50)]
+
+        # Sort the list in descending order
+        savings_values.sort(reverse=True)
+        self.logger.debug(f'Savings value distribution {savings_values}')
+
         for i in self.workforce.retiring_urban_owner:
-            # Add agents to replace retiring_urban_owner workers
-            person = self.create_newcomer()
-            person.bid()
+            if savings_values:
+                top_savings = savings_values.pop()
+                person = self.create_newcomer(top_savings)
+                person.bid()
+            else:
+                # Handle the case where there are no more savings values
+                # You might want to break out of the loop or take other appropriate actions
+                self.logger.error(f'Did not create newcomer since not enough savings values.')
 
         # Investors bid on properties
         self.schedule.step_breed(Investor, step_name='bid')
@@ -567,18 +580,16 @@ class City(Model):
             print(f"Error: {e}")
             return None
 
-    def create_newcomer(self, pos=None):
+    def create_newcomer(self, savings=0, pos=None):
         """Create newcomer at the center with no residence or property."""
         self.unique_id  += 1
 
         if pos is None:
             pos = self.center
-
-        savings = self.get_newcomer_init_savings()
         
-        person           = Person(self.unique_id, self, pos,
-                                  savings = savings,
-                                  residence_owned = None)
+        person  = Person(self.unique_id, self, pos,
+                  savings = savings,
+                  residence_owned = None)
         self.grid.place_agent(person, pos)
         self.schedule.add(person)
         self.workforce.add(person, self.workforce.newcomers)
