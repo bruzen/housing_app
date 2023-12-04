@@ -283,16 +283,12 @@ class City(Model):
         self.urban_other_owners_count    = 0
 
         self.logger.info(f'\n \n \n Step {self.schedule.steps}. \n')
-        self.step_price_data.clear()
 
         # Firms update wages
         self.schedule.step_breed(Firm)
 
         # Land records locational rents and calculates price forecast
         self.schedule.step_breed(Land)
-        new_df = pd.DataFrame(self.step_price_data)
-        self.warranted_price_data = pd.concat([self.warranted_price_data, new_df], 
-                                          ignore_index=True)
     
         # People work, retire, and list homes to sell
         self.schedule.step_breed(Person)
@@ -308,6 +304,7 @@ class City(Model):
         for i in self.workforce.retiring_urban_owner:
             if savings_values:
                 top_savings = savings_values.pop()
+                # top_savings = 0.
                 person = self.create_newcomer(top_savings)
                 person.bid()
             else:
@@ -383,13 +380,6 @@ class City(Model):
 
         # Create folder for plots
         self.figures_folder = self.get_subfolder(folder_name = "output_data", subfolder_name = "figures")
-
-        # Price data for forecasting
-        self.warranted_price_data = pd.DataFrame(
-             columns=['land_id', 'warranted_price', 'time_step', 'transport_cost', 'wage'])
-        self.step_price_data = []
-        self.realized_price_data  = pd.DataFrame(
-             columns=['land_id', 'realized_price', 'time_step', 'transport_cost', 'wage'])
 
         # Create the 'output_data' subfolder if it doesn't exist
         if not os.path.exists(self.subfolder):

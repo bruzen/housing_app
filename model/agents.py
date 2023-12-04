@@ -69,18 +69,6 @@ class Land(Agent):
         else:
             self.p_dot       = None 
 
-        # Prepare price data for the current step
-        price_data = {
-            'land_id': self.unique_id,
-            'warranted_price': self.warranted_price,
-            'time_step': self.model.time_step,
-            'transport_cost': self.transport_cost,
-            'wage': self.model.firm.wage
-        }
-        
-        # Add the price data to the model's step price data
-        self.model.step_price_data.append(price_data)
-
         # TODO Flip
         self.realized_price         = - 1 # Reset to show realized price in just this time_step
         # self.realized_all_steps_price = - 1 # 
@@ -820,7 +808,6 @@ class Realtor(Agent):
             'transport_cost': allocation.sale_property.transport_cost,
             'wage':           self.model.firm.wage,
             }
-            self.model.realized_price_data = self.model.realized_price_data.append(new_row, ignore_index=True)
 
             # if isinstance(allocation.seller, Person):
             #     pass
