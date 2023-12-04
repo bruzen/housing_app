@@ -1,49 +1,75 @@
 # TODO List
+## High Priority
 
-## High Priority 
-- [***] Why is is_working crazy in heatmaps? Why does city not grow? With no owner investors (all People buyers), some people in the city (maybe after sale) do not work. Do people move in and start working after buying - do any of them get removed by accident. (Maybe handle_person_purchase - should make sure it results in workers - not all do, but some? maybe. why?).  Realized population looks wrong?
-- [ ] Show most recent realized_price in heatmap, with x on top if just sold
-- [ ] Why are newcomer agents bidding 0? Maybe they need savings.
-- [ ] Add distributions for newcomer initial savings and mean wealth calculations for wealth adjustment
-- [ ] Fix p-dot
-- [ ] Bidding
-- [ ] Consider why bids are so far off warranted price
-- [ ] Add add worthwhile to work check to warranted price
-
+- [ ] Param sweep line graphs with colors for values of params - save to photo.. for later ones.. and then arrange as a grid
+- [ ] How to see the gap to win bid - between bidders - 
+  - [ ] Display bid type (e.g. equity_limited etc)?
+  - [ ] Show bids vs other expected proxy? 
+  - [ ] store bid prices, reservation prices etc by type - how to best plot - just plot a vector-- or extract from agents? -- store for model - reservation_prices price/distance/property_id maybe  store pd.DataFrame(self.bids, columns=["time_step", "bid_price", "bid_distance", "property_id"]), "bids": lambda m: m.bids_dataframe()?
+- [ ] Check: Implement individual_wealth_adjustment as stated in comment - Plot individual_wealth_adjustment etc
+- [ ] Plots
+  - [ ] Record/plot total rents
+  - [ ] Urban wage and MPL
+  - [ ] Check names and labels on line plots
 
 ## Medium Priority
 
-- [ ] Track savings
-- [ ] Implement mortgages
-
+- [*] Track savings. Plots prices and saving. -  mean savings - distribution of savings. - 
+- [*] Implement mortgages
+- [ ] Check init_F
+- [ ] Think about how to improve plots
+  - [ ] Multiple replicate runs: Put likelihood bars e.g. on ownership share to show range. Larger city run overnight?
+  - [ ] Record Workforce objects count of workers, newcomers, retiring as a sanity check - plot
+  - [ ] Trace lines for a given land item as it folds over
+  - [ ] Make a line for time for p_dot evolution
+- [ ] Make a parameter for the variable 'm' in reservation price (and get_max_bid into a param?)  - max mortgage share 0.8  
+- [ ] New Eqn for p_dot proxy (Add error checking to fail gracefully if no p_dot or no realized price data.)
 
 ## Low Priority
 
-- [ ] Add error checking to fail gracefully if no p_dot or no realized price data.
-- [ ] Use one plotting library to speed imports
-- [ ] If a property is listed for sale, calculate sale properties - calc warranted_rent etc. to speed up (either for all properties or when listed)
-- [ ] Record Workforce objects count of workers, newcomers, retiring as a sanity check
-- [ ] Check init_F
-- [ ] Calc/record rent_captured_by finance, share_captured_by_finance, and urban_surplus
-- [ ] Make a hover over that shows person data for the heatmap - do I store more in person - id/x/y
-- [ ] Fix test_auction for new plot? iPython notebook used some error messages I removed
-- [ ] Display bid type (e.g. equity_limited etc)
-- [ ] Consider sigmoid transitions for get_bid transition
 - [ ] Add change_resident function like change_owner func
-  
+- [ ] Make function for worthwhile to work - Person and land can call for consistency
+- [ ] Speed: If a property is listed for sale, calculate sale properties - calc warranted_rent etc. to speed up (either for all properties or when listed)
+- [ ] Fix test_auction for new plot? iPython notebook used some error messages I removed
+
 
 ## DiR
 
-- [ ] Implement individual_wealth_adjustment
-- [ ] In bid calc realized_price: make price model use realized_price, around line 674
-- [ ] Include warranted price, and effect of more bids in shaping final price
-- [ ] How many newcomers to create. Maybe draw 50 items from the distribution and take the max from those drawn?  - TODO - number of bids is meaningless--. as are low bids because I'm just making incoming agents based on the number of properties for sale. (Could be a distribution of potential newcomers instead of full agents - just some data structure with the initial savings etc.)
-- [ ] WHY ARE BIDS 0
-- [ ] Talk through:
+- [ ] DiR has some kind of warning for depreciated syntax. Check.
+- [ ] Consider why bids/realized_price is so far off warranted price (Old: Weird now warranted price is flat and realized not - or on top?)
+  - [ ] Done? In bid calc realized_price: make price model use realized_price, around line 674
+- [ ] Conversations: results experiments diagram measures figures. Talk through:
         self.rent_captured_by_finance  = 0 # TODO implement. make a marker for agents in the city
         self.share_captured_by_finance = 0 # TODO implement.
         self.urban_surplus   = 0 # TODO implement
-- [ ] 
+
+
+### Experiments and plan (results experiments diagram measures figures)
+-  [ ] Results: 
+   -  [ ] Ownership pattern: under what circumstances do we see institutions take out ownership
+   -  [ ] What circumstances allow to sustain a steady fraction of owner occupiers
+   -  [ ] What share of rents are going to the bankers, share of generated surplus are the extracting.
+   -  [ ] Share of ownership vs measure openness, threshold for entry. Distinction between people and with investors
+-  [ ] Experiments:
+   -  [ ] Differential incomes
+   -  [ ] 2 Cities (one sucks it up)
+   -  [ ] Density
+   -  [ ] Feedbacks into urban surplus - extraction could change growth rate
+   -  [ ] Shocks, resilience and hysteresis, cost to sell a home. 
+   -  [ ] How to show resilience - fragility of homeowner regime, what exists beyond it
+   -  [ ] Operating costs different for owners/not, discount rates may differ
+
+
+## Consider for Future Work
+
+- [ ] Do we only count amenity for workers, or those in the urban boundary?
+- [ ] Add capital gains, tax first time buyer subsidy. Add transaction costs in WTP. It is the unfair floor that is the piece tht does the work.
+- [ ] Add differential income
+- [ ] How to do the resilience experiment?
+- [ ] Size without population and/or density in different areas. 
+- [ ] Calculate mean, median, or the percentage change over time, regression for direction and strength of the trends.
+- [ ] Do investors need to be able to sell houses, do workers sell during their work lives?
+
 
 ## Orienting
 
@@ -52,35 +78,14 @@
 - [ ] Trace flow - think about possible errors
 
 
-## Consider for Future Work
-
-- [ ] Do we only count amenity for workers, or those in the urban boundary?
-- [ ] Add capital gains, tax first time buyer subsidy -  Add transaction costs in WTP - it is the unfair floor that is the piece tht does the work.
-- [ ] Add differential income
-- [ ] How to do the resilience experiment?
-- [ ] Size without population and/or density in different areas. 
-- [ ] Calcule mean, median, or the percentage change over time, regression for direction and strength of the trends.
-
-
 ## Check
 
-- [x] Fix - WARNING: Seller was not a person, so was not removed from the model.
-- [x] Land step - # TODO if residence is not owned, renter moves out
-- [x] Fix retiring renter exit: 
-      if (self.residence in self.properties_owned):
-	 TODO Contact bank. Decide: sell, rent or keep empty
-        self.model.realtor.sale_listing.append(self.residence)
-	 TODO if residence is not owned, renter moves out
-- [x] Add renters after sale
-- [x] Manage retirement at the edge of the city 
-- [x] Fix logging
-- [x] Add renters after sale -- show they are renters vs owners in heatmap
-- [x] 239 TODO if residence is not owned, renter moves out
-- [x] Fix get_max_bid
-- [x] Weird now warranted price is flat and realized not - or on top?
-- [ ] FIX TO IN WORKERS-- RECORD WORKERS, NEWCOMERS, RETIRING
-
-## Done
-
-- [x] Make investors bid on properties
-- [x] DONE do we want to name the pieces of this:  m = max_mortgage_share - 0.1 * average_wealth / W  Name 0.1 lenders_wealth_sensitivity
+- [x] Cases
+      Case 1 no bid
+      Case 2 investor wins
+      Case 3 investor wins
+      Case 4 with/without reservation price/with size of reservation price.
+- [ ] Consider 0 warranted price - outside the city, any concern with transportation cost is only speculative - how to handle - return max(wage_premium - self.transport_cost + a * subsistence_wage, 0)
+- [ ] How do we think about p_dot on the periphery?
+- [ ] Why does max_bid not use transport_cost?
+- [ ] Consider sigmoid transitions for get_bid transition
