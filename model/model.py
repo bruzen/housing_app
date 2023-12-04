@@ -482,6 +482,7 @@ class City(Model):
             "warranted_rent":    lambda a: getattr(a, "warranted_rent", None)  if isinstance(a, Land)         else None,
             "warranted_price":   lambda a: getattr(a, "warranted_price", None) if isinstance(a, Land)         else None,
             "realized_price":    lambda a: getattr(a, "realized_price", None)  if isinstance(a, Land)         else None,
+            "realized_all_steps_price": lambda a: getattr(a, "realized_all_steps_price", None)  if isinstance(a, Land) else None,
             "sold_this_step":    lambda a: getattr(a, "sold_this_step", None)  if isinstance(a, Land)         else None,
             "ownership_type":    lambda a: getattr(a, "ownership_type", None)  if isinstance(a, Land)         else None,
             "distance_from_center": lambda a: getattr(a, "distance_from_center", None) if isinstance(a, Land) else None,

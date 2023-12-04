@@ -218,6 +218,7 @@ class Person(Agent):
 
         self.bank                = self.model.bank 
         self.amenity             = 0.
+        self.purchased_property  = False
 
         # If the agent initially owns a property, set residence and owners
         if self.residence:
@@ -320,7 +321,10 @@ class Person(Agent):
 
             # TODO Temp
             if isinstance(self.residence.owner, Person):
-                self.residence.ownership_type = 1 # 'Person'
+                if self.residence.owner.purchased_property:
+                    self.residence.ownership_type = 1 # 'Person' True newcomer purchased property
+                else:
+                    self.residence.ownership_type = 0 # 'Person' False original owner
                 if premium > self.residence.transport_cost:
                     self.model.urban_resident_owners_count += 1
             elif isinstance(self.residence.owner, Investor):
@@ -328,7 +332,7 @@ class Person(Agent):
                 if premium > self.residence.transport_cost:
                     self.model.urban_investor_owners_count += 1
             else:
-                self.residence.ownership_type = 3 #'Other'
+                self.residence.ownership_type = 3 #'Other' including retiree ownership
                 if premium > self.residence.transport_cost:
                     self.model.urban_other_owners_count += 1
 
@@ -860,6 +864,7 @@ class Realtor(Agent):
         allocation.sale_property.resident = allocation.buyer
         allocation.buyer.residence = allocation.sale_property
         self.model.grid.move_agent(allocation.buyer, allocation.sale_property.pos)
+        allocation.buyer.purchased_property = True
         # if not allocation.sale_property.check_residents_match:
         #     self.model.logger.error(f'Sale property residence doesn\'t match after transfer: seller {seller.unique_id}, buyer {buyer.unique_id}')
         self.model.logger.debug('Property %s sold to newcomer %s, new loc %s.', allocation.sale_property.unique_id, allocation.buyer.unique_id, allocation.buyer.pos)
