@@ -775,7 +775,7 @@ class Realtor(Agent):
             else:
                 # If no allocation rent homes TODO they could keep the home on the market
                 # self.model.logger.debug('No allocation')
-                self.model.logger.debug(f'Property {allocation.sale_property.unique_id}, {allocation.sale_property.pos} NOT sold by seller {allocation.seller}')
+                self.model.logger.debug(f'Property {listing.sale_property.unique_id}, {listing.sale_property.pos} NOT sold by seller {listing.seller}')
                 # List property  to rent it to a newcomer
                 self.rental_listings.append(listing.sale_property)
                 # Track ownership with retired_agents
