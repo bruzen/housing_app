@@ -774,7 +774,13 @@ class Realtor(Agent):
                                         second_highest_bid_price = second_highest_bid_price,
                                         )
                 allocations.append(allocation)
-            
+
+                # If buyer is a Person, they only buy one property and are removed from bidding on other properties
+                if isinstance(allocation.buyer, Person):
+                    self.model.logger.debug(f'Person has purchased, remove bids from other properties, {allocation.buyer.unique_id} {allocation.sale_property.pos}')
+                    for property_bids in self.bids.values():
+                        property_bids[:] = [bid for bid in property_bids if bid.bidder != allocation.buyer]
+
             else:
                 # If no allocation rent homes TODO they could keep the home on the market
                 # self.model.logger.debug('No allocation')
@@ -856,7 +862,7 @@ class Realtor(Agent):
         self.model.grid.move_agent(allocation.buyer, allocation.sale_property.pos)
         # if not allocation.sale_property.check_residents_match:
         #     self.model.logger.error(f'Sale property residence doesn\'t match after transfer: seller {seller.unique_id}, buyer {buyer.unique_id}')
-        self.model.logger.debug('Property %s sold to newcomer %s.', allocation.sale_property.unique_id, allocation.buyer.unique_id)
+        self.model.logger.debug('Property %s sold to newcomer %s, new loc %s.', allocation.sale_property.unique_id, allocation.buyer.unique_id, allocation.buyer.pos)
 
         # if self.residence: # Already checked since residence assigned
         if self.model.firm.wage_premium > allocation.sale_property.transport_cost:

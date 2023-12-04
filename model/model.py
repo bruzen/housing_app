@@ -575,7 +575,6 @@ class City(Model):
             pos = self.center
 
         savings = self.get_newcomer_init_savings()
-        self.logger.warning(f'Newcomer savings {savings}')
         
         person           = Person(self.unique_id, self, pos,
                                   savings = savings,
@@ -583,11 +582,11 @@ class City(Model):
         self.grid.place_agent(person, pos)
         self.schedule.add(person)
         self.workforce.add(person, self.workforce.newcomers)
+        self.logger.debug(f'Newcomer savings {person.unique_id}, {savings}')
         return person
 
     def get_newcomer_init_savings(self):
         savings = self.random.uniform(0, 2*self.bank.get_rural_home_value())
-        # savings = 0.
         return savings
 
         # DISTRIBUTION FUNCTIONS FOR SAVINGS
