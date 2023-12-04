@@ -516,8 +516,7 @@ class Firm(Agent):
         self.k        = init_k #1.360878e+09 #100
         self.n        = init_n
         self.F_target = init_F
-        #self.k_target = 10000
-        #self.n_target = 100        
+        #self.k_target = 10000      
         #self.y_target = 10000
         self.N = self.F * self.n
         self.wage_premium = init_wage_premium_ratio * self.subsistence_wage 
