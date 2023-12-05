@@ -1,8 +1,9 @@
+import os
 import sys
 import yaml
 import datetime
+import numpy as np
 import pandas as pd
-import os
 import matplotlib.pyplot as plt
 from contextlib import contextmanager
 from mesa.batchrunner import batch_run
@@ -69,9 +70,9 @@ fixed_parameters = {
         }
 
 batch_parameters = {
-    'data_collection_period': 2,
+    'data_collection_period': 1,
     'iterations': 1,
-    'max_steps': 20
+    'max_steps': 10
 }
 
 # Define the context manager to record metadata
@@ -96,10 +97,22 @@ def run_batch_simulation():
 
     # Create a line plot (example: warranted_price vs time_step)
     plt.figure(figsize=(10, 6))
-    plt.plot(df['time_step'], df['warranted_price'], label='Warranted Price', marker='o')
+
+    for run_id in df['RunId'].unique():
+        # subset_df = df[df['RunId'] == run_id]
+        subset_df = df[(df['RunId'] == run_id) & (df['Step'] > 0)]  # Exclude time_step 0
+
+        # Extract variable parameter values for the current RunId
+        variable_values = {param: subset_df[param].iloc[0] for param in variable_parameters.keys()}
+        
+        # Construct label using variable parameter values
+        label = f'Run {run_id}: {", ".join(f"{key} {value}" for key, value in variable_values.items())}'
+    
+        plt.plot(subset_df['time_step'], subset_df['wage_premium'], label=label, linestyle='-')
+
     plt.xlabel('Time Step')
-    plt.ylabel('Warranted Price')
-    plt.title('Warranted Price vs Time Step')
+    plt.ylabel('$')
+    plt.title('Wage Premium')
     plt.legend()
 
     # Create the figures subfolder if it doesn't exist
