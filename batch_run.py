@@ -98,19 +98,23 @@ def run_batch_simulation(model_parameters, batch_parameters, subfolder):
     results = batch_run(City, model_parameters, **batch_parameters)
     df = pd.DataFrame(results)
     df.to_csv(os.path.join(subfolder, f'batch_results.csv'), index=False)
+    plot_output(df, subfolder)
 
+def plot_output(df, subfolder):
     # Create the figures subfolder if it doesn't exist
     figures_folder = os.path.join(subfolder, 'figures')
     os.makedirs(figures_folder, exist_ok=True)
-    
-    plot_ownership(df, figures_folder)
-    plot_grid(df, figures_folder)
 
-def plot_ownership(df, figures_folder):
-    # Create a line plot
+    # Define a color map for runs
+    cmap = plt.get_cmap('tab10')
+    num_runs = len(df['RunId'].unique())
+    colors = [cmap(i) for i in np.linspace(0, 1, num_runs)]
+
+    # Plot ownership
+    # Create plot
     plt.figure(figsize=(10, 6))
 
-    for run_id in df['RunId'].unique():
+    for i, run_id in enumerate(df['RunId'].unique()):
         # subset_df = df[df['RunId'] == run_id]
         subset_df = df[(df['RunId'] == run_id) & (df['Step'] > 0)]  # Exclude time_step 0
 
@@ -120,7 +124,10 @@ def plot_ownership(df, figures_folder):
         # Construct label using variable parameter values
         label = f'Run {run_id}: {", ".join(f"{key} {value}" for key, value in variable_values.items())}'
     
-        plt.plot(subset_df['time_step'], subset_df['investor_ownership_share'], label=label, linestyle='-')
+        # Use the defined color for each run
+        color = colors[i]
+
+        plt.plot(subset_df['time_step'], subset_df['investor_ownership_share'], label=label, linestyle='-', color=color)
 
     plt.xlabel('Time Step')
     plt.ylabel('Ownership share')
@@ -131,14 +138,14 @@ def plot_ownership(df, figures_folder):
     plot_path = os.path.join(figures_folder, 'warranted_price_vs_time_step.png')
     plt.savefig(plot_path)
 
-def plot_grid(df, figures_folder):
+    # Plot other variables
     # Create subplots with a 4x2 grid
     fig, axes = plt.subplots(4, 2, figsize=(15, 15))  # 4 rows, 2 columns
     # Adjust subplot spacing
     fig.subplots_adjust(hspace=0.5, wspace=0.3)
 
     # Loop through each run
-    for run_id in df['RunId'].unique():
+    for i, run_id in enumerate(df['RunId'].unique()):
         # Subset the DataFrame for the current run and exclude time_step 0
         subset_df = df[(df['RunId'] == run_id) & (df['Step'] > 0)]
 
@@ -148,12 +155,15 @@ def plot_grid(df, figures_folder):
         # Construct label using variable parameter values
         label = f'Run {run_id}: {", ".join(f"{key} {value}" for key, value in variable_values.items())}'
 
+        # Use the defined color for each run
+        color = colors[i]
+
         # # Determine the subplot position based on run_id
         # row_position = (run_id - 1) // 2  # row position (0-3)
         # col_position = (run_id - 1) % 2  # column position (0 or 1)
 
         # Plot MPL
-        axes[0, 0].plot(subset_df['time_step'], subset_df['MPL'], label=label, color='pink')
+        axes[0, 0].plot(subset_df['time_step'], subset_df['MPL'], label=label, color=color)
         axes[0, 0].set_xlabel('Time Step')
         axes[0, 0].set_ylabel('MPL')
         axes[0, 0].set_title(f'MPL over time - {label}')
@@ -161,7 +171,7 @@ def plot_grid(df, figures_folder):
         axes[0, 0].legend()
 
         # Plot n
-        axes[0, 1].plot(subset_df['time_step'], subset_df['n'], label='n', color='blue')
+        axes[0, 1].plot(subset_df['time_step'], subset_df['n'], label=label, color=color)
         axes[0, 1].set_xlabel('Time Step')
         axes[0, 1].set_ylabel('n')
         axes[0, 1].set_title(f'Urban firm workforce n over time - {label}')
@@ -169,7 +179,7 @@ def plot_grid(df, figures_folder):
         axes[0, 1].legend()
 
         # Plot N
-        axes[1, 0].plot(subset_df['time_step'], subset_df['N'], label='N', color='red')
+        axes[1, 0].plot(subset_df['time_step'], subset_df['N'], label=label, color=color)
         axes[1, 0].set_xlabel('Time Step')
         axes[1, 0].set_ylabel('N')
         axes[1, 0].set_title(f'Total urban workforce over time - {label}')
@@ -177,7 +187,7 @@ def plot_grid(df, figures_folder):
         axes[1, 0].legend()
 
         # Plot F
-        axes[1, 1].plot(subset_df['time_step'], subset_df['F'], label='F', color='red')
+        axes[1, 1].plot(subset_df['time_step'], subset_df['F'], label=label, color=color)
         axes[1, 1].set_xlabel('Time Step')
         axes[1, 1].set_ylabel('F')
         axes[1, 1].set_title(f'Number of firms over time - {label}')
@@ -185,7 +195,7 @@ def plot_grid(df, figures_folder):
         axes[1, 1].legend()
 
         # Plot city extent
-        axes[2, 0].plot(subset_df['time_step'], subset_df['city_extent_calc'], label='city_extent_calc', color='black')
+        axes[2, 0].plot(subset_df['time_step'], subset_df['city_extent_calc'], label=label, color=color)
         axes[2, 0].set_xlabel('Time Step')
         axes[2, 0].set_ylabel('Lot widths')
         axes[2, 0].set_title(f'City extent over time - {label}')
@@ -193,7 +203,7 @@ def plot_grid(df, figures_folder):
         axes[2, 0].legend()
 
         # Plot N/F
-        axes[2, 1].plot(subset_df['time_step'], subset_df['N']/subset_df['F'], label='N/F', color='green')
+        axes[2, 1].plot(subset_df['time_step'], subset_df['N']/subset_df['F'], label=label, color=color)
         axes[2, 1].set_xlabel('Time Step')
         axes[2, 1].set_ylabel('N/F')
         axes[2, 1].set_title(f'Workforce divided by number of firms over time - {label}')
@@ -201,7 +211,7 @@ def plot_grid(df, figures_folder):
         axes[2, 1].legend()
 
         # Plot 'investor_ownership_share'
-        axes[3, 0].plot(subset_df['time_step'], subset_df['investor_ownership_share'], label='investor_ownership_share', color='blue')
+        axes[3, 0].plot(subset_df['time_step'], subset_df['investor_ownership_share'], label=label, color=color)
         axes[3, 0].set_xlabel('Time Step')
         axes[3, 0].set_ylabel('Ownership share')
         axes[3, 0].set_title(f'Ownership share over time - {label}')
@@ -209,7 +219,7 @@ def plot_grid(df, figures_folder):
         axes[3, 0].legend()
 
         # Plot 'k'
-        axes[3, 1].plot(subset_df['time_step'], subset_df['k'], label='k', color='pink')
+        axes[3, 1].plot(subset_df['time_step'], subset_df['k'], label=label, color=color)
         axes[3, 1].set_xlabel('Time Step')
         axes[3, 1].set_ylabel('k')
         axes[3, 1].set_title(f'Urban firm capital over time - {label}')
