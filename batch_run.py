@@ -103,9 +103,10 @@ def run_batch_simulation(model_parameters, batch_parameters, subfolder):
     figures_folder = os.path.join(subfolder, 'figures')
     os.makedirs(figures_folder, exist_ok=True)
     
-    plot_timeseries(df, figures_folder)
+    plot_ownership(df, figures_folder)
+    plot_grid(df, figures_folder)
 
-def plot_timeseries(df, figures_folder):
+def plot_ownership(df, figures_folder):
     # Create a line plot
     plt.figure(figsize=(10, 6))
 
@@ -119,16 +120,104 @@ def plot_timeseries(df, figures_folder):
         # Construct label using variable parameter values
         label = f'Run {run_id}: {", ".join(f"{key} {value}" for key, value in variable_values.items())}'
     
-        plt.plot(subset_df['time_step'], subset_df['wage_premium'], label=label, linestyle='-')
+        plt.plot(subset_df['time_step'], subset_df['investor_ownership_share'], label=label, linestyle='-')
 
     plt.xlabel('Time Step')
-    plt.ylabel('$')
-    plt.title('Wage Premium')
+    plt.ylabel('Ownership share')
+    plt.title('Ownership share')
     plt.legend()
 
     # Save the line plot to the figures subfolder
     plot_path = os.path.join(figures_folder, 'warranted_price_vs_time_step.png')
     plt.savefig(plot_path)
+
+def plot_grid(df, figures_folder):
+    # Create subplots with a 4x2 grid
+    fig, axes = plt.subplots(4, 2, figsize=(15, 15))  # 4 rows, 2 columns
+    # Adjust subplot spacing
+    fig.subplots_adjust(hspace=0.5, wspace=0.3)
+
+    # Loop through each run
+    for run_id in df['RunId'].unique():
+        # Subset the DataFrame for the current run and exclude time_step 0
+        subset_df = df[(df['RunId'] == run_id) & (df['Step'] > 0)]
+
+        # Extract variable parameter values for the current RunId
+        variable_values = {param: subset_df[param].iloc[0] for param in variable_parameters.keys()}
+
+        # Construct label using variable parameter values
+        label = f'Run {run_id}: {", ".join(f"{key} {value}" for key, value in variable_values.items())}'
+
+        # # Determine the subplot position based on run_id
+        # row_position = (run_id - 1) // 2  # row position (0-3)
+        # col_position = (run_id - 1) % 2  # column position (0 or 1)
+
+        # Plot MPL
+        axes[0, 0].plot(subset_df['time_step'], subset_df['MPL'], label=label, color='pink')
+        axes[0, 0].set_xlabel('Time Step')
+        axes[0, 0].set_ylabel('MPL')
+        axes[0, 0].set_title(f'MPL over time - {label}')
+        axes[0, 0].grid(True)
+        axes[0, 0].legend()
+
+        # Plot n
+        axes[0, 1].plot(subset_df['time_step'], subset_df['n'], label='n', color='blue')
+        axes[0, 1].set_xlabel('Time Step')
+        axes[0, 1].set_ylabel('n')
+        axes[0, 1].set_title(f'Urban firm workforce n over time - {label}')
+        axes[0, 1].grid(True)
+        axes[0, 1].legend()
+
+        # Plot N
+        axes[1, 0].plot(subset_df['time_step'], subset_df['N'], label='N', color='red')
+        axes[1, 0].set_xlabel('Time Step')
+        axes[1, 0].set_ylabel('N')
+        axes[1, 0].set_title(f'Total urban workforce over time - {label}')
+        axes[1, 0].grid(True)
+        axes[1, 0].legend()
+
+        # Plot F
+        axes[1, 1].plot(subset_df['time_step'], subset_df['F'], label='F', color='red')
+        axes[1, 1].set_xlabel('Time Step')
+        axes[1, 1].set_ylabel('F')
+        axes[1, 1].set_title(f'Number of firms over time - {label}')
+        axes[1, 1].grid(True)
+        axes[1, 1].legend()
+
+        # Plot city extent
+        axes[2, 0].plot(subset_df['time_step'], subset_df['city_extent_calc'], label='city_extent_calc', color='black')
+        axes[2, 0].set_xlabel('Time Step')
+        axes[2, 0].set_ylabel('Lot widths')
+        axes[2, 0].set_title(f'City extent over time - {label}')
+        axes[2, 0].grid(True)
+        axes[2, 0].legend()
+
+        # Plot N/F
+        axes[2, 1].plot(subset_df['time_step'], subset_df['N']/subset_df['F'], label='N/F', color='green')
+        axes[2, 1].set_xlabel('Time Step')
+        axes[2, 1].set_ylabel('N/F')
+        axes[2, 1].set_title(f'Workforce divided by number of firms over time - {label}')
+        axes[2, 1].grid(True)
+        axes[2, 1].legend()
+
+        # Plot 'investor_ownership_share'
+        axes[3, 0].plot(subset_df['time_step'], subset_df['investor_ownership_share'], label='investor_ownership_share', color='blue')
+        axes[3, 0].set_xlabel('Time Step')
+        axes[3, 0].set_ylabel('Ownership share')
+        axes[3, 0].set_title(f'Ownership share over time - {label}')
+        axes[3, 0].grid(True)
+        axes[3, 0].legend()
+
+        # Plot 'k'
+        axes[3, 1].plot(subset_df['time_step'], subset_df['k'], label='k', color='pink')
+        axes[3, 1].set_xlabel('Time Step')
+        axes[3, 1].set_ylabel('k')
+        axes[3, 1].set_title(f'Urban firm capital over time - {label}')
+        axes[3, 1].grid(True)
+        axes[3, 1].legend()
+
+    plt.savefig(os.path.join(figures_folder, 'timeseries_plots.png'))
+    # plt.show()
 
 def get_subfolder(timestamp, variable_parameters = None, name = None):
     # Name is used in subfolder name if variable_parameters are not passed
