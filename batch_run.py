@@ -93,14 +93,14 @@ def metadata_recorder(model_parameters, batch_parameters, subfolder):
         yaml.safe_dump(metadata, f)
 
 # Define the function to run the batch simulation
-def run_batch_simulation(model_parameters, batch_parameters, subfolder):    
+def run_batch_simulation(model_parameters, batch_parameters, subfolder, name = None):    
     # Run the batch simulations
     results = batch_run(City, model_parameters, **batch_parameters)
     df = pd.DataFrame(results)
     df.to_csv(os.path.join(subfolder, f'batch_results.csv'), index=False)
-    plot_output(df, subfolder)
+    plot_output(df, subfolder, name)
 
-def plot_output(df, subfolder):
+def plot_output(df, subfolder, name = None):
     # Create the figures subfolder if it doesn't exist
     figures_folder = os.path.join(subfolder, 'figures')
     os.makedirs(figures_folder, exist_ok=True)
@@ -135,7 +135,10 @@ def plot_output(df, subfolder):
     plt.legend()
 
     # Save the line plot to the figures subfolder
-    plot_path = os.path.join(figures_folder, 'warranted_price_vs_time_step.png')
+    if name:
+        plot_path = os.path.join(figures_folder, f'{name}_warranted_price_vs_time_step.png')
+    else:
+        plot_path = os.path.join(figures_folder, 'warranted_price_vs_time_step.png')
     plt.savefig(plot_path)
 
     # Plot other variables
@@ -226,10 +229,13 @@ def plot_output(df, subfolder):
         axes[3, 1].grid(True)
         axes[3, 1].legend()
 
-    plt.savefig(os.path.join(figures_folder, 'timeseries_plots.png'))
-    # plt.show()
+    if name:
+        plot_path = os.path.join(figures_folder, f'{name}_timeseries_plots.png')
+    else:
+        plot_path = os.path.join(figures_folder, 'timeseries_plots.png')
+    plt.savefig(plot_path)
 
-def get_subfolder(timestamp, variable_parameters = None, name = None):
+def get_subfolder(timestamp, variable_parameters = None):
     # Name is used in subfolder name if variable_parameters are not passed
     # Create the subfolder path
     output_data_folder = 'output_data'
@@ -237,8 +243,6 @@ def get_subfolder(timestamp, variable_parameters = None, name = None):
     if variable_parameters:
         parameter_names = '-'.join(variable_parameters.keys())
         subfolder = os.path.join(output_data_folder, runs_folder, f"{timestamp}--{parameter_names}")
-    elif name:
-        subfolder = os.path.join(output_data_folder, runs_folder, f"{timestamp}--{name}")
     else:
         subfolder = os.path.join(output_data_folder, runs_folder, f"{timestamp}")
 
@@ -247,14 +251,12 @@ def get_subfolder(timestamp, variable_parameters = None, name = None):
 
     return subfolder
 
-def run_experiment(variable_parameters, fixed_parameters, batch_parameters):
-    fixed_parameters['timestamp'] = datetime.datetime.now().strftime("%Y-%m-%d_%H%M%S")
-    subfolder = get_subfolder(fixed_parameters['timestamp'], variable_parameters)
+def run_experiment(variable_parameters, fixed_parameters, batch_parameters, name):
+    subfolder = get_subfolder(fixed_parameters['timestamp'])
     fixed_parameters['subfolder'] = subfolder
     model_parameters = {**fixed_parameters, **variable_parameters}
     with metadata_recorder(model_parameters, batch_parameters, subfolder):
-        run_batch_simulation(model_parameters, batch_parameters, subfolder)
-
+        run_batch_simulation(model_parameters, batch_parameters, subfolder, name)
 
 # Main execution
 if __name__ == '__main__':
