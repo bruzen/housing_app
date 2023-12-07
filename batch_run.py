@@ -5,6 +5,10 @@ import datetime
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
+import plotly.io as pio
+import plotly.graph_objects as go
+from plotly.subplots import make_subplots
+
 from contextlib import contextmanager
 from mesa.batchrunner import batch_run
 from model.model import City
@@ -70,14 +74,14 @@ fixed_parameters = {
         }
 
 batch_parameters = {
-    'data_collection_period': 1,
-    'iterations': 1,
-    'max_steps': 10
+            'data_collection_period': 1,
+            'iterations': 1,
+            'max_steps': 5
 }
 
 # Define the context manager to record metadata
 @contextmanager
-def metadata_recorder(model_parameters, batch_parameters):
+def metadata_recorder(model_parameters, batch_parameters, subfolder):
     metadata = {
         'model_parameters': model_parameters,
         'batch_parameters': batch_parameters
@@ -89,13 +93,17 @@ def metadata_recorder(model_parameters, batch_parameters):
         yaml.safe_dump(metadata, f)
 
 # Define the function to run the batch simulation
-def run_batch_simulation():    
+def run_batch_simulation(model_parameters, batch_parameters, subfolder):    
     # Run the batch simulations
     results = batch_run(City, model_parameters, **batch_parameters)
     df = pd.DataFrame(results)
     df.to_csv(os.path.join(subfolder, f'batch_results.csv'), index=False)
+    
+    # Create the figures subfolder if it doesn't exist
+    figures_folder = os.path.join(subfolder, 'figures')
+    os.makedirs(figures_folder, exist_ok=True)
 
-    # Create a line plot (example: warranted_price vs time_step)
+    # Create a line plot
     plt.figure(figsize=(10, 6))
 
     for run_id in df['RunId'].unique():
@@ -115,25 +123,37 @@ def run_batch_simulation():
     plt.title('Wage Premium')
     plt.legend()
 
-    # Create the figures subfolder if it doesn't exist
-    figures_folder = os.path.join(subfolder, 'figures')
-    os.makedirs(figures_folder, exist_ok=True)
-
-    # Save the plot to the figures subfolder
+    # Save the line plot to the figures subfolder
     plot_path = os.path.join(figures_folder, 'warranted_price_vs_time_step.png')
     plt.savefig(plot_path)
 
 def get_subfolder(timestamp, variable_parameters):
+def get_subfolder(timestamp, variable_parameters = None, name = None):
+    # Name is used in subfolder name if variable_parameters are not passed
     # Create the subfolder path
     output_data_folder = 'output_data'
     runs_folder = 'batch_runs'
-    parameter_names = '-'.join(variable_parameters.keys())
-    subfolder = os.path.join(output_data_folder, runs_folder, f"{timestamp}--{parameter_names}")
+    if variable_parameters:
+        parameter_names = '-'.join(variable_parameters.keys())
+        subfolder = os.path.join(output_data_folder, runs_folder, f"{timestamp}--{parameter_names}")
+    elif name:
+        subfolder = os.path.join(output_data_folder, runs_folder, f"{timestamp}--{name}")
+    else:
+        subfolder = os.path.join(output_data_folder, runs_folder, f"{timestamp}")
 
     # Create the subfolder if it doesn't exist
     os.makedirs(subfolder, exist_ok=True)
 
     return subfolder
+
+def run_experiment(variable_parameters, fixed_parameters, batch_parameters):
+    fixed_parameters['timestamp'] = datetime.datetime.now().strftime("%Y-%m-%d_%H%M%S")
+    subfolder = get_subfolder(fixed_parameters['timestamp'], variable_parameters)
+    fixed_parameters['subfolder'] = subfolder
+    model_parameters = {**fixed_parameters, **variable_parameters}
+    with metadata_recorder(model_parameters, batch_parameters, subfolder):
+        run_batch_simulation(model_parameters, batch_parameters, subfolder)
+
 
 # Main execution
 if __name__ == '__main__':
@@ -141,5 +161,5 @@ if __name__ == '__main__':
     subfolder = get_subfolder(fixed_parameters['timestamp'], variable_parameters)
     fixed_parameters['subfolder'] = subfolder
     model_parameters = {**fixed_parameters, **variable_parameters}
-    with metadata_recorder(model_parameters, batch_parameters):
-        run_batch_simulation()
+    with metadata_recorder(model_parameters, batch_parameters, subfolder):
+        run_batch_simulation(model_parameters, batch_parameters, subfolder)
