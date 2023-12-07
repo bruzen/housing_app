@@ -98,11 +98,14 @@ def run_batch_simulation(model_parameters, batch_parameters, subfolder):
     results = batch_run(City, model_parameters, **batch_parameters)
     df = pd.DataFrame(results)
     df.to_csv(os.path.join(subfolder, f'batch_results.csv'), index=False)
-    
+
     # Create the figures subfolder if it doesn't exist
     figures_folder = os.path.join(subfolder, 'figures')
     os.makedirs(figures_folder, exist_ok=True)
+    
+    plot_timeseries(df, figures_folder)
 
+def plot_timeseries(df, figures_folder):
     # Create a line plot
     plt.figure(figsize=(10, 6))
 
@@ -127,10 +130,6 @@ def run_batch_simulation(model_parameters, batch_parameters, subfolder):
     plot_path = os.path.join(figures_folder, 'warranted_price_vs_time_step.png')
     plt.savefig(plot_path)
 
-    # # Create a set of heatmaps
-    # run_id_1_df = df[df['RunId'] == 1]
-    # create_heatmap(run_id_1_df, 'is_working', [[0, 'blue'], [1, 'red']], output_folder=figures_folder)
-
 def get_subfolder(timestamp, variable_parameters = None, name = None):
     # Name is used in subfolder name if variable_parameters are not passed
     # Create the subfolder path
@@ -148,58 +147,6 @@ def get_subfolder(timestamp, variable_parameters = None, name = None):
     os.makedirs(subfolder, exist_ok=True)
 
     return subfolder
-
-def create_heatmap(df, z, color_scale, x_axis_title='x', y_axis_title='y', output_folder=None):
-    pass
-    # # Calculate the time step intervals
-    # time_steps = sorted(df['time_step'].unique())
-    # num_time_steps = len(time_steps)
-    # no_time_steps_to_plot = 5
-    # time_step_interval = max(1, num_time_steps // (no_time_steps_to_plot - 1))
-    # time_vals_to_plot = np.floor(np.linspace(1, (no_time_steps_to_plot - 1) * time_step_interval, no_time_steps_to_plot))
-
-    # fig = make_subplots(
-    #     rows=1,
-    #     cols=no_time_steps_to_plot,
-    #     shared_yaxes=True,
-    #     subplot_titles=[f'Time Step {time_step}' for time_step in time_steps]
-    # )
-
-    # for i, time_step in enumerate(time_vals_to_plot):
-    #     # df_at_time_step = df.query("time_step == @time_step and Agent_type == 'Person'")
-    #     df_at_time_step = df.query("time_step == @time_step")
-
-    #     heatmap = go.Heatmap(
-    #         x=df_at_time_step['x'],
-    #         y=df_at_time_step['y'],
-    #         z=df_at_time_step[z],
-    #         colorscale=color_scale,
-    #         colorbar=dict(title=z),
-    #         showscale=False
-    #     )
-    #     fig.add_trace(heatmap, row=1, col=i + 1)
-
-    #     # Label x and y axes for each subplot
-    #     fig.update_xaxes(title_text=x_axis_title, row=1, col=i + 1)
-    # fig.update_yaxes(title_text=y_axis_title, row=1, col=i + 1)
-
-    # # Add a single color bar to the layout
-    # fig.add_trace(go.Heatmap(x=[None], y=[None], z=[[min(df[z]), max(df[z])]], colorscale=color_scale, colorbar=dict(title=z)),
-    #               row=1, col=no_time_steps_to_plot)
-
-    # fig.update_layout(
-    #     title_text=z,
-    #     width=1000,
-    #     height=350,
-    #     title_x=0.5,   # Center the title
-    #     title_y=0.97,  # Adjust the title position
-    # )
-
-    # if output_folder:
-    #     output_path = os.path.join(output_folder, f'heatmap_{z}.png')
-    #     fig.write_image(output_path)
-    # else:
-    #     fig.show()
 
 def run_experiment(variable_parameters, fixed_parameters, batch_parameters):
     fixed_parameters['timestamp'] = datetime.datetime.now().strftime("%Y-%m-%d_%H%M%S")
