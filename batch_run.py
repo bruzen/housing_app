@@ -79,17 +79,21 @@ batch_parameters = {
             'max_steps': 5
 }
 
-# Define the context manager to record metadata
 @contextmanager
-def metadata_recorder(model_parameters, batch_parameters, subfolder):
+def metadata_recorder(model_parameters, batch_parameters, subfolder, name = None):
     metadata = {
-        'model_parameters': model_parameters,
-        'batch_parameters': batch_parameters
+        'experiment_name':  name,
+        'batch_parameters': batch_parameters,
+        'model_parameters': model_parameters
     }
     yield metadata
-    # Save the metadata to a YAML file
-    metadata_path = os.path.join(subfolder, 'batch_metadata.yaml')
-    with open(metadata_path, 'w') as f:
+    # Save the metadata to a YAML file (append mode)
+
+    if name:
+        metadata_path = os.path.join(subfolder, f'{name}_batch_metadata.yaml')
+    else:
+        metadata_path = os.path.join(subfolder, f'batch_metadata.yaml')
+    with open(metadata_path, 'a') as f:
         yaml.safe_dump(metadata, f)
 
 # Define the function to run the batch simulation
@@ -97,7 +101,11 @@ def run_batch_simulation(model_parameters, batch_parameters, subfolder, name = N
     # Run the batch simulations
     results = batch_run(City, model_parameters, **batch_parameters)
     df = pd.DataFrame(results)
-    df.to_csv(os.path.join(subfolder, f'batch_results.csv'), index=False)
+    if name:
+        data_output_path = os.path.join(subfolder, f'{name}_batch_results.csv')
+    else:
+        data_output_path = os.path.join(subfolder, f'batch_results.csv')
+    df.to_csv(data_output_path, index=False)
     plot_output(df, subfolder, name)
 
 def plot_output(df, subfolder, name = None):
@@ -255,7 +263,7 @@ def run_experiment(variable_parameters, fixed_parameters, batch_parameters, name
     subfolder = get_subfolder(fixed_parameters['timestamp'])
     fixed_parameters['subfolder'] = subfolder
     model_parameters = {**fixed_parameters, **variable_parameters}
-    with metadata_recorder(model_parameters, batch_parameters, subfolder):
+    with metadata_recorder(model_parameters, batch_parameters, subfolder, name):
         run_batch_simulation(model_parameters, batch_parameters, subfolder, name)
 
 # Main execution
