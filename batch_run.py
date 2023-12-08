@@ -261,7 +261,7 @@ def get_subfolder(timestamp, variable_parameters = None):
 
     return subfolder
 
-def run_experiment(variable_parameters, fixed_parameters, batch_parameters, name):
+def run_experiment(variable_parameters, fixed_parameters, batch_parameters, name = None):
     subfolder = get_subfolder(fixed_parameters['timestamp'])
     fixed_parameters['subfolder'] = subfolder
     model_parameters = {**fixed_parameters, **variable_parameters}
