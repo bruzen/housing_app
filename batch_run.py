@@ -161,7 +161,7 @@ def plot_output(df, variable_parameters, subfolder, name = None):
         plot_path = os.path.join(figures_folder, f'{name}_warranted_price_vs_time_step.png')
     else:
         plot_path = os.path.join(figures_folder, 'warranted_price_vs_time_step.png')
-    plt.text(0.5, -0.12, plot_path, transform=plt.gca().transAxes, ha='center', va='center', fontsize=5)
+    plt.text(0.5, -0.12, plot_path, transform=plt.gca().transAxes, ha='center', va='center', fontsize=7)
     plt.savefig(plot_path)
 
     # Plot other variables
@@ -169,6 +169,9 @@ def plot_output(df, variable_parameters, subfolder, name = None):
     fig, axes = plt.subplots(4, 2, figsize=(15, 15))  # 4 rows, 2 columns
     # Adjust subplot spacing
     fig.subplots_adjust(hspace=0.5, wspace=0.3)
+
+    # Set the title for the grid
+    fig.suptitle(f'{name}_{"_".join(variable_parameters.keys())}', fontsize=16)
 
     # Loop through each run
     for i, run_id in enumerate(df['RunId'].unique()):
@@ -192,7 +195,7 @@ def plot_output(df, variable_parameters, subfolder, name = None):
         axes[0, 0].plot(subset_df['time_step'], subset_df['MPL'], label=label, color=color)
         axes[0, 0].set_xlabel('Time Step')
         axes[0, 0].set_ylabel('MPL')
-        axes[0, 0].set_title(f'MPL over time - {label}')
+        axes[0, 0].set_title(f'MPL over time')
         axes[0, 0].grid(True)
         axes[0, 0].legend()
 
@@ -200,7 +203,7 @@ def plot_output(df, variable_parameters, subfolder, name = None):
         axes[0, 1].plot(subset_df['time_step'], subset_df['n'], label=label, color=color)
         axes[0, 1].set_xlabel('Time Step')
         axes[0, 1].set_ylabel('n')
-        axes[0, 1].set_title(f'Urban firm workforce n over time - {label}')
+        axes[0, 1].set_title(f'Urban firm workforce n over time')
         axes[0, 1].grid(True)
         axes[0, 1].legend()
 
@@ -208,7 +211,7 @@ def plot_output(df, variable_parameters, subfolder, name = None):
         axes[1, 0].plot(subset_df['time_step'], subset_df['N'], label=label, color=color)
         axes[1, 0].set_xlabel('Time Step')
         axes[1, 0].set_ylabel('N')
-        axes[1, 0].set_title(f'Total urban workforce over time - {label}')
+        axes[1, 0].set_title(f'Total urban workforce over time')
         axes[1, 0].grid(True)
         axes[1, 0].legend()
 
@@ -216,7 +219,7 @@ def plot_output(df, variable_parameters, subfolder, name = None):
         axes[1, 1].plot(subset_df['time_step'], subset_df['F'], label=label, color=color)
         axes[1, 1].set_xlabel('Time Step')
         axes[1, 1].set_ylabel('F')
-        axes[1, 1].set_title(f'Number of firms over time - {label}')
+        axes[1, 1].set_title(f'Number of firms over time')
         axes[1, 1].grid(True)
         axes[1, 1].legend()
 
@@ -224,7 +227,7 @@ def plot_output(df, variable_parameters, subfolder, name = None):
         axes[2, 0].plot(subset_df['time_step'], subset_df['city_extent_calc'], label=label, color=color)
         axes[2, 0].set_xlabel('Time Step')
         axes[2, 0].set_ylabel('Lot widths')
-        axes[2, 0].set_title(f'City extent over time - {label}')
+        axes[2, 0].set_title(f'City extent over time')
         axes[2, 0].grid(True)
         axes[2, 0].legend()
 
@@ -232,7 +235,7 @@ def plot_output(df, variable_parameters, subfolder, name = None):
         axes[2, 1].plot(subset_df['time_step'], subset_df['N']/subset_df['F'], label=label, color=color)
         axes[2, 1].set_xlabel('Time Step')
         axes[2, 1].set_ylabel('N/F')
-        axes[2, 1].set_title(f'Workforce divided by number of firms over time - {label}')
+        axes[2, 1].set_title(f'Workforce divided by number of firms over time')
         axes[2, 1].grid(True)
         axes[2, 1].legend()
 
@@ -240,7 +243,7 @@ def plot_output(df, variable_parameters, subfolder, name = None):
         axes[3, 0].plot(subset_df['time_step'], subset_df['investor_ownership_share'], label=label, color=color)
         axes[3, 0].set_xlabel('Time Step')
         axes[3, 0].set_ylabel('Ownership share')
-        axes[3, 0].set_title(f'Ownership share over time - {label}')
+        axes[3, 0].set_title(f'Ownership share over time')
         axes[3, 0].grid(True)
         axes[3, 0].legend()
 
@@ -248,7 +251,7 @@ def plot_output(df, variable_parameters, subfolder, name = None):
         axes[3, 1].plot(subset_df['time_step'], subset_df['k'], label=label, color=color)
         axes[3, 1].set_xlabel('Time Step')
         axes[3, 1].set_ylabel('k')
-        axes[3, 1].set_title(f'Urban firm capital over time - {label}')
+        axes[3, 1].set_title(f'Urban firm capital over time')
         axes[3, 1].grid(True)
         axes[3, 1].legend()
 
