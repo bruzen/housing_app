@@ -9,7 +9,6 @@ import matplotlib.pyplot as plt
 import plotly.io as pio
 import plotly.graph_objects as go
 from plotly.subplots import make_subplots
-
 from contextlib import contextmanager
 from mesa.batchrunner import batch_run
 from model.model import City
@@ -110,7 +109,7 @@ def metadata_recorder(model_parameters, batch_parameters, subfolder, name = None
     yield
 
 # Define the function to run the batch simulation
-def run_batch_simulation(model_parameters, batch_parameters, subfolder, name = None):    
+def run_batch_simulation(variable_parameters, model_parameters, batch_parameters, subfolder, name = None):    
     # Run the batch simulations
     results = batch_run(City, model_parameters, **batch_parameters)
     df = pd.DataFrame(results)
@@ -119,9 +118,9 @@ def run_batch_simulation(model_parameters, batch_parameters, subfolder, name = N
     else:
         data_output_path = os.path.join(subfolder, f'batch_results.csv')
     df.to_csv(data_output_path, index=False)
-    plot_output(df, subfolder, name)
+    plot_output(df, variable_parameters, subfolder, name)
 
-def plot_output(df, subfolder, name = None):
+def plot_output(df, variable_parameters, subfolder, name = None):
     # Create the figures subfolder if it doesn't exist
     figures_folder = os.path.join(subfolder, 'figures')
     os.makedirs(figures_folder, exist_ok=True)
@@ -141,10 +140,12 @@ def plot_output(df, subfolder, name = None):
 
         # Extract variable parameter values for the current RunId
         variable_values = {param: subset_df[param].iloc[0] for param in variable_parameters.keys()}
+        # print(variable_values)
+        # print {str(variable_values)}
         
         # Construct label using variable parameter values
-        label = f'Run {run_id}: {", ".join(f"{key} {value}" for key, value in variable_values.items())}'
-    
+        label = f'{", ".join(f"{key} {value}" for key, value in variable_values.items())}'
+
         # Use the defined color for each run
         color = colors[i]
 
@@ -178,7 +179,7 @@ def plot_output(df, subfolder, name = None):
         variable_values = {param: subset_df[param].iloc[0] for param in variable_parameters.keys()}
 
         # Construct label using variable parameter values
-        label = f'Run {run_id}: {", ".join(f"{key} {value}" for key, value in variable_values.items())}'
+        label = f'{", ".join(f"{key} {value}" for key, value in variable_values.items())}'
 
         # Use the defined color for each run
         color = colors[i]
@@ -288,7 +289,7 @@ def run_experiment(variable_parameters, fixed_parameters, batch_parameters, name
     fixed_parameters['subfolder'] = subfolder
     model_parameters = {**fixed_parameters, **variable_parameters}
     with metadata_recorder(model_parameters, batch_parameters, subfolder, name):
-        run_batch_simulation(model_parameters, batch_parameters, subfolder, name)
+        run_batch_simulation(variable_parameters, model_parameters, batch_parameters, subfolder, name)
 
 # Main execution
 if __name__ == '__main__':
@@ -297,4 +298,4 @@ if __name__ == '__main__':
     fixed_parameters['subfolder'] = subfolder
     model_parameters = {**fixed_parameters, **variable_parameters}
     with metadata_recorder(model_parameters, batch_parameters, subfolder):
-        run_batch_simulation(model_parameters, batch_parameters, subfolder)
+        run_batch_simulation(variable_parameters, model_parameters, batch_parameters, subfolder)
