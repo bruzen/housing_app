@@ -109,7 +109,7 @@ def metadata_recorder(model_parameters, batch_parameters, subfolder, name = None
     yield
 
 # Define the function to run the batch simulation
-def run_batch_simulation(variable_parameters, model_parameters, batch_parameters, subfolder, name = None):    
+def run_batch_simulation(batch_parameters, variable_parameters, model_parameters, subfolder, name = None):    
     # Run the batch simulations
     results = batch_run(City, model_parameters, **batch_parameters)
     df = pd.DataFrame(results)
@@ -267,11 +267,11 @@ def get_subfolder(timestamp, variable_parameters = None):
     # Create the subfolder path
     output_data_folder = 'output_data'
     runs_folder = 'batch_runs'
-    if variable_parameters:
-        parameter_names = '-'.join(variable_parameters.keys())
-        subfolder = os.path.join(output_data_folder, runs_folder, f"{timestamp}--{parameter_names}")
-    else:
-        subfolder = os.path.join(output_data_folder, runs_folder, f"{timestamp}")
+    # if variable_parameters:
+    #     parameter_names = '-'.join(variable_parameters.keys())
+    #     subfolder = os.path.join(output_data_folder, runs_folder, f"{timestamp}--{parameter_names}")
+    # else:
+    subfolder = os.path.join(output_data_folder, runs_folder, f"{timestamp}")
 
     # Create the subfolder if it doesn't exist
     os.makedirs(subfolder, exist_ok=True)
@@ -287,12 +287,12 @@ def get_git_commit_hash():
         print(f"Error: {e}")
         return None
 
-def run_experiment(variable_parameters, fixed_parameters, batch_parameters, name = None):
+def run_experiment(batch_parameters, variable_parameters, fixed_parameters, name = None):
     subfolder = get_subfolder(fixed_parameters['timestamp'])
     fixed_parameters['subfolder'] = subfolder
     model_parameters = {**fixed_parameters, **variable_parameters}
     with metadata_recorder(model_parameters, batch_parameters, subfolder, name):
-        run_batch_simulation(variable_parameters, model_parameters, batch_parameters, subfolder, name)
+        run_batch_simulation(batch_parameters, variable_parameters, model_parameters, subfolder, name)
 
 # Main execution
 if __name__ == '__main__':
@@ -301,4 +301,4 @@ if __name__ == '__main__':
     fixed_parameters['subfolder'] = subfolder
     model_parameters = {**fixed_parameters, **variable_parameters}
     with metadata_recorder(model_parameters, batch_parameters, subfolder):
-        run_batch_simulation(variable_parameters, model_parameters, batch_parameters, subfolder)
+        run_batch_simulation(batch_parameters, variable_parameters, model_parameters, subfolder)
