@@ -17,7 +17,7 @@ from model.model import City
 variable_parameters = {
     'density': [1, 100],
     # 'subsistence_wage': [10000, 30000],
-    # 'gamma': [0.001, 0.02, 0.7]
+    'gamma': [0.02]
 }
 
 fixed_parameters = {
@@ -158,11 +158,11 @@ def plot_output(df, variable_parameters, subfolder, name = None):
 
     # Save the line plot to the figures subfolder
     if name:
-        plot_path = os.path.join(figures_folder, f'{name}_warranted_price_vs_time_step.png')
+        plot_path = os.path.join(figures_folder, f'{name}_warranted_price_vs_time_step.pdf')
     else:
-        plot_path = os.path.join(figures_folder, 'warranted_price_vs_time_step.png')
+        plot_path = os.path.join(figures_folder, 'warranted_price_vs_time_step.pdf')
     plt.text(0.5, -0.12, plot_path, transform=plt.gca().transAxes, ha='center', va='center', fontsize=7)
-    plt.savefig(plot_path)
+    plt.savefig(plot_path, format='pdf')
 
     # Plot other variables
     # Create subplots with a 4x2 grid
@@ -171,7 +171,7 @@ def plot_output(df, variable_parameters, subfolder, name = None):
     fig.subplots_adjust(hspace=0.5, wspace=0.3)
 
     # Set the title for the grid
-    fig.suptitle(f'{name}_{"_".join(variable_parameters.keys())}', fontsize=16)
+    fig.suptitle(f'{name} {" ".join(variable_parameters.keys())}', fontsize=16)
 
     # Loop through each run
     for i, run_id in enumerate(df['RunId'].unique()):
@@ -256,11 +256,11 @@ def plot_output(df, variable_parameters, subfolder, name = None):
         axes[3, 1].legend()
 
     if name:
-        plot_path = os.path.join(figures_folder, f'{name}_timeseries_plots.png')
+        plot_path = os.path.join(figures_folder, f'{name}_timeseries_plots.pdf')
     else:
-        plot_path = os.path.join(figures_folder, 'timeseries_plots.png')
+        plot_path = os.path.join(figures_folder, 'timeseries_plots.pdf')
     plt.text(0.5, -0.3, plot_path, transform=plt.gca().transAxes, ha='center', va='center')
-    plt.savefig(plot_path)
+    plt.savefig(plot_path, format='pdf')
 
 def get_subfolder(timestamp, variable_parameters = None):
     # Name is used in subfolder name if variable_parameters are not passed
