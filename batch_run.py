@@ -147,6 +147,7 @@ def plot_output(df, subfolder, name = None):
         plot_path = os.path.join(figures_folder, f'{name}_warranted_price_vs_time_step.png')
     else:
         plot_path = os.path.join(figures_folder, 'warranted_price_vs_time_step.png')
+    plt.text(0.5, -0.12, plot_path, transform=plt.gca().transAxes, ha='center', va='center', fontsize=5)
     plt.savefig(plot_path)
 
     # Plot other variables
@@ -241,6 +242,7 @@ def plot_output(df, subfolder, name = None):
         plot_path = os.path.join(figures_folder, f'{name}_timeseries_plots.png')
     else:
         plot_path = os.path.join(figures_folder, 'timeseries_plots.png')
+    plt.text(0.5, -0.3, plot_path, transform=plt.gca().transAxes, ha='center', va='center')
     plt.savefig(plot_path)
 
 def get_subfolder(timestamp, variable_parameters = None):
