@@ -389,7 +389,7 @@ class City(Model):
         model_filename         = self.run_id + '_model' + '.csv'
         self.agent_file_path   = os.path.join(self.subfolder, agent_filename)
         self.model_file_path   = os.path.join(self.subfolder, model_filename)
-        self.metadata_file_path = os.path.join(self.subfolder, 'run_metadata.yaml')
+        self.metadata_file_path = os.path.join(self.subfolder, 'metadata_run.yaml')
 
         metadata = {
             'model_description':     self.model_description,

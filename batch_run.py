@@ -2,6 +2,7 @@ import os
 import sys
 import yaml
 import datetime
+import subprocess
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
@@ -83,18 +84,30 @@ batch_parameters = {
 def metadata_recorder(model_parameters, batch_parameters, subfolder, name = None):
     metadata = {
         'experiment_name':  name,
-        'batch_parameters': batch_parameters,
-        'model_parameters': model_parameters
+        'batch_parameters':     batch_parameters,
+        'git_version':           get_git_commit_hash(),
+        'simulation_parameters': model_parameters
     }
-    yield metadata
-    # Save the metadata to a YAML file (append mode)
 
-    if name:
-        metadata_path = os.path.join(subfolder, f'{name}_batch_metadata.yaml')
+    metadata_file_path = os.path.join(subfolder, f'metadata_batch.yaml')
+    # Check if the file exists
+    file_exists = os.path.isfile(metadata_file_path)
+
+    # If the file exists, load the existing metadata; otherwise, create an empty dictionary
+    if file_exists:
+        with open(metadata_file_path, 'r') as file:
+            existing_metadata = yaml.safe_load(file)
     else:
-        metadata_path = os.path.join(subfolder, f'batch_metadata.yaml')
-    with open(metadata_path, 'a') as f:
-        yaml.safe_dump(metadata, f)
+        existing_metadata = {}
+
+    # Append the metadata for the current experiment to the existing metadata dictionary
+    existing_metadata[name] = metadata
+
+    # Write the updated metadata back to the file
+    with open(metadata_file_path, 'w') as file:
+        yaml.safe_dump(existing_metadata, file)
+
+    yield
 
 # Define the function to run the batch simulation
 def run_batch_simulation(model_parameters, batch_parameters, subfolder, name = None):    
@@ -260,6 +273,15 @@ def get_subfolder(timestamp, variable_parameters = None):
     os.makedirs(subfolder, exist_ok=True)
 
     return subfolder
+
+def get_git_commit_hash():
+    try:
+        # Run 'git rev-parse HEAD' to get the commit hash
+        result = subprocess.check_output(['git', 'rev-parse', 'HEAD']).strip()
+        return result.decode('utf-8')
+    except subprocess.CalledProcessError as e:
+        print(f"Error: {e}")
+        return None
 
 def run_experiment(variable_parameters, fixed_parameters, batch_parameters, name = None):
     subfolder = get_subfolder(fixed_parameters['timestamp'])
