@@ -109,6 +109,7 @@ class City(Model):
             'max_mortgage_share': 0.9,
             'ability_to_carry_mortgage': 0.28,
             'wealth_sensitivity': 0.1,
+            'capital_gains_tax': 0.01, # share 0-1
         }
 
         # Merge default parameters with provided parameters
@@ -178,6 +179,8 @@ class City(Model):
         self.wealth_sensitivity        = self.params['wealth_sensitivity']
         # self.warranted_price_model     = None
         # self.realized_price_model      = None
+        
+        self.capital_gains_tax          = self.params['capital_gains_tax']
 
         # Add workforce manager to track workers, newcomers, and retiring agents
         self.workforce = Workforce()

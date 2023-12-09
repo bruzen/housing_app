@@ -71,6 +71,7 @@ fixed_parameters = {
             'max_mortgage_share': 0.9,
             'ability_to_carry_mortgage': 0.28,
             'wealth_sensitivity': 0.1,
+            'capital_gains_tax': 0.01, # share 0-1
         }
 
 batch_parameters = {

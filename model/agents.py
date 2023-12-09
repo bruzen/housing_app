@@ -629,7 +629,7 @@ class Bank(Agent):
         if R_N is not None and r is not None and r_target is not None and m is not None and p_dot is not None:
             R_NT   = ((1 + r)**T - 1) / r * R_N
             # return R_NT / ((1 - m) * r_target/(delta**T) - p_dot) 
-            return R_NT / ((1 - m) * r_target/(delta**T) - p_dot +(1+r)**T*m) # Revised denominator from eqn 6:20
+            return (1 - self.model.capital_gains_tax) * R_NT / ((1 - m) * r_target/(delta**T) - p_dot +(1+r)**T*m) # Revised denominator from eqn 6:20
 
         else:
             self.model.logger.error(f'Get_max_bid None error Rn {R_N}, r {r}, r_target {r_target}, m {m}, p_dot {p_dot}')
