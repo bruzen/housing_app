@@ -195,7 +195,7 @@ class Person(Agent):
                  residence_owned = None):
         super().__init__(unique_id, model)
         self.pos = pos
-        self.workforce = self.model.workforce
+        # self.model.workforce = self.model.workforce
 
         self.init_working_period = init_working_period
         self.working_period      = init_working_period
@@ -224,7 +224,7 @@ class Person(Agent):
         self.is_working_check    = 0 # TODO delete?
 
         # else:
-        #     self.workforce.remove(self, self.workforce.workers)
+        #     self.model.workforce.remove(self, self.model.workforce.workers)
 
     def step(self):
         self.count              += 1
@@ -234,7 +234,7 @@ class Person(Agent):
         # Non-residents
         if not isinstance (self.residence, Land):
             # Newcomers who don't find a home leave the city
-            if (self.unique_id in self.workforce.newcomers):
+            if (self.unique_id in self.model.workforce.newcomers):
                 # if (self.residence == None):
                 if self.count > 0:
                     self.model.logger.debug(f'Newcomer removed {self.unique_id}') #  removed, who owns {self.properties_owned}, count {self.count}')
@@ -248,11 +248,11 @@ class Person(Agent):
 
         # Urban workers
         elif premium > self.residence.transport_cost:
-            self.workforce.add(self, self.workforce.workers)
+            self.model.workforce.add(self, self.model.workforce.workers)
             # Agents list properties a step before they stop working for consistent worker numbers
             if self.working_period >= self.model.working_periods:
                 if self.residence in self.properties_owned:
-                    self.workforce.add(self, self.workforce.retiring_urban_owner)
+                    self.model.workforce.add(self, self.model.workforce.retiring_urban_owner)
 
                     # P_bid    = self.model.bank.get_max_bid(R_N, r, r_target, m, listing.sale_property.p_dot, listing.sale_property.transport_cost)            
                     reservation_price = self.model.bank.get_reservation_price(
@@ -268,7 +268,7 @@ class Person(Agent):
 
             if self.working_period > self.model.working_periods:
                 if self.residence in self.properties_owned:
-                    self.workforce.remove(self, self.workforce.workers)
+                    self.model.workforce.remove(self, self.model.workforce.workers)
                     self.model.logger.warning(f'Urban homeowner still in model: {self.unique_id}, working_period {self.working_period}')
                 else:
                     self.working_period = 1
@@ -277,7 +277,7 @@ class Person(Agent):
 
         # Rural population
         else:
-            self.workforce.remove(self, self.workforce.workers)
+            self.model.workforce.remove(self, self.model.workforce.workers)
             if self.working_period > self.model.working_periods:
                 self.working_period = 1
                 self.savings        = 0
@@ -288,7 +288,7 @@ class Person(Agent):
         # self.wealth  = self.get_wealth()
 
         # TODo consider doing additional check for retiring agents who are still in model
-        # if self.unique_id in self.workforce.retiring_urban_owner:        
+        # if self.unique_id in self.model.workforce.retiring_urban_owner:        
         #     if (self.residence):
         #         if premium > self.residence.transport_cost:
         #             self.model.logger.warning(f'Removed retiring_urban_owner agent {self.unique_id} in step, working, with residence, properties owned {len(self.properties_owned)} which was still in model.')
@@ -327,9 +327,9 @@ class Person(Agent):
     def work_if_worthwhile_to_work(self):
         premium = self.model.firm.wage_premium
         if premium > self.residence.transport_cost:
-            self.workforce.add(self, self.workforce.workers)
+            self.model.workforce.add(self, self.model.workforce.workers)
         else:
-            self.workforce.remove(self, self.workforce.workers)
+            self.model.workforce.remove(self, self.model.workforce.workers)
 
     def bid(self):
         """Newcomers bid on properties for use or investment value."""
@@ -414,7 +414,7 @@ class Person(Agent):
 
     def remove(self):
         self.model.removed_agents += 1
-        self.workforce.remove_from_all(self)
+        self.model.workforce.remove_from_all(self)
         # self.model.grid.remove(self)
         self.model.schedule.remove(self)
         # x, y = self.pos
@@ -625,11 +625,12 @@ class Bank(Agent):
     def get_max_bid(self, R_N, r, r_target, m, p_dot, transport_cost):
         T      = self.model.mortgage_period
         delta  = self.model.delta
+        capital_gains_tax = self.model.capital_gains_tax
 
         if R_N is not None and r is not None and r_target is not None and m is not None and p_dot is not None:
             R_NT   = ((1 + r)**T - 1) / r * R_N
             # return R_NT / ((1 - m) * r_target/(delta**T) - p_dot) 
-            return (1 - self.model.capital_gains_tax) * R_NT / ((1 - m) * r_target/(delta**T) - p_dot +(1+r)**T*m) # Revised denominator from eqn 6:20
+            return (1 - capital_gains_tax) * R_NT / ((1 - m) * r_target/(delta**T) - p_dot +(1+r)**T*m) # Revised denominator from eqn 6:20
 
         else:
             self.model.logger.error(f'Get_max_bid None error Rn {R_N}, r {r}, r_target {r_target}, m {m}, p_dot {p_dot}')
@@ -699,7 +700,7 @@ class Realtor(Agent):
     def __init__(self, unique_id, model, pos):
         super().__init__(unique_id, model)
         self.pos = pos
-        self.workforce = self.model.workforce
+        # self.model.workforce = self.model.workforce
 
         # self.sale_listings = []
         self.rental_listings = []
@@ -857,14 +858,14 @@ class Realtor(Agent):
 
         # if self.residence: # Already checked since residence assigned
         if self.model.firm.wage_premium > allocation.sale_property.transport_cost:
-            self.workforce.add(allocation.buyer, self.workforce.workers)
+            self.model.workforce.add(allocation.buyer, self.model.workforce.workers)
             self.model.logger.debug(f'Person purchase: add person to workforce')
         else:
             self.model.logger.debug(f'Person purchase: don\'t add person to workforce')
 
-        if allocation.buyer.unique_id in self.workforce.newcomers:
+        if allocation.buyer.unique_id in self.model.workforce.newcomers:
             self.model.logger.debug(f'Remove from newcomers list {allocation.buyer.unique_id}')
-            self.workforce.remove(allocation.buyer, self.workforce.newcomers)
+            self.model.workforce.remove(allocation.buyer, self.model.workforce.newcomers)
         else:
             self.model.logger.warning(f'Person buyer was not a newcomer: {allocation.buyer.unique_id}')
         # self.model.logger.debug(f'Time {self.model.time_step} New worker {buyer.unique_id} Loc {sale_property}') # TEMP
@@ -872,7 +873,7 @@ class Realtor(Agent):
     def handle_seller_departure(self, allocation):
         """Handles the departure of a selling agent."""
         if isinstance(allocation.seller, Person):
-            if allocation.seller.unique_id in self.workforce.retiring_urban_owner:
+            if allocation.seller.unique_id in self.model.workforce.retiring_urban_owner:
                 self.model.logger.debug(f'Removing seller {self.unique_id}')
                 allocation.seller.remove()
             else:
@@ -889,7 +890,7 @@ class Realtor(Agent):
             renter = self.model.create_newcomer(pos = rental.pos)
             rental.resident = renter
             renter.residence = rental
-            self.workforce.remove(renter, self.workforce.newcomers)
+            self.model.workforce.remove(renter, self.model.workforce.newcomers)
             self.model.logger.debug(f'Newly created renter {renter.unique_id} lives at '
                          f'property {renter.residence.unique_id} which has '
                          f'resident {rental.resident.unique_id}, owner {rental.owner.unique_id}, pos {renter.pos}.')

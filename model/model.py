@@ -13,7 +13,7 @@ import numpy as np
 import pandas as pd
 from scipy.spatial import distance
 
-from sklearn.linear_model import LinearRegression
+# from sklearn.linear_model import LinearRegression
 # from sklearn.model_selection import KFold
 # from sklearn.metrics import mean_squared_error
 # from scikit-learn import linear_model
@@ -466,7 +466,7 @@ class City(Model):
             "id":                lambda a: a.unique_id,
             "x":                 lambda a: a.pos[0],
             "y":                 lambda a: a.pos[1],
-            "is_working":        lambda a: None if not isinstance(a, Person) else 1 if a.unique_id in a.workforce.workers else 0,  # TODO does this need to be in model? e.g. a.model.workforce
+            "is_working":        lambda a: None if not isinstance(a, Person) else 1 if a.unique_id in a.model.workforce.workers else 0,  # TODO does this need to be in model? e.g. a.model.workforce
             "is_working_check":  lambda a: None if not isinstance(a, Person) else a.is_working_check,
             "working_period":    lambda a: getattr(a, "working_period", None)  if isinstance(a, Person)       else None,
             "wage_delta":        lambda a: getattr(a, "wage_delta", None)      if isinstance(a, Firm)         else None,
@@ -508,22 +508,22 @@ class City(Model):
         # Calculations for data collection
         self.rent_production = sum(
             agent.model.firm.wage_premium for agent in self.schedule.agents_by_breed[Person].values() 
-            if agent.unique_id in agent.workforce.workers
+            if agent.unique_id in self.workforce.workers
         )
 
         self.rent_amenity    = sum(
             agent.amenity for agent in self.schedule.agents_by_breed[Person].values() 
-            if agent.unique_id in agent.workforce.workers
+            if agent.unique_id in self.workforce.workers
         )
 
         self.market_rent = sum(agent.market_rent    for agent in self.schedule.agents_by_breed[Land].values()
-                               if agent.resident and agent.resident.unique_id in agent.resident.workforce.workers)
+                               if agent.resident and agent.resident.unique_id in self.workforce.workers)
         self.net_rent    = sum(agent.net_rent       for agent in self.schedule.agents_by_breed[Land].values()
-                               if agent.resident and agent.resident.unique_id in agent.resident.workforce.workers)
+                               if agent.resident and agent.resident.unique_id in self.workforce.workers)
         self.potential_dissipated_rent = sum(agent.transport_cost for agent in self.schedule.agents_by_breed[Land].values())
         self.dissipated_rent = sum(
             agent.transport_cost for agent in self.schedule.agents_by_breed[Land].values() 
-            if agent.resident and agent.resident.unique_id in agent.resident.workforce.workers
+            if agent.resident and agent.resident.unique_id in self.workforce.workers
         )
         self.available_rent  = self.rent_production + self.rent_amenity - self.dissipated_rent # w - cd + A - total_dissipated # total-captured
 
