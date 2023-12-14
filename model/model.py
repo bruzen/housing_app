@@ -109,7 +109,8 @@ class City(Model):
             'max_mortgage_share': 0.9,
             'ability_to_carry_mortgage': 0.28,
             'wealth_sensitivity': 0.1,
-            'capital_gains_tax': 0.01, # share 0-1
+            'capital_gains_tax_person':   0.01, # share 0-1
+            'capital_gains_tax_investor': 0.15, # share 0-1
         }
 
         # Merge default parameters with provided parameters
@@ -123,6 +124,7 @@ class City(Model):
         self.model_version     = '0.0.1'
         self.model_description = 'Agent-based housing market model with rent and urban agglomeration.'
         self.num_steps = num_steps
+        self.time_step = 0
 
         self.setup_run_data_collection()
 
@@ -134,7 +136,7 @@ class City(Model):
 
         logging.getLogger('matplotlib').setLevel(logging.ERROR) 
 
-        self.time_step = 0.
+        
         self.height = self.params['height']
         self.width  = self.params['width']
 
@@ -180,7 +182,7 @@ class City(Model):
         # self.warranted_price_model     = None
         # self.realized_price_model      = None
         
-        self.capital_gains_tax          = self.params['capital_gains_tax']
+        # self.capital_gains_tax          = self.params['capital_gains_tax']
 
         # Add workforce manager to track workers, newcomers, and retiring agents
         self.workforce = Workforce()
@@ -224,7 +226,7 @@ class City(Model):
         self.schedule.add(self.firm)
 
         self.unique_id      += 1
-        self.investor        = Investor(self.unique_id, self, self.center)
+        self.investor        = Investor(self.unique_id, self, self.center, self.params['capital_gains_tax_investor'])
         self.grid.place_agent(self.investor, self.center)
         self.schedule.add(self.investor)
 
@@ -254,6 +256,7 @@ class City(Model):
             person  = Person(self.unique_id, self, pos,
                                 init_working_period = init_working_period,
                                 savings             = savings,
+                                capital_gains_tax   = self.params['capital_gains_tax_person'],
                                 residence_owned     = land)
             self.grid.place_agent(person, pos)
             self.schedule.add(person)
@@ -582,8 +585,9 @@ class City(Model):
             pos = self.center
         
         person  = Person(self.unique_id, self, pos,
-                  savings = savings,
-                  residence_owned = None)
+                  savings           = savings,
+                  capital_gains_tax = self.params['capital_gains_tax_person'],
+                  residence_owned   = None)
         self.grid.place_agent(person, pos)
         self.schedule.add(person)
         self.workforce.add(person, self.workforce.newcomers)

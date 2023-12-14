@@ -192,7 +192,8 @@ class Person(Agent):
 
     def __init__(self, unique_id, model, pos, init_working_period = 0,
                  savings = 0., debt = 0.,
-                 residence_owned = None):
+                 capital_gains_tax = None,
+                 residence_owned = None,):
         super().__init__(unique_id, model)
         self.pos = pos
         # self.model.workforce = self.model.workforce
@@ -203,6 +204,9 @@ class Person(Agent):
 
         self.properties_owned    = []
         self.residence           = residence_owned
+        if not capital_gains_tax:
+            self.model.logger.warning(f'No capital gains tax for person {self.unique_id}.')
+        self.capital_gains_tax   = capital_gains_tax
 
         self.bank                = self.model.bank 
         self.amenity             = 0.
@@ -254,13 +258,14 @@ class Person(Agent):
                 if self.residence in self.properties_owned:
                     self.model.workforce.add(self, self.model.workforce.retiring_urban_owner)
 
-                    # P_bid    = self.model.bank.get_max_bid(R_N, r, r_target, m, listing.sale_property.p_dot, listing.sale_property.transport_cost)            
+                    # P_bid    = self.model.bank.get_max_bid(R_N, r, r_target, m, listing.sale_property.p_dot, self.capital_gains_tax, listing.sale_property.transport_cost)            
                     reservation_price = self.model.bank.get_reservation_price(
                         R_N = self.residence.net_rent, 
                         r = self.model.r_prime, 
                         r_target = self.model.r_target, 
                         m =  0.8, 
                         p_dot =  self.residence.p_dot, 
+                        capital_gains_tax = self.capital_gains_tax,
                         transport_cost = self.residence.transport_cost)
                     self.model.realtor.list_property_for_sale(self, self.residence, reservation_price)
                     # TODO Contact bank. Decide: sell, rent or keep empty
@@ -356,7 +361,7 @@ class Person(Agent):
             # First Calculate value of purchase (max bid)
             R_N      = listing.sale_property.net_rent # Need net rent for P_bid
             bid_type = 'value_limited'
-            P_bid    = self.model.bank.get_max_bid(R_N, r, r_target, m, listing.sale_property.p_dot, listing.sale_property.transport_cost)
+            P_bid    = self.model.bank.get_max_bid(R_N, r, r_target, m, listing.sale_property.p_dot, self.capital_gains_tax, listing.sale_property.transport_cost)
             # self.model.logger.warning(f'Max bid: {self.unique_id}, bid {P_bid}, R_N {R_N}, r {r}, r {r_target}, m {m}, transport_cost {listing.sale_property.transport_cost}')
 
             if S/(1-m) <= P_bid:
@@ -618,14 +623,14 @@ class Bank(Agent):
         super().__init__(unique_id, model)
         self.pos = pos
 
-    def get_reservation_price(self, R_N, r, r_target, m, p_dot, transport_cost):
+    def get_reservation_price(self, R_N, r, r_target, m, p_dot, capital_gains_tax, transport_cost):
         # TODO is it the same as max bid?
-        return self.get_max_bid(R_N, r, r_target, m, p_dot, transport_cost)
+        return self.get_max_bid(R_N, r, r_target, m, p_dot, capital_gains_tax, transport_cost)
 
-    def get_max_bid(self, R_N, r, r_target, m, p_dot, transport_cost):
+    def get_max_bid(self, R_N, r, r_target, m, p_dot, capital_gains_tax, transport_cost):
         T      = self.model.mortgage_period
         delta  = self.model.delta
-        capital_gains_tax = self.model.capital_gains_tax
+        # capital_gains_tax = self.model.capital_gains_tax # person and investor send.
 
         if R_N is not None and r is not None and r_target is not None and m is not None and p_dot is not None:
             R_NT   = ((1 + r)**T - 1) / r * R_N
@@ -666,7 +671,7 @@ class Investor(Agent):
     # def borrowing_rate(self):
     #     self.model.r_target
     
-    def __init__(self, unique_id, model, pos, properties_owned = []):
+    def __init__(self, unique_id, model, pos, capital_gains_tax, properties_owned = []):
         super().__init__(unique_id, model)
         self.pos = pos
         self.borrowing_rate = self.model.r_target
@@ -674,6 +679,9 @@ class Investor(Agent):
         # Properties for bank as an asset holder
         # self.property_management_costs = property_management_costs # TODO 
         self.properties_owned      = properties_owned
+        if not capital_gains_tax:
+            self.model.logger.warning(f'No capital gains tax for investor {self.unique_id}.')
+        self.capital_gains_tax     = capital_gains_tax
 
     def bid(self):
         # """Investors bid on investment properties."""
@@ -683,7 +691,7 @@ class Investor(Agent):
 
         for listing in self.model.realtor.bids:
             R_N      = listing.sale_property.net_rent
-            P_bid    = self.model.bank.get_max_bid(R_N, r, r_target, m, listing.sale_property.p_dot, listing.sale_property.transport_cost)
+            P_bid    = self.model.bank.get_max_bid(R_N, r, r_target, m, listing.sale_property.p_dot, self.capital_gains_tax, listing.sale_property.transport_cost)
             bid_type = 'investor'
             # mortgage = m * P_bid
             self.model.logger.debug(f'Investor {self.unique_id} bids {P_bid} for property {listing.sale_property.unique_id}, if val is positive.')
