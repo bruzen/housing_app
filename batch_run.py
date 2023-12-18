@@ -13,6 +13,12 @@ from contextlib import contextmanager
 from mesa.batchrunner import batch_run
 from model.model import City
 
+batch_parameters = {
+            'data_collection_period': 1,
+            'iterations': 1,
+            'max_steps': 5
+}
+
 # Define the variable and fixed parameters
 variable_parameters = {
     'density': [1, 100],
@@ -74,38 +80,50 @@ fixed_parameters = {
             'capital_gains_tax': 0.01, # share 0-1
         }
 
-batch_parameters = {
-            'data_collection_period': 1,
-            'iterations': 1,
-            'max_steps': 5
-}
-
 @contextmanager
-def metadata_recorder(model_parameters, batch_parameters, subfolder, name = None):
+def metadata_recorder(batch_parameters, variable_parameters, fixed_parameters, subfolder, name = None):
     metadata = {
-        'experiment_name':  name,
-        'batch_parameters':     batch_parameters,
-        'git_version':           get_git_commit_hash(),
-        'simulation_parameters': model_parameters
+        'experiment_name':     name,
+        'git_version':         get_git_commit_hash(),
+        'batch_parameters':    batch_parameters,
+        'variable_parameters': variable_parameters,
+        'fixed_parameters':    fixed_parameters,
+        # 'simulation_parameters': model_parameters
     }
 
-    metadata_file_path = os.path.join(subfolder, f'metadata_batch.yaml')
-    # Check if the file exists
-    file_exists = os.path.isfile(metadata_file_path)
-
-    # If the file exists, load the existing metadata; otherwise, create an empty dictionary
-    if file_exists:
-        with open(metadata_file_path, 'r') as file:
-            existing_metadata = yaml.safe_load(file)
+    timestamp = fixed_parameters['timestamp']
+    if name:
+        metadata_file_path = os.path.join(subfolder, f'metadata_batch_{timestamp}_{name}.yaml')
     else:
-        existing_metadata = {}
+        metadata_file_path = os.path.join(subfolder, f'metadata_batch_{timestamp}.yaml')
 
-    # Append the metadata for the current experiment to the existing metadata dictionary
-    existing_metadata[name] = metadata
+    # Ensure the directory structure exists
+    os.makedirs(os.path.dirname(metadata_file_path), exist_ok=True)
 
-    # Write the updated metadata back to the file
+    # # Create a new dictionary for metadata
+    # new_metadata = {self.run_id: metadata}
+
+    # Write the new metadata to the file
     with open(metadata_file_path, 'w') as file:
-        yaml.safe_dump(existing_metadata, file)
+        yaml.safe_dump(metadata, file)
+
+
+    # # Check if the file exists
+    # file_exists = os.path.isfile(metadata_file_path)
+
+    # # If the file exists, load the existing metadata; otherwise, create an empty dictionary
+    # if file_exists:
+    #     with open(metadata_file_path, 'r') as file:
+    #         existing_metadata = yaml.safe_load(file)
+    # else:
+    #     existing_metadata = {}
+
+    # # Append the metadata for the current experiment to the existing metadata dictionary
+    # existing_metadata[name] = metadata
+
+    # # Write the updated metadata back to the file
+    # with open(metadata_file_path, 'w') as file:
+    #     yaml.safe_dump(existing_metadata, file)
 
     yield
 
@@ -114,16 +132,17 @@ def run_batch_simulation(batch_parameters, variable_parameters, model_parameters
     # Run the batch simulations
     results = batch_run(City, model_parameters, **batch_parameters)
     df = pd.DataFrame(results)
+    timestamp = model_parameters['timestamp']
     if name:
-        data_output_path = os.path.join(subfolder, f'{name}_batch_results.csv')
+        data_output_path = os.path.join(subfolder, f'results_batch_{timestamp}_{name}.csv')
     else:
-        data_output_path = os.path.join(subfolder, f'batch_results.csv')
+        data_output_path = os.path.join(subfolder, f'results_batch_{timestamp}.csv')
     df.to_csv(data_output_path, index=False)
-    plot_output(df, variable_parameters, subfolder, name)
+    plot_output(df, variable_parameters, model_parameters, name)
 
-def plot_output(df, variable_parameters, subfolder, name = None):
+def plot_output(df, variable_parameters, model_parameters, name = None):
     # Create the figures subfolder if it doesn't exist
-    figures_folder = os.path.join(subfolder, 'figures')
+    figures_folder = os.path.join('output_data', 'batch_figures')
     os.makedirs(figures_folder, exist_ok=True)
 
     # Define a color map for runs
@@ -131,48 +150,55 @@ def plot_output(df, variable_parameters, subfolder, name = None):
     num_runs = len(df['RunId'].unique())
     colors = [cmap(i) for i in np.linspace(0, 1, num_runs)]
 
-    # Plot ownership
-    # Create plot
-    plt.figure(figsize=(10, 6))
+    # # Plot ownership
+    # # Create plot
+    # plt.figure(figsize=(10, 6))
 
-    for i, run_id in enumerate(df['RunId'].unique()):
-        # subset_df = df[df['RunId'] == run_id]
-        subset_df = df[(df['RunId'] == run_id) & (df['Step'] > 0)]  # Exclude time_step 0
+    # for i, run_id in enumerate(df['RunId'].unique()):
+    #     # subset_df = df[df['RunId'] == run_id]
+    #     subset_df = df[(df['RunId'] == run_id) & (df['Step'] > 0)]  # Exclude time_step 0
 
-        # Extract variable parameter values for the current RunId
-        variable_values = {param: subset_df[param].iloc[0] for param in variable_parameters.keys()}
-        # print(variable_values)
-        # print {str(variable_values)}
+    #     # Extract variable parameter values for the current RunId
+    #     variable_values = {param: subset_df[param].iloc[0] for param in variable_parameters.keys()}
+    #     # print(variable_values)
+    #     # print {str(variable_values)}
         
-        # Construct label using variable parameter values
-        label = f'{", ".join(f"{key} {value}" for key, value in variable_values.items())}'
+    #     # Construct label using variable parameter values
+    #     label = f'{", ".join(f"{key} {value}" for key, value in variable_values.items())}'
 
-        # Use the defined color for each run
-        color = colors[i]
+    #     # Use the defined color for each run
+    #     color = colors[i]
 
-        plt.plot(subset_df['time_step'], subset_df['investor_ownership_share'], label=label, linestyle='-', color=color)
+    #     plt.plot(subset_df['time_step'], subset_df['investor_ownership_share'], label=label, linestyle='-', color=color)
 
-    plt.xlabel('Time Step')
-    plt.ylabel('Ownership share')
-    plt.title('Ownership share')
-    plt.legend()
+    # plt.xlabel('Time Step')
+    # plt.ylabel('Ownership share')
+    # plt.title('Ownership share')
+    # plt.legend()
 
-    # Save the line plot to the figures subfolder
-    if name:
-        plot_path = os.path.join(figures_folder, f'{name}_warranted_price_vs_time_step.pdf')
-    else:
-        plot_path = os.path.join(figures_folder, 'warranted_price_vs_time_step.pdf')
-    plt.text(0.5, -0.12, plot_path, transform=plt.gca().transAxes, ha='center', va='center', fontsize=7)
-    plt.savefig(plot_path, format='pdf')
+    # # Save the ownership plot to the figures subfolder
+    # if name:
+    #     plot_path = os.path.join(figures_folder, f'{name}_ownership.pdf')
+    # else:
+    #     plot_path = os.path.join(figures_folder, 'ownership.pdf')
+    # plt.text(0.5, -0.12, plot_path, transform=plt.gca().transAxes, ha='center', va='center', fontsize=7)
+    # plt.savefig(plot_path, format='pdf')
+
+
 
     # Plot other variables
+
+    # Set the default font size for the figures
+    plt.rcParams.update({'font.size': 16})
+
     # Create subplots with a 4x2 grid
-    fig, axes = plt.subplots(4, 2, figsize=(15, 15))  # 4 rows, 2 columns
+    # fig, ax = plt.subplots(figsize=(10, 6))
+    fig, axes = plt.subplots(4, 2, figsize=(15, 25), gridspec_kw={'hspace': 0.3})  # 4 rows, 2 columns
     # Adjust subplot spacing
     fig.subplots_adjust(hspace=0.5, wspace=0.3)
 
     # Set the title for the grid
-    fig.suptitle(f'{name} {" ".join(variable_parameters.keys())}', fontsize=16)
+    # fig.suptitle(f'{name} {" ".join(variable_parameters.keys())}', fontsize=16)
 
     # Loop through each run
     for i, run_id in enumerate(df['RunId'].unique()):
@@ -232,11 +258,19 @@ def plot_output(df, variable_parameters, subfolder, name = None):
         axes[2, 0].grid(True)
         axes[2, 0].legend()
 
-        # Plot N/F
-        axes[2, 1].plot(subset_df['time_step'], subset_df['N']/subset_df['F'], label=label, color=color)
+        # # Plot N/F
+        # axes[2, 1].plot(subset_df['time_step'], subset_df['N']/subset_df['F'], label=label, color=color)
+        # axes[2, 1].set_xlabel('Time Step')
+        # axes[2, 1].set_ylabel('N/F')
+        # axes[2, 1].set_title(f'Workforce divided by number of firms over time')
+        # axes[2, 1].grid(True)
+        # axes[2, 1].legend()
+
+        # Plot 'k'
+        axes[2, 1].plot(subset_df['time_step'], subset_df['k'], label=label, color=color)
         axes[2, 1].set_xlabel('Time Step')
-        axes[2, 1].set_ylabel('N/F')
-        axes[2, 1].set_title(f'Workforce divided by number of firms over time')
+        axes[2, 1].set_ylabel('k')
+        axes[2, 1].set_title(f'Urban firm capital over time')
         axes[2, 1].grid(True)
         axes[2, 1].legend()
 
@@ -248,19 +282,26 @@ def plot_output(df, variable_parameters, subfolder, name = None):
         axes[3, 0].grid(True)
         axes[3, 0].legend()
 
-        # Plot 'k'
-        axes[3, 1].plot(subset_df['time_step'], subset_df['k'], label=label, color=color)
-        axes[3, 1].set_xlabel('Time Step')
-        axes[3, 1].set_ylabel('k')
-        axes[3, 1].set_title(f'Urban firm capital over time')
-        axes[3, 1].grid(True)
-        axes[3, 1].legend()
+    for ax in axes.flatten():
+        ax.legend(fontsize=9)
+ 
 
+    timestamp = model_parameters['timestamp']
     if name:
-        plot_path = os.path.join(figures_folder, f'{name}_timeseries_plots.pdf')
+        plot_path = os.path.join(figures_folder, f'{timestamp}_{name}_timeseries_plots.pdf')
     else:
         plot_path = os.path.join(figures_folder, 'timeseries_plots.pdf')
-    plt.text(0.5, -0.3, plot_path, transform=plt.gca().transAxes, ha='center', va='center')
+
+    label_text = (
+        f'{plot_path}\n'
+        f'adjF: {model_parameters["adjF"]}, adjw: {model_parameters["adjw"]}, '
+        f'discount_rate: {model_parameters["discount_rate"]}, r_margin: {model_parameters["r_margin"]},\n'
+        f'max_mortgage_share: {model_parameters["max_mortgage_share"]}, '
+        f'capital_gains_tax_person: {model_parameters["capital_gains_tax_person"]}, '
+        f'capital_gains_tax_investor: {model_parameters["capital_gains_tax_investor"]}'
+    )
+
+    plt.text(-1.0, -0.5, label_text, transform=plt.gca().transAxes, ha='left', va='center', wrap=True)
     plt.savefig(plot_path, format='pdf')
 
 def get_subfolder(timestamp, variable_parameters = None):
@@ -292,7 +333,7 @@ def run_experiment(batch_parameters, variable_parameters, fixed_parameters, name
     subfolder = get_subfolder(fixed_parameters['timestamp'])
     fixed_parameters['subfolder'] = subfolder
     model_parameters = {**fixed_parameters, **variable_parameters}
-    with metadata_recorder(model_parameters, batch_parameters, subfolder, name):
+    with metadata_recorder(batch_parameters, variable_parameters, fixed_parameters, subfolder, name):
         run_batch_simulation(batch_parameters, variable_parameters, model_parameters, subfolder, name)
 
 # Main execution
@@ -301,5 +342,5 @@ if __name__ == '__main__':
     subfolder = get_subfolder(fixed_parameters['timestamp'], variable_parameters)
     fixed_parameters['subfolder'] = subfolder
     model_parameters = {**fixed_parameters, **variable_parameters}
-    with metadata_recorder(model_parameters, batch_parameters, subfolder):
+    with metadata_recorder(batch_parameters, variable_parameters, fixed_parameters, subfolder):
         run_batch_simulation(batch_parameters, variable_parameters, model_parameters, subfolder)

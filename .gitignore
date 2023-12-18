@@ -29,3 +29,5 @@ profile_data.prof
 model/temp_comments.py
 
 tests/test_bidding.ipynb
+
+test_model.ipynb
