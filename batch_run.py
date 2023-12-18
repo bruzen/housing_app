@@ -100,30 +100,9 @@ def metadata_recorder(batch_parameters, variable_parameters, fixed_parameters, s
     # Ensure the directory structure exists
     os.makedirs(os.path.dirname(metadata_file_path), exist_ok=True)
 
-    # # Create a new dictionary for metadata
-    # new_metadata = {self.run_id: metadata}
-
     # Write the new metadata to the file
     with open(metadata_file_path, 'w') as file:
         yaml.safe_dump(metadata, file)
-
-
-    # # Check if the file exists
-    # file_exists = os.path.isfile(metadata_file_path)
-
-    # # If the file exists, load the existing metadata; otherwise, create an empty dictionary
-    # if file_exists:
-    #     with open(metadata_file_path, 'r') as file:
-    #         existing_metadata = yaml.safe_load(file)
-    # else:
-    #     existing_metadata = {}
-
-    # # Append the metadata for the current experiment to the existing metadata dictionary
-    # existing_metadata[name] = metadata
-
-    # # Write the updated metadata back to the file
-    # with open(metadata_file_path, 'w') as file:
-    #     yaml.safe_dump(existing_metadata, file)
 
     yield
 
@@ -154,51 +133,14 @@ def plot_output(df, variable_parameters, model_parameters, name = None):
     # # Create plot
     # plt.figure(figsize=(10, 6))
 
-    # for i, run_id in enumerate(df['RunId'].unique()):
-    #     # subset_df = df[df['RunId'] == run_id]
-    #     subset_df = df[(df['RunId'] == run_id) & (df['Step'] > 0)]  # Exclude time_step 0
-
-    #     # Extract variable parameter values for the current RunId
-    #     variable_values = {param: subset_df[param].iloc[0] for param in variable_parameters.keys()}
-    #     # print(variable_values)
-    #     # print {str(variable_values)}
-        
-    #     # Construct label using variable parameter values
-    #     label = f'{", ".join(f"{key} {value}" for key, value in variable_values.items())}'
-
-    #     # Use the defined color for each run
-    #     color = colors[i]
-
-    #     plt.plot(subset_df['time_step'], subset_df['investor_ownership_share'], label=label, linestyle='-', color=color)
-
-    # plt.xlabel('Time Step')
-    # plt.ylabel('Ownership share')
-    # plt.title('Ownership share')
-    # plt.legend()
-
-    # # Save the ownership plot to the figures subfolder
-    # if name:
-    #     plot_path = os.path.join(figures_folder, f'{name}_ownership.pdf')
-    # else:
-    #     plot_path = os.path.join(figures_folder, 'ownership.pdf')
-    # plt.text(0.5, -0.12, plot_path, transform=plt.gca().transAxes, ha='center', va='center', fontsize=7)
-    # plt.savefig(plot_path, format='pdf')
-
-
-
     # Plot other variables
 
     # Set the default font size for the figures
     plt.rcParams.update({'font.size': 16})
 
     # Create subplots with a 4x2 grid
-    # fig, ax = plt.subplots(figsize=(10, 6))
     fig, axes = plt.subplots(4, 2, figsize=(15, 25), gridspec_kw={'hspace': 0.3})  # 4 rows, 2 columns
-    # Adjust subplot spacing
     fig.subplots_adjust(hspace=0.5, wspace=0.3)
-
-    # Set the title for the grid
-    # fig.suptitle(f'{name} {" ".join(variable_parameters.keys())}', fontsize=16)
 
     # Loop through each run
     for i, run_id in enumerate(df['RunId'].unique()):
@@ -258,14 +200,6 @@ def plot_output(df, variable_parameters, model_parameters, name = None):
         axes[2, 0].grid(True)
         axes[2, 0].legend()
 
-        # # Plot N/F
-        # axes[2, 1].plot(subset_df['time_step'], subset_df['N']/subset_df['F'], label=label, color=color)
-        # axes[2, 1].set_xlabel('Time Step')
-        # axes[2, 1].set_ylabel('N/F')
-        # axes[2, 1].set_title(f'Workforce divided by number of firms over time')
-        # axes[2, 1].grid(True)
-        # axes[2, 1].legend()
-
         # Plot 'k'
         axes[2, 1].plot(subset_df['time_step'], subset_df['k'], label=label, color=color)
         axes[2, 1].set_xlabel('Time Step')
@@ -285,7 +219,6 @@ def plot_output(df, variable_parameters, model_parameters, name = None):
     for ax in axes.flatten():
         ax.legend(fontsize=9)
  
-
     timestamp = model_parameters['timestamp']
     if name:
         plot_path = os.path.join(figures_folder, f'{timestamp}_{name}_timeseries_plots.pdf')
@@ -293,6 +226,7 @@ def plot_output(df, variable_parameters, model_parameters, name = None):
         plot_path = os.path.join(figures_folder, 'timeseries_plots.pdf')
 
     label_text = (
+        f'{name} {" ".join(variable_parameters.keys())}'
         f'{plot_path}\n'
         f'adjF: {model_parameters["adjF"]}, adjw: {model_parameters["adjw"]}, '
         f'discount_rate: {model_parameters["discount_rate"]}, r_margin: {model_parameters["r_margin"]},\n'
