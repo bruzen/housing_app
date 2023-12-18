@@ -238,7 +238,7 @@ class City(Model):
         # Add land and people to each cell
         self.unique_id      += 1
         for cell in self.grid.coord_iter():
-            pos              = (cell[1], cell[2])
+            pos              = (cell[1][0], cell[1][1])
 
             land             = Land(self.unique_id, self, pos, 
                                     self.params['property_tax_rate'])
@@ -332,7 +332,7 @@ class City(Model):
 
         # Do checks TEMP
         for cell in self.grid.coord_iter():
-            pos                 = (cell[1], cell[2])
+            pos                 = (cell[1][0], cell[1][1])
             cell_contents       = self.grid.get_cell_list_contents(pos)
             persons_at_position = [agent for agent in cell_contents if isinstance(agent, Person)]
 
