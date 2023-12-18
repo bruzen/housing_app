@@ -124,16 +124,13 @@ def plot_output(df, variable_parameters, model_parameters, name = None):
     figures_folder = os.path.join('output_data', 'batch_figures')
     os.makedirs(figures_folder, exist_ok=True)
 
-    # Define a color map for runs
-    cmap = plt.get_cmap('tab10')
-    num_runs = len(df['RunId'].unique())
-    colors = [cmap(i) for i in np.linspace(0, 1, num_runs)]
-
-    # # Plot ownership
-    # # Create plot
-    # plt.figure(figsize=(10, 6))
-
-    # Plot other variables
+    # Define plotting styles for runs
+    cmap       = plt.get_cmap('tab10')
+    num_runs   = len(df['RunId'].unique())
+    colors     = [cmap(i) for i in np.linspace(0, 1, num_runs)]
+    linewidths = [1, 2, 3, 4]
+    linestyles = ['solid', 'dashed', 'dashdot', 'dotted']  # Add more if needed
+    alpha      = 0.8
 
     # Set the default font size for the figures
     plt.rcParams.update({'font.size': 16})
@@ -153,15 +150,13 @@ def plot_output(df, variable_parameters, model_parameters, name = None):
         # Construct label using variable parameter values
         label = f'{", ".join(f"{key} {value}" for key, value in variable_values.items())}'
 
-        # Use the defined color for each run
+        # Use the defined styles for each run
         color = colors[i]
-
-        # # Determine the subplot position based on run_id
-        # row_position = (run_id - 1) // 2  # row position (0-3)
-        # col_position = (run_id - 1) % 2  # column position (0 or 1)
+        linestyle = linestyles[i % len(linestyles)]  # Cycle through linestyles
+        linewidth = linewidths[i % len(linewidths)]  # Cycle through linewidths
 
         # Plot MPL
-        axes[0, 0].plot(subset_df['time_step'], subset_df['MPL'], label=label, color=color)
+        axes[0, 0].plot(subset_df['time_step'], subset_df['MPL'], label=label, color=color, alpha=alpha, linestyle=linestyle, linewidth=linewidth)
         axes[0, 0].set_xlabel('Time Step')
         axes[0, 0].set_ylabel('MPL')
         axes[0, 0].set_title(f'MPL over time')
@@ -169,7 +164,7 @@ def plot_output(df, variable_parameters, model_parameters, name = None):
         axes[0, 0].legend()
 
         # Plot n
-        axes[0, 1].plot(subset_df['time_step'], subset_df['n'], label=label, color=color)
+        axes[0, 1].plot(subset_df['time_step'], subset_df['n'], label=label, color=color, alpha=alpha, linestyle=linestyle, linewidth=linewidth)
         axes[0, 1].set_xlabel('Time Step')
         axes[0, 1].set_ylabel('n')
         axes[0, 1].set_title(f'Urban firm workforce n over time')
@@ -177,7 +172,7 @@ def plot_output(df, variable_parameters, model_parameters, name = None):
         axes[0, 1].legend()
 
         # Plot N
-        axes[1, 0].plot(subset_df['time_step'], subset_df['N'], label=label, color=color)
+        axes[1, 0].plot(subset_df['time_step'], subset_df['N'], label=label, color=color, alpha=alpha, linestyle=linestyle, linewidth=linewidth)
         axes[1, 0].set_xlabel('Time Step')
         axes[1, 0].set_ylabel('N')
         axes[1, 0].set_title(f'Total urban workforce over time')
@@ -185,7 +180,7 @@ def plot_output(df, variable_parameters, model_parameters, name = None):
         axes[1, 0].legend()
 
         # Plot F
-        axes[1, 1].plot(subset_df['time_step'], subset_df['F'], label=label, color=color)
+        axes[1, 1].plot(subset_df['time_step'], subset_df['F'], label=label, color=color, alpha=alpha, linestyle=linestyle, linewidth=linewidth)
         axes[1, 1].set_xlabel('Time Step')
         axes[1, 1].set_ylabel('F')
         axes[1, 1].set_title(f'Number of firms over time')
@@ -193,7 +188,7 @@ def plot_output(df, variable_parameters, model_parameters, name = None):
         axes[1, 1].legend()
 
         # Plot city extent
-        axes[2, 0].plot(subset_df['time_step'], subset_df['city_extent_calc'], label=label, color=color)
+        axes[2, 0].plot(subset_df['time_step'], subset_df['city_extent_calc'], label=label, color=color, alpha=alpha, linestyle=linestyle, linewidth=linewidth)
         axes[2, 0].set_xlabel('Time Step')
         axes[2, 0].set_ylabel('Lot widths')
         axes[2, 0].set_title(f'City extent over time')
@@ -201,7 +196,7 @@ def plot_output(df, variable_parameters, model_parameters, name = None):
         axes[2, 0].legend()
 
         # Plot 'k'
-        axes[2, 1].plot(subset_df['time_step'], subset_df['k'], label=label, color=color)
+        axes[2, 1].plot(subset_df['time_step'], subset_df['k'], label=label, color=color, alpha=alpha, linestyle=linestyle, linewidth=linewidth)
         axes[2, 1].set_xlabel('Time Step')
         axes[2, 1].set_ylabel('k')
         axes[2, 1].set_title(f'Urban firm capital over time')
@@ -209,7 +204,7 @@ def plot_output(df, variable_parameters, model_parameters, name = None):
         axes[2, 1].legend()
 
         # Plot 'investor_ownership_share'
-        axes[3, 0].plot(subset_df['time_step'], subset_df['investor_ownership_share'], label=label, color=color)
+        axes[3, 0].plot(subset_df['time_step'], subset_df['investor_ownership_share'], label=label, color=color, alpha=alpha, linestyle=linestyle, linewidth=linewidth)
         axes[3, 0].set_xlabel('Time Step')
         axes[3, 0].set_ylabel('Ownership share')
         axes[3, 0].set_title(f'Ownership share over time')
