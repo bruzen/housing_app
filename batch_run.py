@@ -212,9 +212,9 @@ def plot_output(df, variable_parameters, model_parameters, name = None):
 
     timestamp = model_parameters['timestamp']
     if name:
-        plot_path = os.path.join(figures_folder, f'{timestamp}_{name}_timeseries_plots.pdf')
+        plot_path = os.path.join(figures_folder, f'{timestamp}-{name}-timeseries-plots.pdf')
     else:
-        plot_path = os.path.join(figures_folder, 'timeseries_plots.pdf')
+        plot_path = os.path.join(figures_folder, 'timeseries-plots.pdf')
 
     label_text = (
         f'{name} {" ".join(variable_parameters.keys())}'
