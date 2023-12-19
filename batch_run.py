@@ -1,14 +1,10 @@
 import os
-import sys
 import yaml
 import datetime
 import subprocess
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
-import plotly.io as pio
-import plotly.graph_objects as go
-from plotly.subplots import make_subplots
 from contextlib import contextmanager
 from mesa.batchrunner import batch_run
 from model.model import City
@@ -136,8 +132,7 @@ def plot_output(df, variable_parameters, model_parameters, name = None):
     plt.rcParams.update({'font.size': 16})
 
     # Create subplots with a 4x2 grid
-    fig, axes = plt.subplots(4, 2, figsize=(15, 25), gridspec_kw={'hspace': 0.3})  # 4 rows, 2 columns
-    fig.subplots_adjust(hspace=0.5, wspace=0.3)
+    fig, axes = plt.subplots(4, 2, figsize=(20, 18), gridspec_kw={'hspace': 0.5})  # 4 rows, 2 columns
 
     # Loop through each run
     for i, run_id in enumerate(df['RunId'].unique()):
@@ -169,7 +164,7 @@ def plot_output(df, variable_parameters, model_parameters, name = None):
         axes[0, 1].set_ylabel('n')
         axes[0, 1].set_title(f'Urban firm workforce n over time')
         axes[0, 1].grid(True)
-        axes[0, 1].legend()
+        axes[0, 1].legend().set_visible(False)
 
         # Plot N
         axes[1, 0].plot(subset_df['time_step'], subset_df['N'], label=label, color=color, alpha=alpha, linestyle=linestyle, linewidth=linewidth)
@@ -177,7 +172,7 @@ def plot_output(df, variable_parameters, model_parameters, name = None):
         axes[1, 0].set_ylabel('N')
         axes[1, 0].set_title(f'Total urban workforce over time')
         axes[1, 0].grid(True)
-        axes[1, 0].legend()
+        axes[1, 0].legend().set_visible(False)
 
         # Plot F
         axes[1, 1].plot(subset_df['time_step'], subset_df['F'], label=label, color=color, alpha=alpha, linestyle=linestyle, linewidth=linewidth)
@@ -185,7 +180,7 @@ def plot_output(df, variable_parameters, model_parameters, name = None):
         axes[1, 1].set_ylabel('F')
         axes[1, 1].set_title(f'Number of firms over time')
         axes[1, 1].grid(True)
-        axes[1, 1].legend()
+        axes[1, 1].legend().set_visible(False)
 
         # Plot city extent
         axes[2, 0].plot(subset_df['time_step'], subset_df['city_extent_calc'], label=label, color=color, alpha=alpha, linestyle=linestyle, linewidth=linewidth)
@@ -193,7 +188,7 @@ def plot_output(df, variable_parameters, model_parameters, name = None):
         axes[2, 0].set_ylabel('Lot widths')
         axes[2, 0].set_title(f'City extent over time')
         axes[2, 0].grid(True)
-        axes[2, 0].legend()
+        axes[2, 0].legend().set_visible(False)
 
         # Plot 'k'
         axes[2, 1].plot(subset_df['time_step'], subset_df['k'], label=label, color=color, alpha=alpha, linestyle=linestyle, linewidth=linewidth)
@@ -201,7 +196,7 @@ def plot_output(df, variable_parameters, model_parameters, name = None):
         axes[2, 1].set_ylabel('k')
         axes[2, 1].set_title(f'Urban firm capital over time')
         axes[2, 1].grid(True)
-        axes[2, 1].legend()
+        axes[2, 1].legend().set_visible(False)
 
         # Plot 'investor_ownership_share'
         axes[3, 0].plot(subset_df['time_step'], subset_df['investor_ownership_share'], label=label, color=color, alpha=alpha, linestyle=linestyle, linewidth=linewidth)
@@ -209,11 +204,12 @@ def plot_output(df, variable_parameters, model_parameters, name = None):
         axes[3, 0].set_ylabel('Ownership share')
         axes[3, 0].set_title(f'Ownership share over time')
         axes[3, 0].grid(True)
-        axes[3, 0].legend()
+        axes[3, 0].legend().set_visible(False)
 
-    for ax in axes.flatten():
-        ax.legend(fontsize=9)
- 
+        # Display a single legend outside the figure
+        axes[0, 0].legend(loc='center left', bbox_to_anchor=(1.15, -3.8))
+        axes[3, 1].set_axis_off() 
+
     timestamp = model_parameters['timestamp']
     if name:
         plot_path = os.path.join(figures_folder, f'{timestamp}_{name}_timeseries_plots.pdf')
