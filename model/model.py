@@ -157,7 +157,7 @@ class City(Model):
             self.center    = (0, 0)
         self.grid = MultiGrid(self.params['width'], self.params['height'], torus=False)
         self.schedule = RandomActivationByBreed(self)
-        self.transport_cost_per_dist = self.params['init_wage_premium_ratio'] * self.params['subsistence_wage'] / self.params['init_city_extent'] # c
+        self.transport_cost_per_dist = self.params['c'] # self.params['init_wage_premium_ratio'] * self.params['subsistence_wage'] / self.params['init_city_extent'] # c
 
         # People
         # If demographics_on, there is a housing market when agents retire # self.demographics_on = self.params['demographics_on']
@@ -211,7 +211,6 @@ class City(Model):
                                     A=self.params['A'],
                                     overhead=self.params['overhead'],
                                     mult=self.params['mult'],
-                                    c=self.params['c'],
                                     adjN=self.params['adjN'],
                                     adjk=self.params['adjk'],
                                     adjn=self.params['adjn'],

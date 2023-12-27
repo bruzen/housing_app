@@ -459,7 +459,6 @@ class Firm(Agent):
                  A,
                  overhead,
                  mult,
-                 c,
                  adjN,
                  adjk,
                  adjn,
@@ -492,7 +491,7 @@ class Firm(Agent):
         self.A        = A
         self.overhead = overhead    # labour overhead costs for firm
         self.mult     = mult
-        self.c        = c
+        # self.c        = c
         self.adjN     = adjN
         self.adjk     = adjk
         self.adjn     = adjn
