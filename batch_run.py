@@ -129,10 +129,10 @@ def plot_output(df, variable_parameters, model_parameters, name = None):
     alpha      = 0.8
 
     # Set the default font size for the figures
-    plt.rcParams.update({'font.size': 16})
+    plt.rcParams.update({'font.size': 26})
 
     # Create subplots with a 4x2 grid
-    fig, axes = plt.subplots(4, 2, figsize=(20, 18), gridspec_kw={'hspace': 0.5})  # 4 rows, 2 columns
+    fig, axes = plt.subplots(4, 2, figsize=(22, 24), gridspec_kw={'hspace': 0.6})  # 4 rows, 2 columns
 
     # Loop through each run
     for i, run_id in enumerate(df['RunId'].unique()):
@@ -186,7 +186,7 @@ def plot_output(df, variable_parameters, model_parameters, name = None):
         axes[2, 0].plot(subset_df['time_step'], subset_df['city_extent_calc'], label=label, color=color, alpha=alpha, linestyle=linestyle, linewidth=linewidth)
         axes[2, 0].set_xlabel('Time Step')
         axes[2, 0].set_ylabel('Lot widths')
-        axes[2, 0].set_title(f'City extent over time')
+        axes[2, 0].set_title(f'Calculated city extent over time')
         axes[2, 0].grid(True)
         axes[2, 0].legend().set_visible(False)
 
@@ -199,15 +199,15 @@ def plot_output(df, variable_parameters, model_parameters, name = None):
         axes[2, 1].legend().set_visible(False)
 
         # Plot 'investor_ownership_share'
-        axes[3, 0].plot(subset_df['time_step'], subset_df['investor_ownership_share'], label=label, color=color, alpha=alpha, linestyle=linestyle, linewidth=linewidth)
+        axes[3, 0].plot(subset_df['time_step'], (1- subset_df['investor_ownership_share']), label=label, color=color, alpha=alpha, linestyle=linestyle, linewidth=linewidth)
         axes[3, 0].set_xlabel('Time Step')
         axes[3, 0].set_ylabel('Ownership share')
-        axes[3, 0].set_title(f'Ownership share over time')
+        axes[3, 0].set_title('Home ownership over time')
         axes[3, 0].grid(True)
         axes[3, 0].legend().set_visible(False)
 
         # Display a single legend outside the figure
-        axes[0, 0].legend(loc='center left', bbox_to_anchor=(1.15, -3.8))
+        axes[0, 0].legend(loc='center left', bbox_to_anchor=(1.15, -4.4))
         axes[3, 1].set_axis_off() 
 
     timestamp = model_parameters['timestamp']
@@ -217,7 +217,7 @@ def plot_output(df, variable_parameters, model_parameters, name = None):
         plot_path = os.path.join(figures_folder, 'timeseries-plots.pdf')
 
     label_text = (
-        f'{name} {" ".join(variable_parameters.keys())}'
+        f'\n {name} {" ".join(variable_parameters.keys())}'
         f'{plot_path}\n'
         f'adjF: {model_parameters["adjF"]}, adjw: {model_parameters["adjw"]}, '
         f'discount_rate: {model_parameters["discount_rate"]}, r_margin: {model_parameters["r_margin"]},\n'
