@@ -2,18 +2,18 @@
 # TODO List
 
 ## High Priority
-
+- [ ] Look for cache/memory problems. Try pylint
 - [ ] Make it run on the command line. See if that works on AWS
 - [ ] Make a branch to record differences (Check it runs as is, commit, stash, branch)
-- [ ] Make a branch with changes for  
+- [ ] Make a branch with changes for  track-bid-details
 - [ ] Generate evenly spaced grid to iterate over
 - [ ] Param sweep for capital gains tax people/institutions .1 to .4  (or 0-1). Plot final ownership share, and ownership share every 10 steps - they fall at a different point .. what is the point of fall?
- - [ ] boundary search - contour plots - capital gains tax - capital gains tax insittutions.. 
+ - [ ] boundary search - contour plots - capital gains tax - capital gains tax institutions.. 
 - [ ] * perturb mid run -a discrete shift in number - drive it down, then drop it back down.. increase tax- property tax..
 - [ ] see the size of the gap - what is the size of the gap.
 - [ ] model inequality with shifted savings then do the same analysis
 - [ ] (randomize - sensitivity shift)
-- [ ] (spatially distributed density) - tenancy increase avg density - productivity in the city goes up somewhat.. get effect we're talking about.  rents are being extracted.. - savign slevel is actually declining if we do xyz. if the savings depended on just the share of work being captured by owners
+- [ ] (spatially distributed density) - tenancy increase avg density - productivity in the city goes up somewhat.. get effect we're talking about.  rents are being extracted.. - savings level is actually declining if we do xyz. if the savings depended on just the share of work being captured by owners
 - [ ] (mulitple replicate runs)
 - [ ] Store metadata away from data so it is easier to keep if we need to delete large data sets
 - [ ] Log file problem
@@ -51,7 +51,7 @@
 - [ ] Add change_resident function like change_owner func
 - [ ] Make function for worthwhile to work - Person and land can call for consistency
 - [ ] Speed: If a property is listed for sale, calculate sale properties - calc warranted_rent etc. to speed up (either for all properties or when listed)
-  - [ ] Record total run lenght for different changes. 
+  - [ ] Record total run length for different changes. 
   - [ ] Try turning on off logging
   - [ ] Try memorize to speed up runs
 - [ ] Fix test_auction for new plot? iPython notebook used some error messages I removed
