@@ -184,8 +184,6 @@ class City(Model):
         self.wealth_sensitivity        = self.params['wealth_sensitivity']
         # self.warranted_price_model     = None
         # self.realized_price_model      = None
-        
-        # self.capital_gains_tax          = self.params['capital_gains_tax']
 
         # Add workforce manager to track workers, newcomers, and retiring agents
         self.workforce = Workforce()
