@@ -202,7 +202,7 @@ def plot_output(df, variable_parameters, model_parameters, name = None):
         axes[3, 0].plot(subset_df['time_step'], (1- subset_df['investor_ownership_share']), label=label, color=color, alpha=alpha, linestyle=linestyle, linewidth=linewidth)
         axes[3, 0].set_xlabel('Time Step')
         axes[3, 0].set_ylabel('Ownership share')
-        axes[3, 0].set_title('Home ownership over time')
+        axes[3, 0].set_title('Owner-occupier fraction over time')
         axes[3, 0].grid(True)
         axes[3, 0].legend().set_visible(False)
 
