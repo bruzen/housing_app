@@ -78,7 +78,7 @@ fixed_parameters = {
         }
 
 @contextmanager
-def metadata_recorder(batch_parameters, variable_parameters, fixed_parameters, subfolder, name = None):
+def metadata_recorder(batch_parameters, variable_parameters, fixed_parameters, metadata_folder, name = None):
     metadata = {
         'experiment_name':     name,
         'git_version':         get_git_commit_hash(),
@@ -90,9 +90,9 @@ def metadata_recorder(batch_parameters, variable_parameters, fixed_parameters, s
 
     timestamp = fixed_parameters['timestamp']
     if name:
-        metadata_file_path = os.path.join(subfolder, f'metadata_batch_{timestamp}_{name}.yaml')
+        metadata_file_path = os.path.join(metadata_folder, f'metadata_batch_{timestamp}_{name}.yaml')
     else:
-        metadata_file_path = os.path.join(subfolder, f'metadata_batch_{timestamp}.yaml')
+        metadata_file_path = os.path.join(metadata_folder, f'metadata_batch_{timestamp}.yaml')
 
     # Ensure the directory structure exists
     os.makedirs(os.path.dirname(metadata_file_path), exist_ok=True)
@@ -104,22 +104,22 @@ def metadata_recorder(batch_parameters, variable_parameters, fixed_parameters, s
     yield
 
 # Define the function to run the batch simulation
-def run_batch_simulation(batch_parameters, variable_parameters, model_parameters, subfolder, name = None):    
+def run_batch_simulation(batch_parameters, variable_parameters, model_parameters, data_folder, figures_folder, name = None):    
     # Run the batch simulations
     results = batch_run(City, model_parameters, **batch_parameters)
     df = pd.DataFrame(results)
     timestamp = model_parameters['timestamp']
     if name:
-        data_output_path = os.path.join(subfolder, f'results_batch_{timestamp}_{name}.csv')
+        data_output_path = os.path.join(data_folder, f'results_batch_{timestamp}_{name}.csv')
     else:
-        data_output_path = os.path.join(subfolder, f'results_batch_{timestamp}.csv')
+        data_output_path = os.path.join(data_folder, f'results_batch_{timestamp}.csv')
     df.to_csv(data_output_path, index=False)
     plot_output(df, variable_parameters, model_parameters, name)
 
-def plot_output(df, variable_parameters, model_parameters, name = None):
-    # Create the figures subfolder if it doesn't exist
-    figures_folder = os.path.join('output_data', 'batch_figures')
-    os.makedirs(figures_folder, exist_ok=True)
+def plot_output(df, variable_parameters, model_parameters, figures_folder, name = None):
+    # # Create the figures subfolder if it doesn't exist
+    # figures_folder = os.path.join('output_data', 'batch_figures')
+    # os.makedirs(figures_folder, exist_ok=True)
 
     # Define plotting styles for runs
     cmap       = plt.get_cmap('tab10')
@@ -230,22 +230,37 @@ def plot_output(df, variable_parameters, model_parameters, name = None):
     plt.text(-1.0, -0.5, label_text, transform=plt.gca().transAxes, ha='left', va='center', wrap=True)
     plt.savefig(plot_path, format='pdf')
 
-def get_subfolder(timestamp, variable_parameters = None):
-    # Name is used in subfolder name if variable_parameters are not passed
-    # Create the subfolder path
-    output_data_folder = 'output_data'
-    runs_folder = 'batch_runs'
-    # if variable_parameters:
-    #     parameter_names = '-'.join(variable_parameters.keys())
-    #     subfolder = os.path.join(output_data_folder, runs_folder, f"{timestamp}--{parameter_names}")
-    # else:
-    subfolder = os.path.join(output_data_folder, runs_folder, f"{timestamp}")
+# def get_subfolder(timestamp, variable_parameters = None):
+#     # Name is used in subfolder name if variable_parameters are not passed
+#     # Create the subfolder path
+#     output_data_folder = 'output_data'
+#     runs_folder = 'batch_data'
+#     # if variable_parameters:
+#     #     parameter_names = '-'.join(variable_parameters.keys())
+#     #     subfolder = os.path.join(output_data_folder, runs_folder, f"{timestamp}--{parameter_names}")
+#     # else:
+#     subfolder = os.path.join(output_data_folder, runs_folder, f"{timestamp}")
 
-    # Create the subfolder if it doesn't exist
-    os.makedirs(subfolder, exist_ok=True)
+#     # Create the subfolder if it doesn't exist
+#     os.makedirs(subfolder, exist_ok=True)
+#     return subfolder
+    
+def get_folders():
+    # Create the metadata subfolder if it doesn't exist
+    metadata_folder = os.path.join('output_data', 'batch_metadata')
+    os.makedirs(metadata_folder, exist_ok=True)
 
-    return subfolder
 
+    # Create the data subfolder if it doesn't exist
+    data_folder = os.path.join('output_data', 'batch_data')
+    os.makedirs(data_folder, exist_ok=True)
+    
+    # Create the figures subfolder if it doesn't exist
+    figures_folder = os.path.join('output_data', 'batch_figures')
+    os.makedirs(figures_folder, exist_ok=True)
+
+    return metadata_folder, data_folder, figures_folder
+    
 def get_git_commit_hash():
     try:
         # Run 'git rev-parse HEAD' to get the commit hash
@@ -256,17 +271,20 @@ def get_git_commit_hash():
         return None
 
 def run_experiment(batch_parameters, variable_parameters, fixed_parameters, name = None):
-    subfolder = get_subfolder(fixed_parameters['timestamp'])
-    fixed_parameters['subfolder'] = subfolder
+    # subfolder = get_subfolder(fixed_parameters['timestamp'])
+    metadata_folder, data_folder, figures_folder = get_folders()
+    fixed_parameters['subfolder'] = data_folder # subfolder
     model_parameters = {**fixed_parameters, **variable_parameters}
-    with metadata_recorder(batch_parameters, variable_parameters, fixed_parameters, subfolder, name):
-        run_batch_simulation(batch_parameters, variable_parameters, model_parameters, subfolder, name)
+    with metadata_recorder(batch_parameters, variable_parameters, fixed_parameters, metadata_folder, name):
+        run_batch_simulation(batch_parameters, variable_parameters, model_parameters, data_folder, figures_folder, name)
 
 # Main execution
 if __name__ == '__main__':
     fixed_parameters['timestamp'] = datetime.datetime.now().strftime("%Y-%m-%d_%H%M%S")
-    subfolder = get_subfolder(fixed_parameters['timestamp'], variable_parameters)
-    fixed_parameters['subfolder'] = subfolder
+    # subfolder = get_subfolder(fixed_parameters['timestamp'], variable_parameters)
+    metadata_folder, data_folder, figures_folder = get_folders()
+    fixed_parameters['subfolder'] = data_folder # Store subfolder so it can be accessed within runs to store data
+
     model_parameters = {**fixed_parameters, **variable_parameters}
-    with metadata_recorder(batch_parameters, variable_parameters, fixed_parameters, subfolder):
-        run_batch_simulation(batch_parameters, variable_parameters, model_parameters, subfolder)
+    with metadata_recorder(batch_parameters, variable_parameters, fixed_parameters, metadata_folder):
+        run_batch_simulation(batch_parameters, variable_parameters, model_parameters, data_folder,  figures_folder)
