@@ -938,11 +938,11 @@ class Bid:
         if not isinstance(bid_price, (float, int)):
             self.model.logger.error(f'Price in Bid must be a numeric value.')
         if not isinstance(bid_type, (str)):
-            self.model.logger.error(f'Price in Bid must be a numeric value.')
+            self.model.logger.error(f'Bid type must be a string.')
                
-        self.bidder = bidder
-        self.bid_price = bid_price
-        self.bid_type = bid_type
+        self.bidder      = bidder
+        self.bid_price   = bid_price
+        self.bid_type    = bid_type
 
     def __str__(self):
         return f'Bidder: {self.bidder.unique_id}, Price: {self.price}, Type: {self.bid_type}'
