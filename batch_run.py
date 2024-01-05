@@ -43,7 +43,7 @@ fixed_parameters = {
             # PARAMETERS MOST LIKELY TO AFFECT SCALE
             'c': 300.0,                            ###
             'price_of_output': 10,                 ######
-            'density':600,                         #####
+            'density': 600,                         #####
             'A': 3000,                             ### 
             'alpha': 0.18,
             'beta':  0.75,
