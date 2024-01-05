@@ -932,6 +932,7 @@ class Bid:
         bidder: Union[Person, Investor],
         bid_price: Union[float, int],
         bid_type: str = '',
+        bid_details: dict = {},
     ):
         if not isinstance(bidder, (Person, Investor)):
             self.model.logger.error(f'Bidder in Bid {bidder.unique_id} is not a Person or Investor, {bidder}')
@@ -939,10 +940,13 @@ class Bid:
             self.model.logger.error(f'Price in Bid must be a numeric value.')
         if not isinstance(bid_type, (str)):
             self.model.logger.error(f'Bid type must be a string.')
-               
+        if not isinstance(bid_details, (dict)):
+            self.model.logger.error(f'Bid details must be a dict.')
+
         self.bidder      = bidder
         self.bid_price   = bid_price
         self.bid_type    = bid_type
+        self.bid_details = bid_details
 
     def __str__(self):
         return f'Bidder: {self.bidder.unique_id}, Price: {self.price}, Type: {self.bid_type}'
