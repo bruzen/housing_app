@@ -222,8 +222,8 @@ def plot_output(df, variable_parameters, model_parameters, name = None):
         f'adjF: {model_parameters["adjF"]}, adjw: {model_parameters["adjw"]}, '
         f'discount_rate: {model_parameters["discount_rate"]}, r_margin: {model_parameters["r_margin"]},\n'
         f'max_mortgage_share: {model_parameters["max_mortgage_share"]}, '
-        f'capital_gains_tax_person: {model_parameters["capital_gains_tax_person"]}, '
-        f'capital_gains_tax_investor: {model_parameters["capital_gains_tax_investor"]}'
+        f'cg_tax_per: {model_parameters["cg_tax_per"]}, '
+        f'cg_tax_invest: {model_parameters["cg_tax_invest"]}'
     )
 
     plt.text(-1.0, -0.5, label_text, transform=plt.gca().transAxes, ha='left', va='center', wrap=True)

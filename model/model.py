@@ -109,8 +109,8 @@ class City(Model):
             'max_mortgage_share': 0.9,
             'ability_to_carry_mortgage': 0.28,
             'wealth_sensitivity': 0.1,
-            'capital_gains_tax_person':   0.01, # share 0-1
-            'capital_gains_tax_investor': 0.15, # share 0-1
+            'cg_tax_per':   0.01, # share 0-1
+            'cg_tax_invest': 0.15, # share 0-1
         }
 
         # Merge default parameters with provided parameters
@@ -228,7 +228,7 @@ class City(Model):
         self.schedule.add(self.firm)
 
         self.unique_id      += 1
-        self.investor        = Investor(self.unique_id, self, self.center, self.params['capital_gains_tax_investor'])
+        self.investor        = Investor(self.unique_id, self, self.center, self.params['cg_tax_invest'])
         self.grid.place_agent(self.investor, self.center)
         self.schedule.add(self.investor)
 
@@ -258,7 +258,7 @@ class City(Model):
             person  = Person(self.unique_id, self, pos,
                                 init_working_period = init_working_period,
                                 savings             = savings,
-                                capital_gains_tax   = self.params['capital_gains_tax_person'],
+                                capital_gains_tax   = self.params['cg_tax_per'],
                                 residence_owned     = land)
             self.grid.place_agent(person, pos)
             self.schedule.add(person)
@@ -588,7 +588,7 @@ class City(Model):
         
         person  = Person(self.unique_id, self, pos,
                   savings           = savings,
-                  capital_gains_tax = self.params['capital_gains_tax_person'],
+                  capital_gains_tax = self.params['cg_tax_per'],
                   residence_owned   = None)
         self.grid.place_agent(person, pos)
         self.schedule.add(person)
