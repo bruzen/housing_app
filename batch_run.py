@@ -67,6 +67,7 @@ fixed_parameters = {
             'discount_rate': 0.07,        # 1/delta
             'r_prime': 0.05,
             'r_margin': 0.01,
+            'r_investor': 0.05,            # Next best alternative return for investor
             'property_tax_rate': 0.04,     # tau, annual rate, was c
             'housing_services_share': 0.3, # a
             'maintenance_share': 0.2,      # b
