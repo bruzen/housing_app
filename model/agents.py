@@ -670,10 +670,10 @@ class Investor(Agent):
     # def borrowing_rate(self):
     #     self.model.r_target
     
-    def __init__(self, unique_id, model, pos, capital_gains_tax, properties_owned = []):
+    def __init__(self, unique_id, model, pos, r_investor, capital_gains_tax, properties_owned = []):
         super().__init__(unique_id, model)
         self.pos = pos
-        self.borrowing_rate = self.model.r_target
+        self.borrowing_rate = r_investor # self.model.r_target
 
         # Properties for bank as an asset holder
         # self.property_management_costs = property_management_costs # TODO 

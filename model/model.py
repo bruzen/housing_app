@@ -103,6 +103,7 @@ class City(Model):
             'discount_rate': 0.07,        # 1/delta
             'r_prime': 0.05,
             'r_margin': 0.01,
+            'r_investor': 0.05,            # Next best alternative return for investor
             'property_tax_rate': 0.04,     # tau, annual rate, was c
             'housing_services_share': 0.3, # a
             'maintenance_share': 0.2,      # b
@@ -226,7 +227,7 @@ class City(Model):
         self.schedule.add(self.firm)
 
         self.unique_id      += 1
-        self.investor        = Investor(self.unique_id, self, self.center, self.params['cg_tax_invest'])
+        self.investor        = Investor(self.unique_id, self, self.center, self.params['r_investor'], self.params['cg_tax_invest'])
         self.grid.place_agent(self.investor, self.center)
         self.schedule.add(self.investor)
 
