@@ -130,7 +130,7 @@ class City(Model):
 
         logging.basicConfig(filename=self.log_filename,
                     filemode='w',
-                    level=logging.DEBUG,
+                    level=logging.ERROR,
                     format='%(asctime)s %(name)s %(levelname)s:%(message)s')
         self.logger = logging.getLogger(__name__)
 
