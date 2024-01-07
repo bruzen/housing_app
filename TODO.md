@@ -1,15 +1,21 @@
 
 # TODO List
+- Fast version of the code where we track alternative bids/bid rent curves - actual bids/prices
+    - Run on sharcnet
+    - Show end grid
+- Perturb mid way
+- Fix error with crashing values
+- Investors can sell
 
 ## Contributions:
-1. First we put financialiation into a moded an agent based urban modoel that is well constrained and well understood, and show that in a plauzibly specified model, the financializaiton is driving the change in the classs structure. 
-2. The economic litterature does not examine the class impact. Economists don't talk abouot. Socioloogists talk about it, but they don't model it.
-3. We model boom bust dynamics/response. how it responds to chagnes in the outer world - fact you could get a change with an interest rate. what happens when the model is repeatedly struc. What are the impact effects and how do they play out?
-4.  We ask the question about if there's a spillover to productivity. There's speculation about the link in the left win urban litterature but we haven't found any moodelling.
+1. First we put financialization into a model an agent based urban model that is well constrained and well understood, and show that in a plausibly specified model, the financialization is driving the change in the class structure. 
+2. The economic literature does not examine the class impact. Economists don't talk about. Sociologists talk about it, but they don't model it.
+3. We model boom bust dynamics/response. how it responds to changes in the outer world - fact you could get a change with an interest rate. what happens when the model is repeatedly struck. What are the impact effects and how do they play out?
+4.  We ask the question about if there's a spillover to productivity. There's speculation about the link in the left win urban literature but we haven't found any modeling.
 
-This is what's done in the climate litterature. The dynamics and resilience effects are not obvious from the equations and must be moodelled. The modoelling is important because empirical dynamics are really hard to establish. This is a 1 off world. We can't run 50 versions. You can, however moodel 50 versions. 
+This is what's done in the climate literature. The dynamics and resilience effects are not obvious from the equations and must be modelled. The modeling is important because empirical dynamics are really hard to establish. This is a 1 off world. We can't run 50 versions. You can, however model 50 versions. 
 
-The basic fiancialization result is clear from looking at the model. The equations only make it obvious once you put it together, however. They way they are compbined is not obvsious.  It is important to note also that the results are not a consequence of building a model that will give any result, but only a consequence of building a model that behaves urban theory and the econoimc theory predicts. None of the equations were constructed to give a result. Each is our best about how it works. Each step was a best guess at how the process works and based on a knowlge of the litterature and the economics. The base theorly in neighter litterature clearly predicts the class effects (there is some work in the litturature e.g. Jacobs, reinvesting in Henry George litterauter- a few places where the economists have gone in that dirrection) We implemented a version of the best of the urban growth theories.
+The basic fiancialization result is clear from looking at the model. The equations only make it obvious once you put it together, however. They way they are combined is not obvious.  It is important to note also that the results are not a consequence of building a model that will give any result, but only a consequence of building a model that behaves urban theory and the economic theory predicts. None of the equations were constructed to give a result. Each is our best about how it works. Each step was a best guess at how the process works and based on a knowledge of the literature and the economics. The base theory in neither literature clearly predicts the class effects (there is some work in the literature e.g. Jacobs, reinvesting in Henry George literature - a few places where the economists have gone in that direction) We implemented a version of the best of the urban growth theories.
 
 ## Hypotheses
 1. The financial sector affects the ownership of housing and the class structure of society, 
@@ -20,7 +26,7 @@ The basic fiancialization result is clear from looking at the model. The equatio
 3. This shift in ownership may have implications for urban productivity. (can actually displace productive uses - empty store fronts) - who can/will enter, how , who can rent spaces, speculative value may keep it empty (work spaces or living space - lowering pop), reduces consumption
 
 ## Model
-- [ ] Imediately do experiments with the price of output - should give a decline in price of labour, may or may not result in changes in the housing market (record housing prices]
+- [ ] Immediately do experiments with the price of output - should give a decline in price of labour, may or may not result in changes in the housing market (record housing prices]
 - [ ] Which interest rate is charged to investors
 - [ ] Reduce demand for labour temporarily - reduce wages for labour - demand -- 
 - [ ] Link finance and employment - vary price of output - vary the employment
@@ -28,11 +34,11 @@ The basic fiancialization result is clear from looking at the model. The equatio
 
 - [*] Investors/homeowners list home if best offer (e.g. offer from investor or newcomer with highest savings) is above reservation price. The newcomer comes into town. Is willing to go anywhere and works out the bid at any area. Agent goes around, having some idea about who might have a retiree. (Consider what happens if tenants can buy e.g. on their lifetime wealth trajectory, on captured rents for owners if there is turnover)
 
-- [ ] Replace density - Vintage housing stock - houses live 60. added at edge. get bigger with time. get added after some time.. have a fixed density.. - replaced at cost 1. add at the edge and have a fixed density. 2. as time passes, density falls but size rises - the pattern in american cities - at the edges. justify by fidling with the transportation costs - transportation costs fall which let the city spreads faster (or fall as you faerthur out - lighway etc) 3. near the core do a replacement - replacement with high density. (every 60 years - agent cost.- depreciation curve for the house. -and a cost to go up - 6 story and make that work. then do that. then introduce) 4. then do another layer on the inside.
+- [ ] Replace density - Vintage housing stock - houses live 60. added at edge. get bigger with time. get added after some time.. have a fixed density.. - replaced at cost 1. add at the edge and have a fixed density. 2. as time passes, density falls but size rises - the pattern in american cities - at the edges. justify by modifying the transportation costs - transportation costs fall which let the city spreads faster (or fall as you farther out - highway etc) 3. near the core do a replacement - replacement with high density. (every 60 years - agent cost.- depreciation curve for the house. -and a cost to go up - 6 story and make that work. then do that. then introduce) 4. then do another layer on the inside.
 - [ ] (Spatially distributed density) - tenancy increase avg density - productivity in the city goes up somewhat.. get effect we're talking about.  rents are being extracted.. - savings level is actually declining if we do xyz. if the savings depended on just the share of work being captured by owners
 - [ ] Check: Implement individual_wealth_adjustment as stated in comment - Plot individual_wealth_adjustment etc
 
-## Ploting and runs
+## Plotting and runs
 - [ ] Record/plot total rents
 - [ ] Record housing wealth gap
 - [ ] Show housing prices for batch run
@@ -50,7 +56,7 @@ Speed/memory, plot and workflow to find parameters, run online - try storing the
 
 - [ ] Speed
   - [ ] Just keep housing - turn off storage..  cyclic pieces turn off the market. - turn off the production
-  - [ ] Just plot bid rent curves and which is on top, and show bid rent curve relationships with parameters. See/store the size of the gap between bidders. Model inequality with different intitial savings level then do the same analysis of bids, who gets into the city, etc. Inequality will be hard since we don't close the loop. We can have wealth inequality but not income inequality easily.
+  - [ ] Just plot bid rent curves and which is on top, and show bid rent curve relationships with parameters. See/store the size of the gap between bidders. Model inequality with different initial savings level then do the same analysis of bids, who gets into the city, etc. Inequality will be hard since we don't close the loop. We can have wealth inequality but not income inequality easily.
   Display bid type (e.g. equity_limited etc)? store bid prices, reservation prices etc by type - how to best plot - just plot a vector-- or extract from agents? -- store for model - reservation_prices price/distance/property_id maybe  store pd.DataFrame(self.bids, columns=["time_step", "bid_price", "bid_distance", "property_id"]), "bids": lambda m: m.bids_dataframe()?
   - [ ] Look for cache/memory problems. Try pylint.
 - [ ] Run model on the command line. See if that works on AWS.
@@ -58,7 +64,7 @@ Speed/memory, plot and workflow to find parameters, run online - try storing the
 - [*] Perturb mid run - a discrete shift in number - drive it down, then drop it back down.. increase tax- property tax.. (maybe look at effect of driving p_dot)
 
 - [ ] Sensitivity analysis
-- [ ] Mulitple replicate runs
+- [ ] Multiple replicate runs
 - [ ] Store metadata away from data so it is easier to keep if we need to delete large data sets
 - [ ] Check log file for problems
 
@@ -110,7 +116,7 @@ Speed/memory, plot and workflow to find parameters, run online - try storing the
 - [ ] Trace flow - think about possible errors
 
 ## Check
-- [x] Cases
+- [ ] Cases
       Case 1 no bid
       Case 2 investor wins
       Case 3 investor wins
@@ -122,15 +128,4 @@ Speed/memory, plot and workflow to find parameters, run online - try storing the
 - [ ] Call little n firm size, remove N/F
 - [ ] Make sure self.transport_cost_per_dist = self.params['c']
 - [ ] Does changing c change anything?
-- [ ] plot people's ownership share not investor ownership share.
-
-
-Heat transfer = hA(T - Tambient), area is constant, say 1, Coffee temp  60 to 71 degrees Celsius
-Person 
-coefficient might be  10 to 50 W/(m²·C). for a person
-hand maybe 36.1 to 37 degrees Celsius (97 to 98.6 degrees Fahrenheit a bit lower than core)
-10*(60-36) to 50*(60-37) = 240 to 1150 watts (W)
-Air
-coefficent maybe 5 to 25 W/(m²·C) for air
-maybe 20 Celsius for air (22 at heater 18 near window?)
-5*(60-18) to 25*(60-22) = 210 to 950 W
+- [ ] plot people's ownership share not investor ownership share
