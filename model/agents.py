@@ -1,6 +1,6 @@
 import math
 import logging
-import numpy as np
+# import numpy as np
 from typing import Union
 from collections import defaultdict
 from scipy.spatial import distance
@@ -519,7 +519,7 @@ class Firm(Agent):
 
     def step(self):
         # GET POPULATION AND OUTPUT TODO replace N with agent count
-        self.N = self.get_N()
+        # self.N = self.get_N()
         self.n =  self.N / self.F # distribute workforce across firms
         self.y = self.A * self.N**self.gamma *  self.k**self.alpha * self.n**self.beta
 

@@ -6,11 +6,11 @@ import datetime
 import random
 import string
 from typing import Dict, List
-from contextlib import contextmanager
+# from contextlib import contextmanager
 import subprocess
 # import math
-import numpy as np
-import pandas as pd
+# import numpy as np
+# import pandas as pd
 from scipy.spatial import distance
 
 # from sklearn.linear_model import LinearRegression
@@ -292,6 +292,7 @@ class City(Model):
         self.logger.info(f'\n \n \n Step {self.schedule.steps}. \n')
 
         # Firms update wages
+        self.firm.N = self.firm.get_N()  # self.N = self.get_N()
         self.schedule.step_breed(Firm)
 
         # Land records locational rents and calculates price forecast
@@ -359,33 +360,6 @@ class City(Model):
                 logging.warning(f'No Person agents at location {pos}')
 
         self.record_step_data()
-
-    def step_fast(self):
-        self.time_step += 1
-
-        # Firm updates wages based on agglomeration population
-        self.firm.step()
-
-        # Firm updates agglomeration population based on calculated city extent
-        extent = self.city_extent_calc
-        self.firm.N = self.firm.get_N_from_city_extent(extent)
-
-        # TODO create a list of savings levels representing people
-        newcomers = [] 
-
-        # Calculate bid_rent values function of distance and person's savings
-        # TODO does this exclude some of the city, effectively rounding down? Do rounding effects matter for the city extent/population calculations?
-        # TODO could speed up by making more sparse
-        while i <= extent:
-            # TODO calculate the bid rent for the investor
-            for j in newcomers:
-                # TODO calculate the bid rent for the investor
-                pass
-            i += 1
-        # TODO store the grid of output data
-
-        # Store data about relationship between investor and person bid rent curves
-
 
     def run_model(self):
         for t in range(self.num_steps):
