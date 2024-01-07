@@ -646,6 +646,7 @@ class Bank(Agent):
         if not self.model.center_city:
             avg_locational_value = avg_locational_value/4
         return rural_home_value + avg_locational_value
+    #   Should this be randomized? not everyone s at the same distance
     
         # AVERAGE_WEALTH_CALCULATION
         # The value of average_wealth.
@@ -658,7 +659,7 @@ class Bank(Agent):
         # TODO check if we need to adjust if not center_city
 
     def get_rural_home_value(self):
-        # r is the bank rate since this is the bank's assessment of value. a is the housing share, and a * subsistence_wage is the value of the housing services since we've fixed the subsistence wage and all houses are the same.
+        # r is the bank rate ussed to capitalie the value of housing services. a is the housing share, and a * subsistence_wage is the value of the housing services since we've fixed the subsistence wage and all houses are the same.
         a                = self.model.housing_services_share
         subsistence_wage = self.model.firm.subsistence_wage
         r                = self.model.r_prime
