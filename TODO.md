@@ -1,5 +1,11 @@
 
 # TODO List
+## Fast version of the code
+- Answer TODO questions
+- Try it/plot
+- Setup different data collection to furthur speed up? Maybe use a flag
+
+## Next
 - Fast version of the code where we track alternative bids/bid rent curves - actual bids/prices
     - Run on sharcnet
     - Show end grid

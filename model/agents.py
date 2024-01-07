@@ -615,6 +615,11 @@ class Firm(Agent):
         agglomeration_population = self.mult * N + self.seed_population
         return agglomeration_population
 
+    def get_N_from_city_extent(self, city_extent):
+        agent_count = math.pi * (city_extent ** 2) #  radius of the circular city
+        agglomeration_population = self.mult * agent_count + self.seed_population
+        return agglomeration_population
+
 class Bank(Agent):
     def __init__(self, unique_id, model, pos,
                  r_prime = 0.05, max_mortgage_share = 0.9,

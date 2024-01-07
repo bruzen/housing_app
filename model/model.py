@@ -131,7 +131,7 @@ class City(Model):
 
         logging.basicConfig(filename=self.log_filename,
                     filemode='w',
-                    level=logging.ERROR,
+                    level=logging.DEBUG,
                     format='%(asctime)s %(name)s %(levelname)s:%(message)s')
         self.logger = logging.getLogger(__name__)
 
@@ -359,6 +359,33 @@ class City(Model):
                 logging.warning(f'No Person agents at location {pos}')
 
         self.record_step_data()
+
+    def step_fast(self):
+        self.time_step += 1
+
+        # Firm updates wages based on agglomeration population
+        self.firm.step()
+
+        # Firm updates agglomeration population based on calculated city extent
+        extent = self.city_extent_calc
+        self.firm.N = self.firm.get_N_from_city_extent(extent)
+
+        # TODO create a list of savings levels representing people
+        newcomers = [] 
+
+        # Calculate bid_rent values function of distance and person's savings
+        # TODO does this exclude some of the city, effectively rounding down? Do rounding effects matter for the city extent/population calculations?
+        # TODO could speed up by making more sparse
+        while i <= extent:
+            # TODO calculate the bid rent for the investor
+            for j in newcomers:
+                # TODO calculate the bid rent for the investor
+                pass
+            i += 1
+        # TODO store the grid of output data
+
+        # Store data about relationship between investor and person bid rent curves
+
 
     def run_model(self):
         for t in range(self.num_steps):
