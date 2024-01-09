@@ -35,13 +35,6 @@ class Land(Agent):
         appraised_price  = self.appraised_price
         return tau * appraised_price
 
-    @property
-    def maintenance(self):
-        a                 = self.model.housing_services_share
-        b                 = self.model.maintenance_share
-        subsistence_wage  = self.model.firm.subsistence_wage # subsistence_wage
-        return a * b * subsistence_wage
-
     def __init__(self, unique_id, model, pos, 
                  property_tax_rate = 0., 
                  resident = None, owner = None):
@@ -58,6 +51,7 @@ class Land(Agent):
         self.realized_all_steps_price = - 1
         self.ownership_type           = - 1
         self.p_dot                    = None
+        self.maintenance              = self.get_maintenance()
 
     def step(self):
         self.warranted_rent  = self.get_warranted_rent()
@@ -114,6 +108,11 @@ class Land(Agent):
         #     self.ownership_type = 3 # 'Other'
         #     self.model.logger.warning(f'Land {self.unique_id} owner not a person or investor. Owner: {self.owner}')
 
+    def get_maintenance(self):
+        a                 = self.model.housing_services_share
+        b                 = self.model.maintenance_share
+        subsistence_wage  = self.model.firm.subsistence_wage # subsistence_wage
+        return a * b * subsistence_wage
 
     def get_warranted_rent(self):
         wage_premium     = self.model.firm.wage_premium
