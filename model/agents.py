@@ -59,7 +59,7 @@ class Land(Agent):
 
         # self.p_dot = None # Calculate when properties are listed for sale
         if (self.model.firm.wage_premium > self.transport_cost):
-            self.p_dot       = self.get_p_dot()
+            self.p_dot       = self.model.firm.get_p_dot()
         else:
             self.p_dot       = None 
 
@@ -128,24 +128,6 @@ class Land(Agent):
 
     def get_warranted_price(self):
         return self.warranted_rent / self.model.r_prime
-
-    def get_p_dot(self):
-        try:
-            p_dot = (self.model.firm.wage_premium / self.model.firm.old_wage_premium)**self.model.mortgage_period - 1
-
-            # # Handle the case where the result is negative
-            # if p_dot < 0:
-            #     p_dot = 0.
-
-        except ZeroDivisionError:
-            # Handle division by zero
-            p_dot = None
-            logging.error(f"ZeroDivisionError at time_step {self.model.time_step} for Land ID {self.unique_id}, old_wage_premium {self.model.firm.old_wage_premium}")
-        except Exception as e:
-            # Handle other exceptions
-            self.model.logger.error(f"An error occurred: {str(e)}")
-            p_dot = None
-        return p_dot
 
     def check_owners_match(self):
         for owned_property in self.owner.properties_owned:
@@ -642,6 +624,23 @@ class Firm(Agent):
         agglomeration_population = self.mult * agent_count + self.seed_population
         return agglomeration_population
 
+    def get_p_dot(self):
+        try:
+            p_dot = (self.model.firm.wage_premium / self.model.firm.old_wage_premium)**self.model.mortgage_period - 1
+
+            # # Handle the case where the result is negative
+            # if p_dot < 0:
+            #     p_dot = 0.
+
+        except ZeroDivisionError:
+            # Handle division by zero
+            p_dot = None
+            logging.error(f"ZeroDivisionError at time_step {self.model.time_step} for Land ID {self.unique_id}, old_wage_premium {self.model.firm.old_wage_premium}")
+        except Exception as e:
+            # Handle other exceptions
+            self.model.logger.error(f"An error occurred: {str(e)}")
+            p_dot = None
+        return p_dot
 class Bank(Agent):
     def __init__(self, unique_id, model, pos):
         super().__init__(unique_id, model)
@@ -756,7 +755,7 @@ class Realtor(Agent):
     def list_property_for_sale(self, seller, sale_property, reservation_price):
         listing = Listing(seller, sale_property, reservation_price)
         self.bids[listing] = []
-        sale_property.get_p_dot()
+        sale_property.p_dot
 
     def add_bid(self, bidder, listing, price, bid_type= ''):
         # Type check for bidder and property
