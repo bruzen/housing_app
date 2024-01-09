@@ -196,7 +196,7 @@ class City(Model):
 
         # Add bank, firm, investor, and realtor
         self.unique_id      += 1
-        self.bank            = Bank(self.unique_id, self, self.center, self.r_prime)
+        self.bank            = Bank(self.unique_id, self, self.center)
         self.grid.place_agent(self.bank, self.center)
         self.schedule.add(self.bank)
         

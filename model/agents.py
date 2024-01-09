@@ -353,8 +353,8 @@ class Person(Agent):
         M = 0.28 * (wage + r * S) / r_prime
 
         # Max mortgage share
-        m = 0.8 # TODO get mortgage share # standard_mortgage_share = 0.8 # TODO make this a parameter
-         # m = max_mortgage_share - lenders_wealth_sensitivity * average_wealth / W
+        m = self.model.max_mortgage_share
+         # m = max_mortgage_share - lenders_wealth_sensitivity * average_wealth / W # TODO adjust max mortgage share
 
         for listing in self.model.realtor.bids:
 
@@ -621,9 +621,7 @@ class Firm(Agent):
         return agglomeration_population
 
 class Bank(Agent):
-    def __init__(self, unique_id, model, pos,
-                 r_prime = 0.05, max_mortgage_share = 0.9,
-                 ):
+    def __init__(self, unique_id, model, pos):
         super().__init__(unique_id, model)
         self.pos = pos
 
@@ -690,7 +688,7 @@ class Investor(Agent):
 
     def bid(self):
         # """Investors bid on investment properties."""
-        m = 0.9 # TODO fix
+        m = self.model.max_mortgage_share # mortgage share
         r = self.borrowing_rate
         r_target = self.model.r_target
 
