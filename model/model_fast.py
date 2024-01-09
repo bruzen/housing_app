@@ -292,11 +292,14 @@ class City(Model):
         # TODO could speed up by making more sparse
         dist = 0
         newcomer_bid_values = []
+        print(f'\n Step {self.time_step}')
         while dist <= extent:
             m     = self.max_mortgage_share
-            R_N   = 0 # TODO FIX - ADD VALUES FOR R_N, p_dot, transport_cost, 
-            p_dot = self.firm.get_p_dot
-            transport_cost = self.land.calculate_transport_cost(dist)
+            self.property.change_dist(dist)
+            print(f'Property dist {self.property.distance_from_center}, transport_cost {self.property.transport_cost}')
+            R_N             = self.property.net_rent # Net rent
+            p_dot           = self.property.p_dot
+            transport_cost  = self.property.transport_cost
             investor_bid,  investor_bid_type = self.investor.get_max_bid(m = m,
                                                R_N   = R_N, 
                                                p_dot = p_dot, 
@@ -312,8 +315,8 @@ class City(Model):
                 newcomer_bid_values.append(newcomer_bid)
             self.newcomer_bid_history.append(newcomer_bid_values)
             dist += 1
-            # print(f'Distance: {dist}')
         # TODO store the grid of output data
+        # Store data about relationship between investor and person bid rent curves
 
     def setup_run_data_collection(self):
         # Setup data collection
