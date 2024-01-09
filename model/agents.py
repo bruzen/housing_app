@@ -258,7 +258,7 @@ class Person(Agent):
                 if self.residence in self.properties_owned:
                     self.model.workforce.add(self, self.model.workforce.retiring_urban_owner)
 
-                    # P_bid    = self.model.bank.get_max_bid(R_N, r, r_target, m, listing.sale_property.p_dot, self.capital_gains_tax, listing.sale_property.transport_cost)            
+                    # P_bid    = self.model.bank.get_max_desired_bid(R_N, r, r_target, m, listing.sale_property.p_dot, self.capital_gains_tax, listing.sale_property.transport_cost)            
                     reservation_price = self.model.bank.get_reservation_price(
                         R_N = self.residence.net_rent, 
                         r = self.model.r_prime, 
@@ -361,7 +361,7 @@ class Person(Agent):
             # First Calculate value of purchase (max bid)
             R_N      = listing.sale_property.net_rent # Need net rent for P_bid
             bid_type = 'value_limited'
-            P_bid    = self.model.bank.get_max_bid(R_N, r, r_target, m, listing.sale_property.p_dot, self.capital_gains_tax, listing.sale_property.transport_cost)
+            P_bid    = self.model.bank.get_max_desired_bid(R_N, r, r_target, m, listing.sale_property.p_dot, self.capital_gains_tax, listing.sale_property.transport_cost)
             # self.model.logger.warning(f'Max bid: {self.unique_id}, bid {P_bid}, R_N {R_N}, r {r}, r {r_target}, m {m}, transport_cost {listing.sale_property.transport_cost}')
 
             if S/(1-m) <= P_bid:
@@ -385,7 +385,7 @@ class Person(Agent):
             # # Old logic, replaced by version above
             # # Max desired bid
             # R_N = listing.sale_property.net_rent
-            # # P_max_bid = self.model.bank.get_max_bid(R_N, r, r_target, m, listing.sale_property.transport_cost)
+            # # P_max_bid = self.model.bank.get_max_desired_bid(R_N, r, r_target, m, listing.sale_property.transport_cost)
 
             # mortgage_share_max = m * P_max_bid # TODO this should have S in it. 
             # mortgage_total_max = M
@@ -627,9 +627,9 @@ class Bank(Agent):
 
     def get_reservation_price(self, R_N, r, r_target, m, p_dot, capital_gains_tax, transport_cost):
         # TODO is it the same as max bid?
-        return self.get_max_bid(R_N, r, r_target, m, p_dot, capital_gains_tax, transport_cost)
+        return self.get_max_desired_bid(R_N, r, r_target, m, p_dot, capital_gains_tax, transport_cost)
 
-    def get_max_bid(self, R_N, r, r_target, m, p_dot, capital_gains_tax, transport_cost):
+    def get_max_desired_bid(self, R_N, r, r_target, m, p_dot, capital_gains_tax, transport_cost):
         T      = self.model.mortgage_period
         delta  = self.model.delta
         # capital_gains_tax = self.model.capital_gains_tax # person and investor send.
@@ -640,7 +640,7 @@ class Bank(Agent):
             return (1 - capital_gains_tax) * R_NT / ((1 - m) * r_target/(delta**T) - p_dot +(1+r)**T*m) # Revised denominator from eqn 6:20
 
         else:
-            self.model.logger.error(f'Get_max_bid None error Rn {R_N}, r {r}, r_target {r_target}, m {m}, p_dot {p_dot}')
+            self.model.logger.error(f'Get_max_desired_bid None error Rn {R_N}, r {r}, r_target {r_target}, m {m}, p_dot {p_dot}')
             return 0. # TODO Temp
 
     def get_average_wealth(self):
@@ -694,7 +694,7 @@ class Investor(Agent):
 
         for listing in self.model.realtor.bids:
             R_N      = listing.sale_property.net_rent
-            P_bid    = self.model.bank.get_max_bid(R_N, r, r_target, m, listing.sale_property.p_dot, self.capital_gains_tax, listing.sale_property.transport_cost)
+            P_bid    = self.model.bank.get_max_desired_bid(R_N, r, r_target, m, listing.sale_property.p_dot, self.capital_gains_tax, listing.sale_property.transport_cost)
             bid_type = 'investor'
             # mortgage = m * P_bid
             self.model.logger.debug(f'Investor {self.unique_id} bids {P_bid} for property {listing.sale_property.unique_id}, if val is positive.')
