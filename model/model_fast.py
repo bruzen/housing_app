@@ -222,10 +222,10 @@ class City(Model):
         self.schedule.add(self.person)
 
         self.unique_id      += 1
-        self.land             = Land(self.unique_id, self, self.center, 
-                                self.params['property_tax_rate'])
-        self.grid.place_agent(self.land, self.center)
-        self.schedule.add(self.land)
+        self.property        = Land(self.unique_id, self, self.center, 
+                                    self.params['property_tax_rate'])
+        self.grid.place_agent(self.property, self.center)
+        self.schedule.add(self.property)
 
         # # Add land and people to each cell
         # self.unique_id      += 1
