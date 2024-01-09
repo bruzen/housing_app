@@ -249,8 +249,8 @@ class City(Model):
         self.newcomer_savings = [min_savings + i * step_size for i in range(no_steps)]
         # print(f'Newcomer savings: {self.newcomer_savings}')
 
-        self.newcomer_bid_rent_history = []
-        
+        self.investor_bid_history = []
+        self.newcomer_bid_history = []
         # self.setup_mesa_data_collection()
         # self.record_step_data()
 
@@ -276,16 +276,18 @@ class City(Model):
         # TODO does this exclude some of the city, effectively rounding down? Do rounding effects matter for the city extent/population calculations?
         # TODO could speed up by making more sparse
         dist = 0
-        newcomer_bid_rent_values = []
+        newcomer_bid_values = []
         while dist <= extent:
             # TODO calculate the bid rent for the investor
-            # investor_bid_rent = dist
+            # investor_bid,  investor_bid_type = self.investor.get_max_bid()
+            # self.investor_bid_history.append(investor_bid)
             for savings_value in self.newcomer_savings:
                 # print(savings_value)
                 # TODO calculate the bid rent for the investor
-                newcomer_bid_rent = savings_value # will make this a function - STORE FOR NOW
-                newcomer_bid_rent_values.append(newcomer_bid_rent)
-            self.newcomer_bid_rent_history.append(newcomer_bid_rent_values)
+                # newcomer_bid,  newcomer_bid_type = self.investor.get_max_bid()
+                newcomer_bid = savings_value # will make this a function - STORE FOR NOW
+                newcomer_bid_values.append(newcomer_bid)
+            self.newcomer_bid_history.append(newcomer_bid_values)
             dist += 1
             # print(f'Distance: {dist}')
         # TODO store the grid of output data
