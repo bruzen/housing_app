@@ -293,13 +293,21 @@ class City(Model):
         dist = 0
         newcomer_bid_values = []
         while dist <= extent:
-            # TODO calculate the bid rent for the investor
-            # investor_bid,  investor_bid_type = self.investor.get_max_bid()
-            # self.investor_bid_history.append(investor_bid)
+            m     = self.max_mortgage_share
+            R_N   = 0 # TODO FIX - ADD VALUES FOR R_N, p_dot, transport_cost, 
+            p_dot = self.firm.get_p_dot
+            transport_cost = self.land.calculate_transport_cost(dist)
+            investor_bid,  investor_bid_type = self.investor.get_max_bid(m = m,
+                                               R_N   = R_N, 
+                                               p_dot = p_dot, 
+                                               transport_cost = transport_cost)
+            self.investor_bid_history.append(investor_bid)
             for savings_value in self.newcomer_savings:
                 # print(savings_value)
-                # TODO calculate the bid rent for the investor
-                # newcomer_bid,  newcomer_bid_type = self.investor.get_max_bid()
+                # Calculate newcomers bid
+                M     = self.person.get_max_mortgage(savings_value)
+                newcomer_bid,  newcomer_bid_type = self.person.get_max_bid(m, M, R_N, p_dot, transport_cost, savings_value)
+                # get_max_bid(self, m, M, R_N, p_dot, transport_cost, savings = None):
                 newcomer_bid = savings_value # will make this a function - STORE FOR NOW
                 newcomer_bid_values.append(newcomer_bid)
             self.newcomer_bid_history.append(newcomer_bid_values)
