@@ -103,15 +103,15 @@ class City(Model):
         self.num_steps = num_steps
         self.time_step = 0
 
-        # self.setup_run_data_collection()
+        self.setup_run_data_collection()
 
-        # logging.basicConfig(filename=self.log_filename,
-        #             filemode='w',
-        #             level=logging.DEBUG,
-        #             format='%(asctime)s %(name)s %(levelname)s:%(message)s')
-        # self.logger = logging.getLogger(__name__)
+        logging.basicConfig(filename=self.log_filename,
+                    filemode='w',
+                    level=logging.DEBUG,
+                    format='%(asctime)s %(name)s %(levelname)s:%(message)s')
+        self.logger = logging.getLogger(__name__)
 
-        # logging.getLogger('matplotlib').setLevel(logging.ERROR) 
+        logging.getLogger('matplotlib').setLevel(logging.ERROR) 
 
         
         self.height = self.params['height']
@@ -315,4 +315,60 @@ class City(Model):
             # print(f'Distance: {dist}')
         # TODO store the grid of output data
 
-        # Store data about relationship between investor and person bid rent curves
+    def setup_run_data_collection(self):
+        # Setup data collection
+        if 'timestamp' in self.params and self.params['timestamp'] is not None:
+            timestamp = self.params['timestamp']
+        else:
+            timestamp = datetime.datetime.now().strftime("%Y-%m-%d_%H%M%S")
+        self.timestamp = timestamp
+
+        if 'subfolder' in self.params and self.params['subfolder'] is not None:
+            subfolder = self.params['subfolder']
+        else:
+            subfolder = self.get_subfolder(folder_name = "output_data", subfolder_name = "run_data")
+        self.subfolder = subfolder
+        
+        # Create folder and filename for logging
+        log_folder = self.get_subfolder(folder_name = "output_data", subfolder_name = "logs")
+        self.run_id    = self.get_run_id(self.model_name, self.timestamp, self.model_version)
+        self.log_filename = os.path.join(log_folder, f'logfile_{self.run_id}.log')
+
+        # Create folder for plots
+        self.figures_folder = self.get_subfolder(folder_name = "output_data", subfolder_name = "figures")
+
+        # Create the 'output_data' subfolder if it doesn't exist
+        if not os.path.exists(self.subfolder):
+            os.makedirs(self.subfolder)
+
+        # agent_filename         = self.run_id + '_agent' + '.csv'
+        # model_filename         = self.run_id + '_model' + '.csv'
+        # self.agent_file_path   = os.path.join(self.subfolder, agent_filename)
+        # self.model_file_path   = os.path.join(self.subfolder, model_filename)
+        # self.metadata_file_path = os.path.join(self.subfolder, 'metadata_run.yaml')
+
+        # metadata = {
+        #     'model_description':     self.model_description,
+        #     'num_steps':             self.num_steps,
+        #     'git_version':           self.get_git_commit_hash(),
+        #     'simulation_parameters': self.params
+        # }
+
+        # self.record_metadata(metadata, self.metadata_file_path)
+
+    def get_run_id(self, model_name, timestamp, model_version):
+        # Adapt the model name to lowercase and replace spaces with underscores
+        formatted_model_name = model_name.lower().replace(" ", "_")
+        unique_id = ''.join(random.choices(string.ascii_uppercase + string.digits, k=3))
+
+        # Create the run_id
+        return f"{formatted_model_name}_{timestamp}_{unique_id}_v{model_version.replace('.', '_')}"
+
+    def get_subfolder(self, folder_name = "output_data", subfolder_name = "run_data"):
+        # Create the subfolder path
+        subfolder = os.path.join(folder_name, subfolder_name)
+        
+        # Create the subfolder if it doesn't exist
+        os.makedirs(subfolder, exist_ok=True)
+        
+        return subfolder

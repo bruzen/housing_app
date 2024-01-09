@@ -47,11 +47,11 @@ class Land(Agent):
         self.transport_cost           = self.calculate_transport_cost()
         self.warranted_rent           = self.get_warranted_rent()
         self.warranted_price          = self.get_warranted_price()
+        self.maintenance              = self.get_maintenance()
         self.realized_price           = - 1
         self.realized_all_steps_price = - 1
         self.ownership_type           = - 1
         self.p_dot                    = None
-        self.maintenance              = self.get_maintenance()
 
     def step(self):
         self.warranted_rent  = self.get_warranted_rent()
@@ -135,6 +135,14 @@ class Land(Agent):
                 return True
         return False
  
+    def change_dist(self, dist):
+        self.model.logger.warning(f'Note land has set rather than calculated distance. Could introduce errors. {self.unique_id}.')
+        self.distance_from_center     = dist # self.calculate_distance_from_center()
+        self.transport_cost           = self.calculate_transport_cost()
+        self.warranted_rent           = self.get_warranted_rent()
+        self.warranted_price          = self.get_warranted_price()
+        self.maintenance              = self.get_maintenance()
+
     def __str__(self):
         return f'Land {self.unique_id} (Dist. {self.distance_from_center}, Pw {self.warranted_price})'
 
