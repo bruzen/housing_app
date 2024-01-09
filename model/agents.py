@@ -340,7 +340,24 @@ class Person(Agent):
         """Newcomers bid on properties for use or investment value."""
         
         # self.model.logger.debug(f'Newcomer bids: {self.unique_id}, count {self.count}')
+        max_mortgage         = self.get_max_mortgage() # M
+        # Max mortgage share
+        max_mortgage_share  = self.model.max_mortgage_share # m
+         # m = max_mortgage_share - lenders_wealth_sensitivity * average_wealth / W # TODO adjust max mortgage share
 
+        for listing in self.model.realtor.bids:
+            net_rent        = listing.sale_property.net_rent # Net rent
+            p_dot           = listing.sale_property.p_dot
+            transport_cost  = listing.sale_property.transport_cost
+            P_bid, bid_type = self.get_max_bid(m     = max_mortgage_share, 
+                                               M     = max_mortgage,
+                                               R_N   = net_rent, 
+                                               p_dot = p_dot, 
+                                               transport_cost = transport_cost)
+
+            self.model.realtor.add_bid(self, listing, P_bid, bid_type)
+
+    def get_max_mortgage(self):
         # W = self.savings # TODO fix self.get_wealth()
         S = self.savings
         r = self.borrowing_rate
@@ -351,66 +368,72 @@ class Person(Agent):
 
         # Max mortgage
         M = 0.28 * (wage + r * S) / r_prime
+        return M
 
-        # Max mortgage share
-        m = self.model.max_mortgage_share
-         # m = max_mortgage_share - lenders_wealth_sensitivity * average_wealth / W # TODO adjust max mortgage share
+    def get_max_bid(self, m, M, R_N, p_dot, transport_cost):
+        # m = mortgage_share
+        # M = max_mortgage # TODO M why not used?
+        # W = self.savings # TODO fix self.get_wealth()
+        S = self.savings
+        r = self.borrowing_rate
+        r_prime  = self.model.r_prime
+        r_target = self.model.r_target # TODO this is personal but uses same as bank. Clarify.        
+        wage     = self.model.firm.wage
+        # average_wealth = # TODO? put in calculation
 
-        for listing in self.model.realtor.bids:
+        # First Calculate value of purchase (max bid)
+        
+        bid_type = 'value_limited'
+        P_bid    = self.model.bank.get_max_desired_bid(R_N, r, r_target, m, p_dot, self.capital_gains_tax, transport_cost)
+        # self.model.logger.warning(f'Max bid: {self.unique_id}, bid {P_bid}, R_N {R_N}, r {r}, r {r_target}, m {m}, transport_cost {transport_cost}')
 
-            # First Calculate value of purchase (max bid)
-            R_N      = listing.sale_property.net_rent # Need net rent for P_bid
-            bid_type = 'value_limited'
-            P_bid    = self.model.bank.get_max_desired_bid(R_N, r, r_target, m, listing.sale_property.p_dot, self.capital_gains_tax, listing.sale_property.transport_cost)
-            # self.model.logger.warning(f'Max bid: {self.unique_id}, bid {P_bid}, R_N {R_N}, r {r}, r {r_target}, m {m}, transport_cost {listing.sale_property.transport_cost}')
+        if S/(1-m) <= P_bid:
+            bid_type = 'equity_limited'
+            P_bid = S/(1-m)
+            self.model.logger.warning(f'Newcomer bid EQUITY LIMITED: {self.unique_id}, bid {P_bid}') #, S {S}, m {m}, .. ')
 
-            if S/(1-m) <= P_bid:
-                bid_type = 'equity_limited'
-                P_bid = S/(1-m)
-                self.model.logger.warning(f'Newcomer bid EQUITY LIMITED: {self.unique_id}, bid {P_bid}') #, S {S}, m {m}, .. ')
+        if (0.28 * (wage + r * S) / r_prime)  <= P_bid:
+            bid_type = 'income_limited'
+            P_bid = 0.28 * (wage + r * S) / r_prime
+            self.model.logger.warning(f'Newcomer bid INCOME LIMITED: {self.unique_id}, bid {P_bid}')
 
-            if (0.28 * (wage + r * S) / r_prime)  <= P_bid:
-                bid_type = 'income_limited'
-                P_bid = 0.28 * (wage + r * S) / r_prime
-                self.model.logger.warning(f'Newcomer bid INCOME LIMITED: {self.unique_id}, bid {P_bid}')
+        if P_bid > 0:
+            bid_type = 'negative'
+            # self.model.logger.warning(f'Newcomer bids: {self.unique_id}, bid {P_bid}')
 
-            if P_bid > 0:
-                # self.model.logger.warning(f'Newcomer bids: {self.unique_id}, bid {P_bid}')
-                self.model.realtor.add_bid(self, listing, P_bid, bid_type)
+        else:
+            bid_type = 'none'
+            self.model.logger.warning(f'Newcomer doesnt bid: {self.unique_id}, bid {P_bid}') #, sale_property {listing.sale_property.unique_id}')
+        return P_bid, bid_type
 
-            else:
-                pass
-                # self.model.logger.warning(f'Newcomer doesnt bid: {self.unique_id}, bid {P_bid}, sale_property {listing.sale_property.unique_id}')
+        # # Old logic, replaced by version above
+        # # Max desired bid
+        # # P_max_bid = self.model.bank.get_max_desired_bid(R_N, r, r_target, m, transport_cost)
 
-            # # Old logic, replaced by version above
-            # # Max desired bid
-            # R_N = listing.sale_property.net_rent
-            # # P_max_bid = self.model.bank.get_max_desired_bid(R_N, r, r_target, m, listing.sale_property.transport_cost)
+        # mortgage_share_max = m * P_max_bid # TODO this should have S in it. 
+        # mortgage_total_max = M
 
-            # mortgage_share_max = m * P_max_bid # TODO this should have S in it. 
-            # mortgage_total_max = M
-
-            # # Agents cannot exceed any of their constraints
-            # if mortgage_share_max < mortgage_total_max:
-            #     # Mortgage share limited
-            #     if mortgage_share_max + S < P_max_bid:
-            #         P_bid = mortgage_share_max + S
-            #         bid_type = 'mortgage_share_limited'
-            #     # Max bid limited
-            #     else:
-            #         P_bid = P_max_bid
-            #         bid_type = 'max_bid_limited'
-            #     mortgage = P_bid - S # TODO is this right? what about savings. 
-            # else:
-            #     mortgage = M
-            #     # Mortgage total limited
-            #     if mortgage_total_max + S < P_max_bid:
-            #         P_bid = mortgage_total_max + S
-            #         bid_type = 'mortgage_total_limited'
-            #     # Max bid limited
-            #     else:
-            #         P_bid = P_max_bid
-            #         bid_type = 'max_bid_limited'
+        # # Agents cannot exceed any of their constraints
+        # if mortgage_share_max < mortgage_total_max:
+        #     # Mortgage share limited
+        #     if mortgage_share_max + S < P_max_bid:
+        #         P_bid = mortgage_share_max + S
+        #         bid_type = 'mortgage_share_limited'
+        #     # Max bid limited
+        #     else:
+        #         P_bid = P_max_bid
+        #         bid_type = 'max_bid_limited'
+        #     mortgage = P_bid - S # TODO is this right? what about savings. 
+        # else:
+        #     mortgage = M
+        #     # Mortgage total limited
+        #     if mortgage_total_max + S < P_max_bid:
+        #         P_bid = mortgage_total_max + S
+        #         bid_type = 'mortgage_total_limited'
+        #     # Max bid limited
+        #     else:
+        #         P_bid = P_max_bid
+        #         bid_type = 'max_bid_limited'
 
     def get_wealth(self):
         # TODO Wealth is properties owned, minus mortgages owed, plus savings.
@@ -689,19 +712,29 @@ class Investor(Agent):
     def bid_on_properties(self):
         # """Investors bid on investment properties."""
         m = self.model.max_mortgage_share # mortgage share
-        r = self.borrowing_rate
-        r_target = self.model.r_target
 
         for listing in self.model.realtor.bids:
-            R_N      = listing.sale_property.net_rent
-            P_bid    = self.model.bank.get_max_desired_bid(R_N, r, r_target, m, listing.sale_property.p_dot, self.capital_gains_tax, listing.sale_property.transport_cost)
-            bid_type = 'investor'
+            R_N             = listing.sale_property.net_rent
+            p_dot           = listing.sale_property.p_dot
+            transport_cost  = listing.sale_property.transport_cost
+            P_bid, bid_type = self.get_max_bid(m = m,
+                                               R_N   = R_N, 
+                                               p_dot = p_dot, 
+                                               transport_cost = transport_cost)
+            # P_bid, bid_type = get_max_bid(R_N=R_N, p_dot, transport_cost)
             # mortgage = m * P_bid
             self.model.logger.debug(f'Investor {self.unique_id} bids {P_bid} for property {listing.sale_property.unique_id}, if val is positive.')
             if P_bid > 0:
                 self.model.realtor.add_bid(self, listing, P_bid, bid_type)
             else:
                 self.model.logger.debug(f'Investor doesn\'t bid: {self.unique_id}')
+
+    def get_max_bid(self, m, R_N, p_dot, transport_cost):
+        r = self.borrowing_rate
+        r_target = self.model.r_target
+        P_bid    = self.model.bank.get_max_desired_bid(R_N, r, r_target, m, p_dot, self.capital_gains_tax, transport_cost)
+        bid_type = 'investor'
+        return P_bid, bid_type
 
     def __str__(self):
         return f'Investor {self.unique_id}'
