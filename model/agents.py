@@ -336,7 +336,7 @@ class Person(Agent):
         else:
             self.model.workforce.remove(self, self.model.workforce.workers)
 
-    def bid(self):
+    def bid_on_properties(self):
         """Newcomers bid on properties for use or investment value."""
         
         # self.model.logger.debug(f'Newcomer bids: {self.unique_id}, count {self.count}')
@@ -686,7 +686,7 @@ class Investor(Agent):
             self.model.logger.warning(f'No capital gains tax for investor {self.unique_id}.')
         self.capital_gains_tax     = capital_gains_tax
 
-    def bid(self):
+    def bid_on_properties(self):
         # """Investors bid on investment properties."""
         m = self.model.max_mortgage_share # mortgage share
         r = self.borrowing_rate

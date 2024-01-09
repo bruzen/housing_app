@@ -314,14 +314,14 @@ class City(Model):
                 top_savings = savings_values.pop()
                 # top_savings = 0.
                 person = self.create_newcomer(top_savings)
-                person.bid()
+                person.bid_on_properties()
             else:
                 # Handle the case where there are no more savings values
                 # You might want to break out of the loop or take other appropriate actions
                 self.logger.error(f'Did not create newcomer since not enough savings values.')
 
         # Investors bid on properties
-        self.schedule.step_breed(Investor, step_name='bid')
+        self.schedule.step_breed(Investor, step_name='bid_on_properties')
 
         # Realtors sell homes
         self.schedule.step_breed(Realtor, step_name='sell_homes')
