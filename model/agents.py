@@ -321,10 +321,9 @@ class Person(Agent):
         """Newcomers bid on properties for use or investment value."""
         
         # self.model.logger.debug(f'Newcomer bids: {self.unique_id}, count {self.count}')
-        max_mortgage         = self.get_max_mortgage() # M
-        # Max mortgage share
-        max_mortgage_share  = self.model.max_mortgage_share # m
-         # m = max_mortgage_share - lenders_wealth_sensitivity * average_wealth / W # TODO adjust max mortgage share
+        # m = max_mortgage_share - lenders_wealth_sensitivity * average_wealth / W # TODO adjust max mortgage share
+        max_mortgage_share  = self.model.max_mortgage_share # m # TODO make wealth dependant?
+        max_mortgage         = self.get_max_mortgage()      # M
 
         for listing in self.model.realtor.bids:
             net_rent        = listing.sale_property.net_rent # Net rent
@@ -338,9 +337,9 @@ class Person(Agent):
 
             self.model.realtor.add_bid(self, listing, P_bid, bid_type)
 
-    def get_max_mortgage(self):
+    def get_max_mortgage(self, savings = None):
         # W = self.savings # TODO fix self.get_wealth()
-        S = self.savings
+        S = savings if savings is not None else self.savings
         r = self.borrowing_rate
         r_prime  = self.model.r_prime
         r_target = self.model.r_target # TODO this is personal but uses same as bank. Clarify.        
@@ -351,11 +350,11 @@ class Person(Agent):
         M = 0.28 * (wage + r * S) / r_prime
         return M
 
-    def get_max_bid(self, m, M, R_N, p_dot, transport_cost):
+    def get_max_bid(self, m, M, R_N, p_dot, transport_cost, savings = None):
         # m = mortgage_share
         # M = max_mortgage # TODO M why not used?
         # W = self.savings # TODO fix self.get_wealth()
-        S = self.savings
+        S = savings if savings is not None else self.savings
         r = self.borrowing_rate
         r_prime  = self.model.r_prime
         r_target = self.model.r_target # TODO this is personal but uses same as bank. Clarify.        
