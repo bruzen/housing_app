@@ -212,6 +212,16 @@ class City(Model):
         self.grid.place_agent(self.realtor, self.center)
         self.schedule.add(self.realtor)
 
+        self.unique_id      += 1
+        person  = Person(self.unique_id, self, self.center,
+                            init_working_period = 0,
+                            savings             = 0,
+                            capital_gains_tax   = self.params['cg_tax_per'],
+                            residence_owned     = None)
+        self.grid.place_agent(person, self.center)
+        self.schedule.add(person)
+
+
         # # Add land and people to each cell
         # self.unique_id      += 1
         # for cell in self.grid.coord_iter():
