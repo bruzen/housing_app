@@ -627,8 +627,9 @@ class Firm(Agent):
         return agglomeration_population
 
     def get_N_from_city_extent(self, city_extent):
-        agent_count = math.pi * (city_extent ** 2) #  radius of the circular city
-        agglomeration_population = self.mult * agent_count + self.seed_population
+        # agent_count = math.pi * (city_extent ** 2) #  Euclidian radius of the circular city
+        agent_count = 2 * (city_extent ** 2)         #  Block metric radius of the circular city
+        agglomeration_population = self.mult * self.density * agent_count + self.seed_population
         return agglomeration_population
 
     def get_p_dot(self):
