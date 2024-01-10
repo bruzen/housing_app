@@ -1,18 +1,17 @@
 import logging
 import os
-import yaml
+# import yaml
 # import functools
 import datetime
 import random
 import string
-from typing import Dict, List
+# from typing import Dict, List
 # from contextlib import contextmanager
-import subprocess
+# import subprocess
 # import math
-# import numpy as np
+import numpy as np
 # import pandas as pd
-from scipy.spatial import distance
-
+# from scipy.spatial import distance
 from mesa import Model
 from mesa.space import MultiGrid
 from mesa.datacollection import DataCollector
@@ -259,14 +258,17 @@ class City(Model):
         # Create a list of savings levels representing newcomers who will bid
         min_savings = -20000
         max_savings = 200000
-        no_steps = 5
+        no_steps = 4
         step_size = (max_savings - min_savings) / (no_steps - 1)
         self.newcomer_savings = [min_savings + i * step_size for i in range(no_steps)]
-        # print(f'Newcomer savings: {self.newcomer_savings}')
+        print(f'Newcomer savings: {self.newcomer_savings}')
 
-        self.investor_bid_history = []
-        self.newcomer_bid_history = []
-        # self.setup_mesa_data_collection()
+        # self.investor_bid_history = []
+        # self.newcomer_bid_history = []
+        self.investor_bid_history = np.array([])
+        self.newcomer_bid_history = np.array([])
+
+        self.setup_mesa_data_collection()
         # self.record_step_data()
 
         # # Run the firm for several steps to stabilize
@@ -282,21 +284,24 @@ class City(Model):
 
         # Firm updates wages based on agglomeration population
         self.firm.step()
+        investor_bid_values = np.array([])
+        newcomer_bid_values = np.array([])
+        print(f'\n Step {self.time_step}')
 
         # Firm updates agglomeration population based on calculated city extent
+        print(self.firm.N)
         extent = self.city_extent_calc
         self.firm.N = self.firm.get_N_from_city_extent(extent)
+        print(self.firm.N)
 
         # Calculate bid_rent values function of distance and person's savings
         # TODO does this exclude some of the city, effectively rounding down? Do rounding effects matter for the city extent/population calculations?
         # TODO could speed up by making more sparse
         dist = 0
-        newcomer_bid_values = []
-        print(f'\n Step {self.time_step}')
         while dist <= extent:
             m     = self.max_mortgage_share
             self.property.change_dist(dist)
-            print(f'Property dist {self.property.distance_from_center}, transport_cost {self.property.transport_cost}')
+            
             R_N             = self.property.net_rent # Net rent
             p_dot           = self.property.p_dot
             transport_cost  = self.property.transport_cost
@@ -304,17 +309,27 @@ class City(Model):
                                                R_N   = R_N, 
                                                p_dot = p_dot, 
                                                transport_cost = transport_cost)
-            self.investor_bid_history.append(investor_bid)
+            print(f'bid {investor_bid}, m {m}, R_N {R_N}, p_Dot {p_dot}, transp {transport_cost}')
+            # self.investor_bid_history.append(investor_bid)
+            # print(f'Property dist {self.property.distance_from_center}, transport_cost {self.property.transport_cost}, i_bid {investor_bid} {investor_bid_type}')
+            investor_bid_values = np.append(investor_bid_values, investor_bid)
+            newcomer_bid_values = np.array([])
             for savings_value in self.newcomer_savings:
                 # print(savings_value)
                 # Calculate newcomers bid
                 M     = self.person.get_max_mortgage(savings_value)
                 newcomer_bid,  newcomer_bid_type = self.person.get_max_bid(m, M, R_N, p_dot, transport_cost, savings_value)
                 # get_max_bid(self, m, M, R_N, p_dot, transport_cost, savings = None):
-                newcomer_bid = savings_value # will make this a function - STORE FOR NOW
-                newcomer_bid_values.append(newcomer_bid)
-            self.newcomer_bid_history.append(newcomer_bid_values)
+                # newcomer_bid = savings_value # will make this a function - STORE FOR NOW
+                newcomer_bid_values = np.append(newcomer_bid_values, newcomer_bid)
+            # print(newcomer_bid_values)
+            #     newcomer_bid_values.append(newcomer_bid)
+            # self.newcomer_bid_history.append(newcomer_bid_values)
             dist += 1
+        self.investor_bid_history = np.append(self.investor_bid_history, investor_bid_values)
+        self.newcomer_bid_history = np.append(self.newcomer_bid_history, newcomer_bid_values)
+        print(self.investor_bid_history)
+        # print(self.newcomer_bid_history)
         # TODO store the grid of output data
         # Store data about relationship between investor and person bid rent curves
         self.datacollector.collect(self)
@@ -392,12 +407,12 @@ class City(Model):
             # "share_captured_by_finance": lambda m: m.share_captured_by_finance,
             # "urban_surplus":             lambda m: m.urban_surplus,
             # "removed_agents":            lambda m: m.removed_agents,
-            # "n":                         lambda m: m.firm.n,
-            # "y":                         lambda m: m.firm.y,
-            # "F_target":                  lambda m: m.firm.F_target,
-            # "F":                         lambda m: m.firm.F,
-            # "k":                         lambda m: m.firm.k,
-            # "N":                         lambda m: m.firm.N,
+            "n":                         lambda m: m.firm.n,
+            "y":                         lambda m: m.firm.y,
+            "F_target":                  lambda m: m.firm.F_target,
+            "F":                         lambda m: m.firm.F,
+            "k":                         lambda m: m.firm.k,
+            "N":                         lambda m: m.firm.N,
             # # "agglomeration_population":  lambda m: m.firm.agglomeration_population, # TODO delete
             # "Y":                         lambda m: m.firm.Y,
             "wage_premium":              lambda m: m.firm.wage_premium,
