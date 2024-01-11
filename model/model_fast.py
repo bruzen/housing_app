@@ -263,8 +263,18 @@ class City(Model):
         self.newcomer_savings = [min_savings + i * step_size for i in range(no_steps)]
         print(f'Newcomer savings: {self.newcomer_savings}')
 
-        self.investor_bid_data = []
-        self.newcomer_bid_data = []
+        self.step_data = {
+            "dist":            [],
+            "m":               [],
+            "R_N":             [],
+            "p_dot":           [],
+            "transport_cost":  [],
+            "investor_bid":    [],
+            "warranted_rent":  [],
+            "warranted_price": [],
+            "maintenance":     [],
+            "newcomer_bid":    [],
+        }
 
         self.setup_mesa_data_collection()
         # self.record_step_data()
@@ -279,10 +289,7 @@ class City(Model):
 
     def step_fast(self):
         self.time_step += 1
-        self.investor_bid_data = []
-        self.newcomer_bid_data = []
-
-        # print(f'\n Step {self.time_step}')
+        self.reset_step_data_lists()
 
         # Firm updates wages based on agglomeration population
         self.firm.step()
@@ -294,11 +301,10 @@ class City(Model):
         # Calculate bid_rent values function of distance and person's savings
         # TODO does this exclude some of the city, effectively rounding down? Do rounding effects matter for the city extent/population calculations?
         dist = 0
-        newcomer_data = []
         while dist <= extent:
-            m     = self.max_mortgage_share
+            m       = self.max_mortgage_share
             self.property.change_dist(dist)
-            
+
             R_N             = self.property.net_rent
             p_dot           = self.property.p_dot
             transport_cost  = self.property.transport_cost
@@ -306,19 +312,27 @@ class City(Model):
                                                R_N   = R_N,
                                                p_dot = p_dot,
                                                transport_cost = transport_cost)
-            self.investor_bid_data.append((investor_bid, dist))
+
+            warranted_rent  = self.property.get_warranted_rent()
+            warranted_price = self.property.get_warranted_price()
+            maintenance     = self.property.get_maintenance()
+
+            attributes_to_append = ["dist", "m", "R_N", "p_dot", "transport_cost", "investor_bid", "warranted_rent", "warranted_price", "maintenance"]
+            for attribute in attributes_to_append:
+                value = locals()[attribute]  # Get the value of the attribute
+                # self.step_data[attribute].append((value, dist))
+                self.step_data[attribute].append(value)
+
             # print(f'bid {investor_bid}, m {m}, R_N {R_N}, p_Dot {p_dot}, transp {transport_cost}')
             # print(f'Property dist {self.property.distance_from_center}, transport_cost {self.property.transport_cost}, i_bid {investor_bid} {investor_bid_type}')
+
             for savings_value in self.newcomer_savings:
                 # Calculate newcomers bid
                 M     = self.person.get_max_mortgage(savings_value)
                 newcomer_bid,  newcomer_bid_type = self.person.get_max_bid(m, M, R_N, p_dot, transport_cost, savings_value)
-                # newcomer_data.append((dist, savings_value, newcomer_bid))
-                self.newcomer_bid_data.append((newcomer_bid, dist, savings_value))
+                self.step_data["newcomer_bid"].append((newcomer_bid, dist, savings_value))
             dist += 1
         self.datacollector.collect(self)
-        # newcomer_data_path = os.path.join(self.data_folder, f'newcomer-data-{self.time_step}-{self.run_id}.npy')
-        # np.save(newcomer_data_path, np.array(newcomer_data))
 
     def setup_run_data_collection(self):
         # TODO adjust as in model for batch runs
@@ -410,8 +424,16 @@ class City(Model):
             #     [a for a in self.schedule.agents_by_breed[Person].values()
             #              if a.is_working == 1]
             # )
-            "investor_bid_data":             lambda m: m.investor_bid_data,
-            "newcomer_bid_data":             lambda m: m.newcomer_bid_data,
+            "dist":            lambda m: m.step_data["dist"],
+            "m":               lambda m: m.step_data["m"],
+            "R_N":             lambda m: m.step_data["R_N"],
+            "p_dot":           lambda m: m.step_data["p_dot"],
+            "transport_cost":  lambda m: m.step_data["transport_cost"],
+            "investor_bid":    lambda m: m.step_data["investor_bid"],
+            "warranted_rent":  lambda m: m.step_data["warranted_rent"],
+            "warranted_price": lambda m: m.step_data["warranted_price"],
+            "maintenance":     lambda m: m.step_data["maintenance"],
+            "newcomer_bid":    lambda m: m.step_data["newcomer_bid"],
         }
 
         agent_reporters      = {
@@ -476,3 +498,8 @@ class City(Model):
         os.makedirs(subfolder, exist_ok=True)
         
         return subfolder
+
+    def reset_step_data_lists(self):
+        # Reset all lists within step_data
+        for key in self.step_data:
+            self.step_data[key] = []
