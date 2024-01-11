@@ -385,9 +385,10 @@ class Person(Agent):
             P_bid = 0.28 * (wage + r * S) / r_prime
             self.model.logger.warning(f'Newcomer bid INCOME LIMITED: {self.unique_id}, bid {P_bid}')
 
-        if P_bid > 0:
+        if P_bid < 0:
             bid_type = 'negative'
-            # self.model.logger.warning(f'Newcomer bids: {self.unique_id}, bid {P_bid}')
+            # P_bid = 0
+            self.model.logger.warning(f'Newcomer bid is NEGATIVE: {self.unique_id}, bid {P_bid}')
 
         else:
             bid_type = 'none'

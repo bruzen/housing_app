@@ -286,18 +286,19 @@ class City(Model):
         self.firm.step()
         investor_bid_values = np.array([])
         newcomer_bid_values = np.array([])
-        print(f'\n Step {self.time_step}')
+        # print(f'\n Step {self.time_step}')
 
         # Firm updates agglomeration population based on calculated city extent
-        print(self.firm.N)
+        # print(self.firm.N)
         extent = self.city_extent_calc
         self.firm.N = self.firm.get_N_from_city_extent(extent)
-        print(self.firm.N)
+        # print(self.firm.N)
 
         # Calculate bid_rent values function of distance and person's savings
         # TODO does this exclude some of the city, effectively rounding down? Do rounding effects matter for the city extent/population calculations?
         # TODO could speed up by making more sparse
         dist = 0
+        newcomer_data = []
         while dist <= extent:
             m     = self.max_mortgage_share
             self.property.change_dist(dist)
@@ -309,7 +310,7 @@ class City(Model):
                                                R_N   = R_N, 
                                                p_dot = p_dot, 
                                                transport_cost = transport_cost)
-            print(f'bid {investor_bid}, m {m}, R_N {R_N}, p_Dot {p_dot}, transp {transport_cost}')
+            # print(f'bid {investor_bid}, m {m}, R_N {R_N}, p_Dot {p_dot}, transp {transport_cost}')
             # self.investor_bid_history.append(investor_bid)
             # print(f'Property dist {self.property.distance_from_center}, transport_cost {self.property.transport_cost}, i_bid {investor_bid} {investor_bid_type}')
             investor_bid_values = np.append(investor_bid_values, investor_bid)
@@ -322,17 +323,19 @@ class City(Model):
                 # get_max_bid(self, m, M, R_N, p_dot, transport_cost, savings = None):
                 # newcomer_bid = savings_value # will make this a function - STORE FOR NOW
                 newcomer_bid_values = np.append(newcomer_bid_values, newcomer_bid)
+                newcomer_data.append((dist, savings_value, newcomer_bid))
             # print(newcomer_bid_values)
             #     newcomer_bid_values.append(newcomer_bid)
             # self.newcomer_bid_history.append(newcomer_bid_values)
             dist += 1
         self.investor_bid_history = np.append(self.investor_bid_history, investor_bid_values)
         self.newcomer_bid_history = np.append(self.newcomer_bid_history, newcomer_bid_values)
-        print(self.investor_bid_history)
+        # print(self.investor_bid_history)
         # print(self.newcomer_bid_history)
         # TODO store the grid of output data
         # Store data about relationship between investor and person bid rent curves
         self.datacollector.collect(self)
+        np.save(f'newcomer_data_{self.time_step}.npy', np.array(newcomer_data))
 
 
     def setup_run_data_collection(self):
