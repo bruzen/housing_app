@@ -263,10 +263,6 @@ class City(Model):
         self.newcomer_savings = [min_savings + i * step_size for i in range(no_steps)]
         print(f'Newcomer savings: {self.newcomer_savings}')
 
-        # self.investor_bid_history = []
-        # self.newcomer_bid_history = []
-        self.investor_bid_history = np.array([])
-        self.newcomer_bid_history = np.array([])
 
         self.setup_mesa_data_collection()
         # self.record_step_data()
@@ -281,93 +277,67 @@ class City(Model):
 
     def step_fast(self):
         self.time_step += 1
+        # print(f'\n Step {self.time_step}')
 
         # Firm updates wages based on agglomeration population
         self.firm.step()
-        investor_bid_values = np.array([])
-        newcomer_bid_values = np.array([])
-        # print(f'\n Step {self.time_step}')
 
         # Firm updates agglomeration population based on calculated city extent
-        # print(self.firm.N)
         extent = self.city_extent_calc
         self.firm.N = self.firm.get_N_from_city_extent(extent)
-        # print(self.firm.N)
 
         # Calculate bid_rent values function of distance and person's savings
         # TODO does this exclude some of the city, effectively rounding down? Do rounding effects matter for the city extent/population calculations?
-        # TODO could speed up by making more sparse
         dist = 0
         newcomer_data = []
         while dist <= extent:
             m     = self.max_mortgage_share
             self.property.change_dist(dist)
             
-            R_N             = self.property.net_rent # Net rent
+            R_N             = self.property.net_rent
             p_dot           = self.property.p_dot
             transport_cost  = self.property.transport_cost
             investor_bid,  investor_bid_type = self.investor.get_max_bid(m = m,
-                                               R_N   = R_N, 
-                                               p_dot = p_dot, 
+                                               R_N   = R_N,
+                                               p_dot = p_dot,
                                                transport_cost = transport_cost)
             # print(f'bid {investor_bid}, m {m}, R_N {R_N}, p_Dot {p_dot}, transp {transport_cost}')
-            # self.investor_bid_history.append(investor_bid)
             # print(f'Property dist {self.property.distance_from_center}, transport_cost {self.property.transport_cost}, i_bid {investor_bid} {investor_bid_type}')
-            investor_bid_values = np.append(investor_bid_values, investor_bid)
-            newcomer_bid_values = np.array([])
             for savings_value in self.newcomer_savings:
-                # print(savings_value)
                 # Calculate newcomers bid
                 M     = self.person.get_max_mortgage(savings_value)
                 newcomer_bid,  newcomer_bid_type = self.person.get_max_bid(m, M, R_N, p_dot, transport_cost, savings_value)
-                # get_max_bid(self, m, M, R_N, p_dot, transport_cost, savings = None):
-                # newcomer_bid = savings_value # will make this a function - STORE FOR NOW
-                newcomer_bid_values = np.append(newcomer_bid_values, newcomer_bid)
                 newcomer_data.append((dist, savings_value, newcomer_bid))
-            # print(newcomer_bid_values)
-            #     newcomer_bid_values.append(newcomer_bid)
-            # self.newcomer_bid_history.append(newcomer_bid_values)
             dist += 1
-        self.investor_bid_history = np.append(self.investor_bid_history, investor_bid_values)
-        self.newcomer_bid_history = np.append(self.newcomer_bid_history, newcomer_bid_values)
-        # print(self.investor_bid_history)
-        # print(self.newcomer_bid_history)
-        # TODO store the grid of output data
-        # Store data about relationship between investor and person bid rent curves
         self.datacollector.collect(self)
-        np.save(f'newcomer_data_{self.time_step}.npy', np.array(newcomer_data))
-
+        newcomer_data_path = os.path.join(self.data_folder, f'newcomer-data-{self.time_step}-{self.run_id}.npy')
+        np.save(newcomer_data_path, np.array(newcomer_data))
 
     def setup_run_data_collection(self):
-        # Setup data collection
+        # TODO adjust as in model for batch runs
+        # Get timestamp
         if 'timestamp' in self.params and self.params['timestamp'] is not None:
             timestamp = self.params['timestamp']
         else:
             timestamp = datetime.datetime.now().strftime("%Y-%m-%d_%H%M%S")
         self.timestamp = timestamp
-
-        if 'subfolder' in self.params and self.params['subfolder'] is not None:
-            subfolder = self.params['subfolder']
-        else:
-            subfolder = self.get_subfolder(folder_name = "output_data", subfolder_name = "run_data")
-        self.subfolder = subfolder
         
         # Create folder and filename for logging
-        log_folder = self.get_subfolder(folder_name = "output_data", subfolder_name = "logs")
+        log_folder = self.get_subfolder(folder_name = "output_data", subfolder_name = "fast_logs")
         self.run_id    = self.get_run_id(self.model_name, self.timestamp, self.model_version)
         self.log_filename = os.path.join(log_folder, f'logfile_{self.run_id}.log')
 
         # Create folder for plots
-        self.figures_folder = self.get_subfolder(folder_name = "output_data", subfolder_name = "figures")
+        self.figures_folder = self.get_subfolder(folder_name = "output_data", subfolder_name = "fast_figures")
 
-        # Create the 'output_data' subfolder if it doesn't exist
-        if not os.path.exists(self.subfolder):
-            os.makedirs(self.subfolder)
-
+        # Create folder and filenames for data output
+        data_folder = self.get_subfolder(folder_name = "output_data", subfolder_name = "fast_run_data")
+        self.data_folder = data_folder
         agent_filename         = self.run_id + '_agent' + '.csv'
         model_filename         = self.run_id + '_model' + '.csv'
-        self.agent_file_path   = os.path.join(self.subfolder, agent_filename)
-        self.model_file_path   = os.path.join(self.subfolder, model_filename)
+        self.agent_file_path   = os.path.join(self.data_folder, agent_filename)
+        self.model_file_path   = os.path.join(self.data_folder, model_filename)
+
         # self.metadata_file_path = os.path.join(self.subfolder, 'metadata_run.yaml')
 
         # metadata = {
