@@ -263,8 +263,8 @@ class City(Model):
         self.newcomer_savings = [min_savings + i * step_size for i in range(no_steps)]
         print(f'Newcomer savings: {self.newcomer_savings}')
 
-        self.investor_bids = []
-        self.newcomer_bids = []
+        self.investor_bid_data = []
+        self.newcomer_bid_data = []
 
         self.setup_mesa_data_collection()
         # self.record_step_data()
@@ -279,7 +279,9 @@ class City(Model):
 
     def step_fast(self):
         self.time_step += 1
-        self.newcomer_bids = []
+        self.investor_bid_data = []
+        self.newcomer_bid_data = []
+
         # print(f'\n Step {self.time_step}')
 
         # Firm updates wages based on agglomeration population
@@ -304,7 +306,7 @@ class City(Model):
                                                R_N   = R_N,
                                                p_dot = p_dot,
                                                transport_cost = transport_cost)
-            self.investor_bids.append((investor_bid, dist))
+            self.investor_bid_data.append((investor_bid, dist))
             # print(f'bid {investor_bid}, m {m}, R_N {R_N}, p_Dot {p_dot}, transp {transport_cost}')
             # print(f'Property dist {self.property.distance_from_center}, transport_cost {self.property.transport_cost}, i_bid {investor_bid} {investor_bid_type}')
             for savings_value in self.newcomer_savings:
@@ -312,7 +314,7 @@ class City(Model):
                 M     = self.person.get_max_mortgage(savings_value)
                 newcomer_bid,  newcomer_bid_type = self.person.get_max_bid(m, M, R_N, p_dot, transport_cost, savings_value)
                 # newcomer_data.append((dist, savings_value, newcomer_bid))
-                self.newcomer_bids.append((newcomer_bid, dist, savings_value))
+                self.newcomer_bid_data.append((newcomer_bid, dist, savings_value))
             dist += 1
         self.datacollector.collect(self)
         # newcomer_data_path = os.path.join(self.data_folder, f'newcomer-data-{self.time_step}-{self.run_id}.npy')
@@ -408,8 +410,8 @@ class City(Model):
             #     [a for a in self.schedule.agents_by_breed[Person].values()
             #              if a.is_working == 1]
             # )
-            "investor_bids":             lambda m: m.investor_bids,
-            "newcomer_bids":             lambda m: m.newcomer_bids,
+            "investor_bid_data":             lambda m: m.investor_bid_data,
+            "newcomer_bid_data":             lambda m: m.newcomer_bid_data,
         }
 
         agent_reporters      = {
