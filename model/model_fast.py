@@ -110,9 +110,8 @@ class City(Model):
                     format='%(asctime)s %(name)s %(levelname)s:%(message)s')
         self.logger = logging.getLogger(__name__)
 
-        logging.getLogger('matplotlib').setLevel(logging.ERROR) 
+        logging.getLogger('matplotlib').setLevel(logging.ERROR)
 
-        
         self.height = self.params['height']
         self.width  = self.params['width']
 
