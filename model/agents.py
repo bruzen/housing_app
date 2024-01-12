@@ -142,6 +142,7 @@ class Land(Agent):
         self.warranted_rent           = self.get_warranted_rent()
         self.warranted_price          = self.get_warranted_price()
         self.maintenance              = self.get_maintenance()
+        self.p_dot                    = self.model.firm.get_p_dot()
 
     def __str__(self):
         return f'Land {self.unique_id} (Dist. {self.distance_from_center}, Pw {self.warranted_price})'
