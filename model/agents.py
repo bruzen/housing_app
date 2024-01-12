@@ -59,7 +59,7 @@ class Land(Agent):
 
         # self.p_dot = None # Calculate when properties are listed for sale
         if (self.model.firm.wage_premium > self.transport_cost):
-            self.p_dot       = self.model.firm.get_p_dot()
+            self.p_dot       = self.model.firm.p_dot
         else:
             self.p_dot       = None 
 
@@ -142,7 +142,7 @@ class Land(Agent):
         self.warranted_rent           = self.get_warranted_rent()
         self.warranted_price          = self.get_warranted_price()
         self.maintenance              = self.get_maintenance()
-        self.p_dot                    = self.model.firm.get_p_dot()
+        self.p_dot                    = self.model.firm.p_dot
 
     def __str__(self):
         return f'Land {self.unique_id} (Dist. {self.distance_from_center}, Pw {self.warranted_price})'
@@ -460,6 +460,25 @@ class Firm(Agent):
     #     total_no_workers = self.model.workforce.get_agent_count(self.model.workforce.workers)
     #     return total_no_workers * self.density + self.seed_population
 
+    @property
+    def p_dot(self):
+        try:
+            p_dot = (self.model.firm.wage_premium / self.model.firm.old_wage_premium)**self.model.mortgage_period - 1
+
+            # # Handle the case where the result is negative
+            # if p_dot < 0:
+            #     p_dot = 0.
+
+        except ZeroDivisionError:
+            # Handle division by zero
+            p_dot = None
+            logging.error(f"ZeroDivisionError at time_step {self.model.time_step} for Land ID {self.unique_id}, old_wage_premium {self.model.firm.old_wage_premium}")
+        except Exception as e:
+            # Handle other exceptions
+            self.model.logger.error(f"An error occurred: {str(e)}")
+            p_dot = None
+        return p_dot
+
     def __init__(self, unique_id, model, pos, 
                  subsistence_wage,
                  init_wage_premium_ratio,
@@ -634,23 +653,6 @@ class Firm(Agent):
         agglomeration_population = self.mult * self.density * agent_count + self.seed_population
         return agglomeration_population
 
-    def get_p_dot(self):
-        try:
-            p_dot = (self.model.firm.wage_premium / self.model.firm.old_wage_premium)**self.model.mortgage_period - 1
-
-            # # Handle the case where the result is negative
-            # if p_dot < 0:
-            #     p_dot = 0.
-
-        except ZeroDivisionError:
-            # Handle division by zero
-            p_dot = None
-            logging.error(f"ZeroDivisionError at time_step {self.model.time_step} for Land ID {self.unique_id}, old_wage_premium {self.model.firm.old_wage_premium}")
-        except Exception as e:
-            # Handle other exceptions
-            self.model.logger.error(f"An error occurred: {str(e)}")
-            p_dot = None
-        return p_dot
 class Bank(Agent):
     def __init__(self, unique_id, model, pos):
         super().__init__(unique_id, model)

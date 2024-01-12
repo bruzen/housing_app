@@ -409,6 +409,7 @@ class City(Model):
             # # "agglomeration_population":  lambda m: m.firm.agglomeration_population, # TODO delete
             # "Y":                         lambda m: m.firm.Y,
             "wage_premium":              lambda m: m.firm.wage_premium,
+            "p_dot":                     lambda m: m.firm.p_dot,
             # "subsistence_wage":          lambda m: m.firm.subsistence_wage,
             # "wage":                      lambda m: m.firm.wage,
             # # "worker_agents":           lambda m: m.workforce.get_agent_count(m.workforce.workers),
@@ -423,14 +424,14 @@ class City(Model):
             #     [a for a in self.schedule.agents_by_breed[Person].values()
             #              if a.is_working == 1]
             # )
-            "dist":            lambda m: m.step_data["dist"],
-            "m":               lambda m: m.step_data["m"],
-            "R_N":             lambda m: m.step_data["R_N"],
-            "p_dot":           lambda m: m.step_data["p_dot"],
-            "transport_cost":  lambda m: m.step_data["transport_cost"],
             "investor_bid":    lambda m: m.step_data["investor_bid"],
             "warranted_rent":  lambda m: m.step_data["warranted_rent"],
             "warranted_price": lambda m: m.step_data["warranted_price"],
+            "dist":            lambda m: m.step_data["dist"],
+            # "m":               lambda m: m.step_data["m"],
+            "R_N":             lambda m: m.step_data["R_N"],
+            # "p_dot":           lambda m: m.step_data["p_dot"],
+            "transport_cost":  lambda m: m.step_data["transport_cost"],
             "maintenance":     lambda m: m.step_data["maintenance"],
             "newcomer_bid":    lambda m: m.step_data["newcomer_bid"],
         }
