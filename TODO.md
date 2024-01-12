@@ -1,5 +1,6 @@
-
 # TODO List
+
+## Next
 - Fast version of the code where we track alternative bids/bid rent curves - actual bids/prices
     - Run on sharcnet
     - Show end grid
@@ -37,6 +38,9 @@ The basic fiancialization result is clear from looking at the model. The equatio
 - [ ] Replace density - Vintage housing stock - houses live 60. added at edge. get bigger with time. get added after some time.. have a fixed density.. - replaced at cost 1. add at the edge and have a fixed density. 2. as time passes, density falls but size rises - the pattern in american cities - at the edges. justify by modifying the transportation costs - transportation costs fall which let the city spreads faster (or fall as you farther out - highway etc) 3. near the core do a replacement - replacement with high density. (every 60 years - agent cost.- depreciation curve for the house. -and a cost to go up - 6 story and make that work. then do that. then introduce) 4. then do another layer on the inside.
 - [ ] (Spatially distributed density) - tenancy increase avg density - productivity in the city goes up somewhat.. get effect we're talking about.  rents are being extracted.. - savings level is actually declining if we do xyz. if the savings depended on just the share of work being captured by owners
 - [ ] Check: Implement individual_wealth_adjustment as stated in comment - Plot individual_wealth_adjustment etc
+- [ ] Make max_mortgage_share wealth dependant
+- [ ] FIX N vs aglom_pop = mult * N  + seed (where N is density*agent_count) # makes clear its equalt to a count of lots
+- [ ] Note Changes in self.model.bank.max_mortgage_share - were not used until correction
 
 ## Plotting and runs
 - [ ] Record/plot total rents

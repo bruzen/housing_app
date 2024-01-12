@@ -6,11 +6,11 @@ import datetime
 import random
 import string
 from typing import Dict, List
-from contextlib import contextmanager
+# from contextlib import contextmanager
 import subprocess
 # import math
-import numpy as np
-import pandas as pd
+# import numpy as np
+# import pandas as pd
 from scipy.spatial import distance
 
 # from sklearn.linear_model import LinearRegression
@@ -131,7 +131,7 @@ class City(Model):
 
         logging.basicConfig(filename=self.log_filename,
                     filemode='w',
-                    level=logging.ERROR,
+                    level=logging.DEBUG,
                     format='%(asctime)s %(name)s %(levelname)s:%(message)s')
         self.logger = logging.getLogger(__name__)
 
@@ -196,7 +196,7 @@ class City(Model):
 
         # Add bank, firm, investor, and realtor
         self.unique_id      += 1
-        self.bank            = Bank(self.unique_id, self, self.center, self.r_prime)
+        self.bank            = Bank(self.unique_id, self, self.center)
         self.grid.place_agent(self.bank, self.center)
         self.schedule.add(self.bank)
         
@@ -292,6 +292,7 @@ class City(Model):
         self.logger.info(f'\n \n \n Step {self.schedule.steps}. \n')
 
         # Firms update wages
+        self.firm.N = self.firm.get_N()  # self.N = self.get_N()
         self.schedule.step_breed(Firm)
 
         # Land records locational rents and calculates price forecast
@@ -313,14 +314,14 @@ class City(Model):
                 top_savings = savings_values.pop()
                 # top_savings = 0.
                 person = self.create_newcomer(top_savings)
-                person.bid()
+                person.bid_on_properties()
             else:
                 # Handle the case where there are no more savings values
                 # You might want to break out of the loop or take other appropriate actions
                 self.logger.error(f'Did not create newcomer since not enough savings values.')
 
         # Investors bid on properties
-        self.schedule.step_breed(Investor, step_name='bid')
+        self.schedule.step_breed(Investor, step_name='bid_on_properties')
 
         # Realtors sell homes
         self.schedule.step_breed(Realtor, step_name='sell_homes')

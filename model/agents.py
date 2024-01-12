@@ -1,6 +1,6 @@
 import math
 import logging
-import numpy as np
+# import numpy as np
 from typing import Union
 from collections import defaultdict
 from scipy.spatial import distance
@@ -35,13 +35,6 @@ class Land(Agent):
         appraised_price  = self.appraised_price
         return tau * appraised_price
 
-    @property
-    def maintenance(self):
-        a                 = self.model.housing_services_share
-        b                 = self.model.maintenance_share
-        subsistence_wage  = self.model.firm.subsistence_wage # subsistence_wage
-        return a * b * subsistence_wage
-
     def __init__(self, unique_id, model, pos, 
                  property_tax_rate = 0., 
                  resident = None, owner = None):
@@ -54,6 +47,7 @@ class Land(Agent):
         self.transport_cost           = self.calculate_transport_cost()
         self.warranted_rent           = self.get_warranted_rent()
         self.warranted_price          = self.get_warranted_price()
+        self.maintenance              = self.get_maintenance()
         self.realized_price           = - 1
         self.realized_all_steps_price = - 1
         self.ownership_type           = - 1
@@ -65,7 +59,7 @@ class Land(Agent):
 
         # self.p_dot = None # Calculate when properties are listed for sale
         if (self.model.firm.wage_premium > self.transport_cost):
-            self.p_dot       = self.get_p_dot()
+            self.p_dot       = self.model.firm.get_p_dot()
         else:
             self.p_dot       = None 
 
@@ -114,6 +108,11 @@ class Land(Agent):
         #     self.ownership_type = 3 # 'Other'
         #     self.model.logger.warning(f'Land {self.unique_id} owner not a person or investor. Owner: {self.owner}')
 
+    def get_maintenance(self):
+        a                 = self.model.housing_services_share
+        b                 = self.model.maintenance_share
+        subsistence_wage  = self.model.firm.subsistence_wage # subsistence_wage
+        return a * b * subsistence_wage
 
     def get_warranted_rent(self):
         wage_premium     = self.model.firm.wage_premium
@@ -130,30 +129,20 @@ class Land(Agent):
     def get_warranted_price(self):
         return self.warranted_rent / self.model.r_prime
 
-    def get_p_dot(self):
-        try:
-            p_dot = (self.model.firm.wage_premium / self.model.firm.old_wage_premium)**self.model.mortgage_period - 1
-
-            # # Handle the case where the result is negative
-            # if p_dot < 0:
-            #     p_dot = 0.
-
-        except ZeroDivisionError:
-            # Handle division by zero
-            p_dot = None
-            logging.error(f"ZeroDivisionError at time_step {self.model.time_step} for Land ID {self.unique_id}, old_wage_premium {self.model.firm.old_wage_premium}")
-        except Exception as e:
-            # Handle other exceptions
-            self.model.logger.error(f"An error occurred: {str(e)}")
-            p_dot = None
-        return p_dot
-
     def check_owners_match(self):
         for owned_property in self.owner.properties_owned:
             if self.unique_id == owned_property.unique_id:
                 return True
         return False
  
+    def change_dist(self, dist):
+        self.model.logger.warning(f'Note land has set rather than calculated distance. Could introduce errors. {self.unique_id}.')
+        self.distance_from_center     = dist # self.calculate_distance_from_center()
+        self.transport_cost           = self.calculate_transport_cost()
+        self.warranted_rent           = self.get_warranted_rent()
+        self.warranted_price          = self.get_warranted_price()
+        self.maintenance              = self.get_maintenance()
+
     def __str__(self):
         return f'Land {self.unique_id} (Dist. {self.distance_from_center}, Pw {self.warranted_price})'
 
@@ -258,7 +247,7 @@ class Person(Agent):
                 if self.residence in self.properties_owned:
                     self.model.workforce.add(self, self.model.workforce.retiring_urban_owner)
 
-                    # P_bid    = self.model.bank.get_max_bid(R_N, r, r_target, m, listing.sale_property.p_dot, self.capital_gains_tax, listing.sale_property.transport_cost)            
+                    # P_bid    = self.model.bank.get_max_desired_bid(R_N, r, r_target, m, listing.sale_property.p_dot, self.capital_gains_tax, listing.sale_property.transport_cost)            
                     reservation_price = self.model.bank.get_reservation_price(
                         R_N = self.residence.net_rent, 
                         r = self.model.r_prime, 
@@ -336,13 +325,29 @@ class Person(Agent):
         else:
             self.model.workforce.remove(self, self.model.workforce.workers)
 
-    def bid(self):
+    def bid_on_properties(self):
         """Newcomers bid on properties for use or investment value."""
         
         # self.model.logger.debug(f'Newcomer bids: {self.unique_id}, count {self.count}')
+        # m = max_mortgage_share - lenders_wealth_sensitivity * average_wealth / W # TODO adjust max mortgage share
+        max_mortgage_share  = self.model.max_mortgage_share # m # TODO make wealth dependant?
+        max_mortgage         = self.get_max_mortgage()      # M
 
+        for listing in self.model.realtor.bids:
+            net_rent        = listing.sale_property.net_rent # Net rent
+            p_dot           = listing.sale_property.p_dot
+            transport_cost  = listing.sale_property.transport_cost
+            P_bid, bid_type = self.get_max_bid(m     = max_mortgage_share, 
+                                               M     = max_mortgage,
+                                               R_N   = net_rent, 
+                                               p_dot = p_dot, 
+                                               transport_cost = transport_cost)
+
+            self.model.realtor.add_bid(self, listing, P_bid, bid_type)
+
+    def get_max_mortgage(self, savings = None):
         # W = self.savings # TODO fix self.get_wealth()
-        S = self.savings
+        S = savings if savings is not None else self.savings
         r = self.borrowing_rate
         r_prime  = self.model.r_prime
         r_target = self.model.r_target # TODO this is personal but uses same as bank. Clarify.        
@@ -351,66 +356,73 @@ class Person(Agent):
 
         # Max mortgage
         M = 0.28 * (wage + r * S) / r_prime
+        return M
 
-        # Max mortgage share
-        m = 0.8 # TODO get mortgage share # standard_mortgage_share = 0.8 # TODO make this a parameter
-         # m = max_mortgage_share - lenders_wealth_sensitivity * average_wealth / W
+    def get_max_bid(self, m, M, R_N, p_dot, transport_cost, savings = None):
+        # m = mortgage_share
+        # M = max_mortgage # TODO M why not used?
+        # W = self.savings # TODO fix self.get_wealth()
+        S = savings if savings is not None else self.savings
+        r = self.borrowing_rate
+        r_prime  = self.model.r_prime
+        r_target = self.model.r_target # TODO this is personal but uses same as bank. Clarify.        
+        wage     = self.model.firm.wage
+        # average_wealth = # TODO? put in calculation
 
-        for listing in self.model.realtor.bids:
+        # First Calculate value of purchase (max bid)
+        
+        bid_type = 'value_limited'
+        P_bid    = self.model.bank.get_max_desired_bid(R_N, r, r_target, m, p_dot, self.capital_gains_tax, transport_cost)
+        # self.model.logger.warning(f'Max bid: {self.unique_id}, bid {P_bid}, R_N {R_N}, r {r}, r {r_target}, m {m}, transport_cost {transport_cost}')
 
-            # First Calculate value of purchase (max bid)
-            R_N      = listing.sale_property.net_rent # Need net rent for P_bid
-            bid_type = 'value_limited'
-            P_bid    = self.model.bank.get_max_bid(R_N, r, r_target, m, listing.sale_property.p_dot, self.capital_gains_tax, listing.sale_property.transport_cost)
-            # self.model.logger.warning(f'Max bid: {self.unique_id}, bid {P_bid}, R_N {R_N}, r {r}, r {r_target}, m {m}, transport_cost {listing.sale_property.transport_cost}')
+        if S/(1-m) <= P_bid:
+            bid_type = 'equity_limited'
+            P_bid = S/(1-m)
+            self.model.logger.warning(f'Newcomer bid EQUITY LIMITED: {self.unique_id}, bid {P_bid}') #, S {S}, m {m}, .. ')
 
-            if S/(1-m) <= P_bid:
-                bid_type = 'equity_limited'
-                P_bid = S/(1-m)
-                self.model.logger.warning(f'Newcomer bid EQUITY LIMITED: {self.unique_id}, bid {P_bid}') #, S {S}, m {m}, .. ')
+        if (0.28 * (wage + r * S) / r_prime)  <= P_bid:
+            bid_type = 'income_limited'
+            P_bid = 0.28 * (wage + r * S) / r_prime
+            self.model.logger.warning(f'Newcomer bid INCOME LIMITED: {self.unique_id}, bid {P_bid}')
 
-            if (0.28 * (wage + r * S) / r_prime)  <= P_bid:
-                bid_type = 'income_limited'
-                P_bid = 0.28 * (wage + r * S) / r_prime
-                self.model.logger.warning(f'Newcomer bid INCOME LIMITED: {self.unique_id}, bid {P_bid}')
+        if P_bid < 0:
+            bid_type = 'negative'
+            # P_bid = 0
+            self.model.logger.warning(f'Newcomer bid is NEGATIVE: {self.unique_id}, bid {P_bid}')
 
-            if P_bid > 0:
-                # self.model.logger.warning(f'Newcomer bids: {self.unique_id}, bid {P_bid}')
-                self.model.realtor.add_bid(self, listing, P_bid, bid_type)
+        else:
+            bid_type = 'none'
+            self.model.logger.warning(f'Newcomer doesnt bid: {self.unique_id}, bid {P_bid}') #, sale_property {listing.sale_property.unique_id}')
+        return P_bid, bid_type
 
-            else:
-                pass
-                # self.model.logger.warning(f'Newcomer doesnt bid: {self.unique_id}, bid {P_bid}, sale_property {listing.sale_property.unique_id}')
+        # # Old logic, replaced by version above
+        # # Max desired bid
+        # # P_max_bid = self.model.bank.get_max_desired_bid(R_N, r, r_target, m, transport_cost)
 
-            # # Old logic, replaced by version above
-            # # Max desired bid
-            # R_N = listing.sale_property.net_rent
-            # # P_max_bid = self.model.bank.get_max_bid(R_N, r, r_target, m, listing.sale_property.transport_cost)
+        # mortgage_share_max = m * P_max_bid # TODO this should have S in it. 
+        # mortgage_total_max = M
 
-            # mortgage_share_max = m * P_max_bid # TODO this should have S in it. 
-            # mortgage_total_max = M
-
-            # # Agents cannot exceed any of their constraints
-            # if mortgage_share_max < mortgage_total_max:
-            #     # Mortgage share limited
-            #     if mortgage_share_max + S < P_max_bid:
-            #         P_bid = mortgage_share_max + S
-            #         bid_type = 'mortgage_share_limited'
-            #     # Max bid limited
-            #     else:
-            #         P_bid = P_max_bid
-            #         bid_type = 'max_bid_limited'
-            #     mortgage = P_bid - S # TODO is this right? what about savings. 
-            # else:
-            #     mortgage = M
-            #     # Mortgage total limited
-            #     if mortgage_total_max + S < P_max_bid:
-            #         P_bid = mortgage_total_max + S
-            #         bid_type = 'mortgage_total_limited'
-            #     # Max bid limited
-            #     else:
-            #         P_bid = P_max_bid
-            #         bid_type = 'max_bid_limited'
+        # # Agents cannot exceed any of their constraints
+        # if mortgage_share_max < mortgage_total_max:
+        #     # Mortgage share limited
+        #     if mortgage_share_max + S < P_max_bid:
+        #         P_bid = mortgage_share_max + S
+        #         bid_type = 'mortgage_share_limited'
+        #     # Max bid limited
+        #     else:
+        #         P_bid = P_max_bid
+        #         bid_type = 'max_bid_limited'
+        #     mortgage = P_bid - S # TODO is this right? what about savings. 
+        # else:
+        #     mortgage = M
+        #     # Mortgage total limited
+        #     if mortgage_total_max + S < P_max_bid:
+        #         P_bid = mortgage_total_max + S
+        #         bid_type = 'mortgage_total_limited'
+        #     # Max bid limited
+        #     else:
+        #         P_bid = P_max_bid
+        #         bid_type = 'max_bid_limited'
 
     def get_wealth(self):
         # TODO Wealth is properties owned, minus mortgages owed, plus savings.
@@ -519,7 +531,7 @@ class Firm(Agent):
 
     def step(self):
         # GET POPULATION AND OUTPUT TODO replace N with agent count
-        self.N = self.get_N()
+        # self.N = self.get_N()
         self.n =  self.N / self.F # distribute workforce across firms
         self.y = self.A * self.N**self.gamma *  self.k**self.alpha * self.n**self.beta
 
@@ -615,18 +627,39 @@ class Firm(Agent):
         agglomeration_population = self.mult * N + self.seed_population
         return agglomeration_population
 
+    def get_N_from_city_extent(self, city_extent):
+        # agent_count = math.pi * (city_extent ** 2) #  Euclidian radius of the circular city
+        agent_count = 2 * (city_extent ** 2)         #  Block metric radius of the circular city
+        agglomeration_population = self.mult * self.density * agent_count + self.seed_population
+        return agglomeration_population
+
+    def get_p_dot(self):
+        try:
+            p_dot = (self.model.firm.wage_premium / self.model.firm.old_wage_premium)**self.model.mortgage_period - 1
+
+            # # Handle the case where the result is negative
+            # if p_dot < 0:
+            #     p_dot = 0.
+
+        except ZeroDivisionError:
+            # Handle division by zero
+            p_dot = None
+            logging.error(f"ZeroDivisionError at time_step {self.model.time_step} for Land ID {self.unique_id}, old_wage_premium {self.model.firm.old_wage_premium}")
+        except Exception as e:
+            # Handle other exceptions
+            self.model.logger.error(f"An error occurred: {str(e)}")
+            p_dot = None
+        return p_dot
 class Bank(Agent):
-    def __init__(self, unique_id, model, pos,
-                 r_prime = 0.05, max_mortgage_share = 0.9,
-                 ):
+    def __init__(self, unique_id, model, pos):
         super().__init__(unique_id, model)
         self.pos = pos
 
     def get_reservation_price(self, R_N, r, r_target, m, p_dot, capital_gains_tax, transport_cost):
         # TODO is it the same as max bid?
-        return self.get_max_bid(R_N, r, r_target, m, p_dot, capital_gains_tax, transport_cost)
+        return self.get_max_desired_bid(R_N, r, r_target, m, p_dot, capital_gains_tax, transport_cost)
 
-    def get_max_bid(self, R_N, r, r_target, m, p_dot, capital_gains_tax, transport_cost):
+    def get_max_desired_bid(self, R_N, r, r_target, m, p_dot, capital_gains_tax, transport_cost):
         T      = self.model.mortgage_period
         delta  = self.model.delta
         # capital_gains_tax = self.model.capital_gains_tax # person and investor send.
@@ -637,7 +670,7 @@ class Bank(Agent):
             return (1 - capital_gains_tax) * R_NT / ((1 - m) * r_target/(delta**T) - p_dot +(1+r)**T*m) # Revised denominator from eqn 6:20
 
         else:
-            self.model.logger.error(f'Get_max_bid None error Rn {R_N}, r {r}, r_target {r_target}, m {m}, p_dot {p_dot}')
+            self.model.logger.error(f'Get_max_desired_bid None error Rn {R_N}, r {r}, r_target {r_target}, m {m}, p_dot {p_dot}')
             return 0. # TODO Temp
 
     def get_average_wealth(self):
@@ -683,22 +716,32 @@ class Investor(Agent):
             self.model.logger.warning(f'No capital gains tax for investor {self.unique_id}.')
         self.capital_gains_tax     = capital_gains_tax
 
-    def bid(self):
+    def bid_on_properties(self):
         # """Investors bid on investment properties."""
-        m = 0.9 # TODO fix
-        r = self.borrowing_rate
-        r_target = self.model.r_target
+        m = self.model.max_mortgage_share # mortgage share
 
         for listing in self.model.realtor.bids:
-            R_N      = listing.sale_property.net_rent
-            P_bid    = self.model.bank.get_max_bid(R_N, r, r_target, m, listing.sale_property.p_dot, self.capital_gains_tax, listing.sale_property.transport_cost)
-            bid_type = 'investor'
+            R_N             = listing.sale_property.net_rent
+            p_dot           = listing.sale_property.p_dot
+            transport_cost  = listing.sale_property.transport_cost
+            P_bid, bid_type = self.get_max_bid(m = m,
+                                               R_N   = R_N, 
+                                               p_dot = p_dot, 
+                                               transport_cost = transport_cost)
+            # P_bid, bid_type = get_max_bid(R_N=R_N, p_dot, transport_cost)
             # mortgage = m * P_bid
             self.model.logger.debug(f'Investor {self.unique_id} bids {P_bid} for property {listing.sale_property.unique_id}, if val is positive.')
             if P_bid > 0:
                 self.model.realtor.add_bid(self, listing, P_bid, bid_type)
             else:
                 self.model.logger.debug(f'Investor doesn\'t bid: {self.unique_id}')
+
+    def get_max_bid(self, m, R_N, p_dot, transport_cost):
+        r = self.borrowing_rate
+        r_target = self.model.r_target
+        P_bid    = self.model.bank.get_max_desired_bid(R_N, r, r_target, m, p_dot, self.capital_gains_tax, transport_cost)
+        bid_type = 'investor'
+        return P_bid, bid_type
 
     def __str__(self):
         return f'Investor {self.unique_id}'
@@ -721,7 +764,7 @@ class Realtor(Agent):
     def list_property_for_sale(self, seller, sale_property, reservation_price):
         listing = Listing(seller, sale_property, reservation_price)
         self.bids[listing] = []
-        sale_property.get_p_dot()
+        sale_property.p_dot
 
     def add_bid(self, bidder, listing, price, bid_type= ''):
         # Type check for bidder and property
