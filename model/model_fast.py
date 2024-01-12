@@ -255,9 +255,11 @@ class City(Model):
 
         # Init for step_fast
         # Create a list of savings levels representing newcomers who will bid
-        min_savings = -20000
-        max_savings = 200000
-        no_steps = 4
+
+        self.no_decimals = 1
+        min_savings = 0
+        max_savings = 2*self.bank.get_rural_home_value()
+        no_steps = 3
         step_size = (max_savings - min_savings) / (no_steps - 1)
         self.newcomer_savings = [min_savings + i * step_size for i in range(no_steps)]
         print(f'Newcomer savings: {self.newcomer_savings}')
@@ -299,8 +301,13 @@ class City(Model):
 
         # Calculate bid_rent values function of distance and person's savings
         # TODO does this exclude some of the city, effectively rounding down? Do rounding effects matter for the city extent/population calculations?
-        dist = 0
-        while dist <= extent:
+        # dist = 0
+        # while dist <= extent:
+        num_steps = 3
+        step_size = extent // (num_steps - 1) if num_steps > 1 else 1  # Calculate the step size
+
+        for step in range(num_steps):
+            dist = step * step_size
             m       = self.max_mortgage_share
             self.property.change_dist(dist)
 
@@ -320,7 +327,7 @@ class City(Model):
             for attribute in attributes_to_append:
                 value = locals()[attribute]  # Get the value of the attribute
                 # self.step_data[attribute].append((value, dist))
-                self.step_data[attribute].append(value)
+                self.step_data[attribute].append(round(value, self.no_decimals))
 
             # print(f'bid {investor_bid}, m {m}, R_N {R_N}, p_Dot {p_dot}, transp {transport_cost}')
             # print(f'Property dist {self.property.distance_from_center}, transport_cost {self.property.transport_cost}, i_bid {investor_bid} {investor_bid_type}')
@@ -329,8 +336,8 @@ class City(Model):
                 # Calculate newcomers bid
                 M     = self.person.get_max_mortgage(savings_value)
                 newcomer_bid,  newcomer_bid_type = self.person.get_max_bid(m, M, R_N, p_dot, transport_cost, savings_value)
-                self.step_data["newcomer_bid"].append((newcomer_bid, dist, savings_value))
-            dist += 1
+                self.step_data["newcomer_bid"].append((round(newcomer_bid, self.no_decimals), round(dist, self.no_decimals), round(savings_value, self.no_decimals)))
+            # dist += 1
         self.datacollector.collect(self)
 
     def setup_run_data_collection(self):
@@ -389,7 +396,7 @@ class City(Model):
             # "MPL":                       lambda m: m.firm.MPL,
             "time_step":                 lambda m: m.time_step,
             # "companies":                 lambda m: m.schedule.get_breed_count(Firm),
-            "city_extent_calc":          lambda m: m.city_extent_calc,
+            "city_extent_calc":          lambda m: round(m.city_extent_calc, self.no_decimals),
             # "people":                    lambda m: m.schedule.get_breed_count(Person),
             # "market_rent":               lambda m: m.market_rent,
             # "net_rent":                  lambda m: m.net_rent,
@@ -400,16 +407,16 @@ class City(Model):
             # "share_captured_by_finance": lambda m: m.share_captured_by_finance,
             # "urban_surplus":             lambda m: m.urban_surplus,
             # "removed_agents":            lambda m: m.removed_agents,
-            "n":                         lambda m: m.firm.n,
-            "y":                         lambda m: m.firm.y,
-            "F_target":                  lambda m: m.firm.F_target,
-            "F":                         lambda m: m.firm.F,
-            "k":                         lambda m: m.firm.k,
-            "N":                         lambda m: m.firm.N,
+            "n":                         lambda m: round(m.firm.n, self.no_decimals),
+            "y":                         lambda m: round(m.firm.y, self.no_decimals),
+            "F_target":                  lambda m: round(m.firm.F_target, self.no_decimals),
+            "F":                         lambda m: round(m.firm.F, self.no_decimals),
+            "k":                         lambda m: round(m.firm.k, self.no_decimals),
+            "N":                         lambda m: round(m.firm.N, self.no_decimals),
             # # "agglomeration_population":  lambda m: m.firm.agglomeration_population, # TODO delete
             # "Y":                         lambda m: m.firm.Y,
-            "wage_premium":              lambda m: m.firm.wage_premium,
-            "p_dot":                     lambda m: m.firm.p_dot,
+            "wage_premium":              lambda m: round(m.firm.wage_premium, self.no_decimals),
+            "p_dot":                     lambda m: round(m.firm.p_dot, self.no_decimals),
             # "subsistence_wage":          lambda m: m.firm.subsistence_wage,
             # "wage":                      lambda m: m.firm.wage,
             # # "worker_agents":           lambda m: m.workforce.get_agent_count(m.workforce.workers),
