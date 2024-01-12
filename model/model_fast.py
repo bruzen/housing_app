@@ -128,7 +128,7 @@ class City(Model):
         # random.seed(current_time_seed)
 
         # # If self.center_city is True, it places the city in the center; otherwise, it places it in the bottom corner.
-        # self.center_city   = self.params['center_city'] # put city in the bottom corner TODO check flag's logic
+        self.center_city   = self.params['center_city'] # put city in the bottom corner TODO check flag's logic
         # if self.center_city:
         #     self.center    = (width//2, height//2)
         # else:
@@ -440,8 +440,8 @@ class City(Model):
             # "agent_class":       lambda a: type(a),
             "agent_type":        lambda a: type(a).__name__,
             # "id":                lambda a: a.unique_id,
-            # "x":                 lambda a: a.pos[0],
-            # "y":                 lambda a: a.pos[1],
+            "x":                 lambda a: a.pos[0],
+            "y":                 lambda a: a.pos[1],
             # "is_working":        lambda a: None if not isinstance(a, Person) else 1 if a.unique_id in a.model.workforce.workers else 0,  # TODO does this need to be in model? e.g. a.model.workforce
             # "is_working_check":  lambda a: None if not isinstance(a, Person) else a.is_working_check,
             # "working_period":    lambda a: getattr(a, "working_period", None)  if isinstance(a, Person)       else None,
