@@ -127,12 +127,12 @@ class City(Model):
         # current_time_seed = int(time.time())
         # random.seed(current_time_seed)
 
-        # If self.center_city is True, it places the city in the center; otherwise, it places it in the bottom corner.
-        self.center_city   = self.params['center_city'] # put city in the bottom corner TODO check flag's logic
-        if self.center_city:
-            self.center    = (width//2, height//2)
-        else:
-            self.center    = (0, 0)
+        # # If self.center_city is True, it places the city in the center; otherwise, it places it in the bottom corner.
+        # self.center_city   = self.params['center_city'] # put city in the bottom corner TODO check flag's logic
+        # if self.center_city:
+        #     self.center    = (width//2, height//2)
+        # else:
+        self.center    = (0, 0)
         self.grid = MultiGrid(self.params['width'], self.params['height'], torus=False)
         self.schedule = RandomActivationByBreed(self)
         self.transport_cost_per_dist = self.params['c'] # self.params['init_wage_premium_ratio'] * self.params['subsistence_wage'] / self.params['init_city_extent'] # c
