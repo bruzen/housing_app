@@ -9,6 +9,8 @@
 - Investors can sell
 
 ## Contributions:
+
+0. Having understood what you mean by rent/by the implications of rent in an urban situation
 1. First we put financialization into a model an agent based urban model that is well constrained and well understood, and show that in a plausibly specified model, the financialization is driving the change in the class structure. 
 2. The economic literature does not examine the class impact. Economists don't talk about. Sociologists talk about it, but they don't model it.
 3. We model boom bust dynamics/response. how it responds to changes in the outer world - fact you could get a change with an interest rate. what happens when the model is repeatedly struck. What are the impact effects and how do they play out?
@@ -25,6 +27,13 @@ The basic fiancialization result is clear from looking at the model. The equatio
 - Hysteresis - perturb, doesn't come back - e.g. interest rates go up.
 - The way it aligns with long run changes in the landscape e.g. tech changing local info changes vulnerability to these shocks -- Depth of the basin changes - erodes systemic resilience - together these changes the capacity to hold value in landscape. (links to the productivity feedback - much will/can they invest in increasing their productivity/supporting kids/good food to grow brains. Education to increase productivity is the feature that makes productivity increases resilient to de-industrialization). This has implications for landscape/system/class structure.
 3. This shift in ownership may have implications for urban productivity. (can actually displace productive uses - empty store fronts) - who can/will enter, how , who can rent spaces, speculative value may keep it empty (work spaces or living space - lowering pop), reduces consumption
+
+Recall that we have three basic hypotheses
+\begin{enumerate}
+    \item Financialization of the urban housing stock extracts wealth produced by human agglomeration 
+    \item Financialization of the urban housing stock changes the class structure of urban society
+    \item Financialization of the urban housing stock can limit urban productivity growth
+\end{enumerate}
 
 ## Model
 - [ ] Immediately do experiments with the price of output - should give a decline in price of labour, may or may not result in changes in the housing market (record housing prices]
