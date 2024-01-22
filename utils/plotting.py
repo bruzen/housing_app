@@ -22,11 +22,16 @@ def small_multiples_lineplot(df, param_mapping, palette=None):
 
     # Set axis labels and titles for each subplot
     g.set_axis_labels(param_mapping['x'], param_mapping['y']).set_titles(
-        row_template=f'{param_mapping["x_global"]} = {{row_name}}', 
-        col_template=f'{param_mapping["y_global"]} = {{col_name}}'
+        row_template=f'{format_label(param_mapping["y_global"])} = {{row_name}}', 
+        col_template=f'{param_mapping["x_global"]} = {{col_name}}'
     )
+
     # Show the plot
     plt.show()
+
+def format_label(label):
+    # Capitalize the first letter of each word
+    return ' '.join(word.capitalize() for word in label.split('_'))
 
 if __name__ == "__main__":
 
