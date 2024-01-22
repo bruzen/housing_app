@@ -6,7 +6,7 @@ import matplotlib.pyplot as plt
 def small_multiples_lineplot(df, param_mapping, palette=None):
     # Set up the grid of subplots using FacetGrid
     g = sns.FacetGrid(df, col=param_mapping['x_global'], row=param_mapping['y_global'], 
-                      margin_titles=True, height=3, aspect=1.5)
+                      margin_titles=True, height=1.5, aspect=1.)
 
     # Add grey gridlines (note: only shows up on second run)
     # sns.set_style("darkgrid")
