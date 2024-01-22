@@ -100,7 +100,7 @@ class Fast(Model):
         self.model_version     = '0.0.1'
         self.model_description = 'Agent-based housing market model with rent and urban agglomeration.'
         self.num_steps = num_steps
-        self.time_step = 0
+        # self.time_step = 0
 
         self.setup_run_data_collection()
 
