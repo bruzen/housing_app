@@ -13,12 +13,16 @@ def small_multiples_lineplot(df, param_mapping, palette=None):
     # sns.set_style("ticks",{'axes.grid' : True})
     sns.set_style("whitegrid", {'axes.grid' : True})
 
+    # sns.set(font_scale=1.5)  # crazy big
+    # sns.set_context("paper", rc={"font.size":20,"axes.titlesize":20,"axes.labelsize":20})   
+    # sns.set(rc={'figure.figsize':(11.7,8.27),"font.size":20,"axes.titlesize":20,"axes.labelsize":20},style="white")
+
     if palette:
-        g.map_dataframe(sns.lineplot, x=param_mapping['x'], y=param_mapping['y'], 
-                        hue=param_mapping['line_val'], marker='o', palette=palette).add_legend()
+        g.map_dataframe(sns.lineplot, x=param_mapping['x'], y=param_mapping['y'], estimator=None, 
+                        hue=param_mapping['line_val'], marker='o', palette=palette).add_legend() #(fontsize=20)
     else:
-        g.map_dataframe(sns.lineplot, x=param_mapping['x'], y=param_mapping['y'], 
-                        hue=param_mapping['line_val'], marker='o').add_legend()
+        g.map_dataframe(sns.lineplot, x=param_mapping['x'], y=param_mapping['y'], estimator=None, 
+                        hue=param_mapping['line_val'], marker='o').add_legend() # (fontsize=20)
 
     # Set axis labels and titles for each subplot
     g.set_axis_labels(param_mapping['x'], param_mapping['y']).set_titles(
