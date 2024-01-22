@@ -490,14 +490,14 @@ class Fast(Model):
         }
 
         agent_reporters      = {
-            "Time Step":             lambda a: a.model.schedule.time,
+            "time_step":             lambda a: a.model.schedule.time,
             # # "agent_class":       lambda a: type(a),
             "agent_type":            lambda a: type(a).__name__,
-            "Bidder Name":           lambda a: getattr(a, "bidder_name", None)           if isinstance(a, Bid_Storage) else None,
-            "Bidder Savings":        lambda a: getattr(a, "bidder_savings", None)        if isinstance(a, Bid_Storage) else None,
-            "Distance":              lambda a: getattr(a, "distance_from_center", None)  if isinstance(a, Bid_Storage) else None,
-            "Transport Cost":        lambda a: getattr(a, "transport_cost", None)        if isinstance(a, Bid_Storage) else None,
-            "Bid":                   lambda a: getattr(a, "bid_value", None)             if isinstance(a, Bid_Storage) else None,
+            "bidder_name":           lambda a: getattr(a, "bidder_name", None)           if isinstance(a, Bid_Storage) else None,
+            "bidder_savings":        lambda a: getattr(a, "bidder_savings", None)        if isinstance(a, Bid_Storage) else None,
+            "distance":              lambda a: getattr(a, "distance_from_center", None)  if isinstance(a, Bid_Storage) else None,
+            "transport_cost":        lambda a: getattr(a, "transport_cost", None)        if isinstance(a, Bid_Storage) else None,
+            "bid":                   lambda a: getattr(a, "bid_value", None)             if isinstance(a, Bid_Storage) else None,
             "R_N":                   lambda a: getattr(a, "R_N", None)                   if isinstance(a, Bid_Storage) else None,
             # "Density":               lambda a: getattr(a, "density", None)               if isinstance(a, Bid_Storage) else None,
             # # "id":                lambda a: a.unique_id,
