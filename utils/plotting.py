@@ -13,7 +13,7 @@ def small_multiples_lineplot(df, param_mapping, palette=None):
     # sns.set_style("ticks",{'axes.grid' : True})
     sns.set_style("whitegrid", {'axes.grid' : True})
 
-    # sns.set(font_scale=1.5)  # crazy big
+    # sns.set(font_scale=1.5)
     # sns.set_context("paper", rc={"font.size":20,"axes.titlesize":20,"axes.labelsize":20})   
     # sns.set(rc={'figure.figsize':(11.7,8.27),"font.size":20,"axes.titlesize":20,"axes.labelsize":20},style="white")
 
@@ -25,9 +25,9 @@ def small_multiples_lineplot(df, param_mapping, palette=None):
                         hue=param_mapping['line_val'], marker='o').add_legend() # (fontsize=20)
 
     # Set axis labels and titles for each subplot
-    g.set_axis_labels(param_mapping['x'], param_mapping['y']).set_titles(
+    g.set_axis_labels(format_label(param_mapping['x']), format_label(param_mapping['y'])).set_titles(
         row_template=f'{format_label(param_mapping["y_global"])} = {{row_name}}', 
-        col_template=f'{param_mapping["x_global"]} = {{col_name}}'
+        col_template=f'{format_label(param_mapping["x_global"])} = {{col_name}}'
     )
 
     # Show the plot
