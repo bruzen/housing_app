@@ -16,10 +16,10 @@ from mesa import Model
 from mesa.space import MultiGrid
 from mesa.datacollection import DataCollector
 
-from model.agents import Land, Person, Firm, Investor, Bank, Realtor
+from model.agents import Land, Person, Firm, Investor, Bank, Realtor, Bid_Storage
 from model.schedule import RandomActivationByBreed
 
-class City(Model):
+class Fast(Model):
     @property
     def city_extent_calc(self):
         # Compute urban boundary where it is not worthwhile to work
@@ -225,6 +225,39 @@ class City(Model):
         self.grid.place_agent(self.property, self.center)
         self.schedule.add(self.property)
 
+        # Determine maximum radius of the city (with sparseness and some extra)
+        max_radius = 300
+        sparseness = 80
+        spatial_steps = int(max_radius / sparseness)
+
+        # Determine number of people to add, and their initial savings
+        min_savings = 0
+        max_savings = 2*self.bank.get_rural_home_value()
+        no_steps = 3
+        step_size = int((max_savings - min_savings) / (no_steps - 1))
+        newcomer_savings = [min_savings + i * step_size for i in range(no_steps)]
+        # print(f'Newcomer savings: {self.newcomer_savings}')
+
+        # Add Bid_Storage to store bids
+        for x in range(spatial_steps):
+            self.unique_id      += 1
+            dist = x * sparseness
+            bidder_name = 'Investor'         
+            agent       = Bid_Storage(self.unique_id, self, self.center, 
+                                        bidder_name          = bidder_name,
+                                        distance_from_center = dist)
+            self.grid.place_agent(agent, self.center)
+            self.schedule.add(agent)      
+            for y, savings_val in enumerate(newcomer_savings):
+                self.unique_id      += 1
+                bidder_name = f'Savings {savings_val}'
+                agent   = Bid_Storage(self.unique_id, self, self.center, 
+                                      bidder_name          = bidder_name,
+                                      distance_from_center = dist,
+                                      bidder_savings       = savings_val)
+                self.grid.place_agent(agent, self.center)
+                self.schedule.add(agent)
+                
         # # Add land and people to each cell
         # self.unique_id      += 1
         # for cell in self.grid.coord_iter():
@@ -256,27 +289,20 @@ class City(Model):
         # Init for step_fast
         # Create a list of savings levels representing newcomers who will bid
 
+        # self.step_data = {
+        #     "dist":            [],
+        #     "m":               [],
+        #     "R_N":             [],
+        #     "p_dot":           [],
+        #     "transport_cost":  [],
+        #     "investor_bid":    [],
+        #     "warranted_rent":  [],
+        #     "warranted_price": [],
+        #     "maintenance":     [],
+        #     "newcomer_bid":    [],
+        # }
+
         self.no_decimals = 1
-        min_savings = 0
-        max_savings = 2*self.bank.get_rural_home_value()
-        no_steps = 3
-        step_size = (max_savings - min_savings) / (no_steps - 1)
-        self.newcomer_savings = [min_savings + i * step_size for i in range(no_steps)]
-        print(f'Newcomer savings: {self.newcomer_savings}')
-
-        self.step_data = {
-            "dist":            [],
-            "m":               [],
-            "R_N":             [],
-            "p_dot":           [],
-            "transport_cost":  [],
-            "investor_bid":    [],
-            "warranted_rent":  [],
-            "warranted_price": [],
-            "maintenance":     [],
-            "newcomer_bid":    [],
-        }
-
         self.setup_mesa_data_collection()
         # self.record_step_data()
 
@@ -288,57 +314,77 @@ class City(Model):
         #     # Firms update wages
         #     self.schedule.step_breed(Firm)   
 
-    def step_fast(self):
-        self.time_step += 1
-        self.reset_step_data_lists()
-
+    def step(self):
+       
         # Firm updates wages based on agglomeration population
-        self.firm.step()
+        self.schedule.step_breed(Firm)
 
         # Firm updates agglomeration population based on calculated city extent
         extent = self.city_extent_calc
         self.firm.N = self.firm.get_N_from_city_extent(extent)
 
-        # Calculate bid_rent values function of distance and person's savings
-        # TODO does this exclude some of the city, effectively rounding down? Do rounding effects matter for the city extent/population calculations?
-        # dist = 0
-        # while dist <= extent:
-        num_steps = 3
-        step_size = extent // (num_steps - 1) if num_steps > 1 else 1  # Calculate the step size
+        self.schedule.step_breed(Bid_Storage)
 
-        for step in range(num_steps):
-            dist = step * step_size
-            m       = self.max_mortgage_share
-            self.property.change_dist(dist)
-
-            R_N             = self.property.net_rent
-            p_dot           = self.property.p_dot
-            transport_cost  = self.property.transport_cost
-            investor_bid,  investor_bid_type = self.investor.get_max_bid(m = m,
-                                               R_N   = R_N,
-                                               p_dot = p_dot,
-                                               transport_cost = transport_cost)
-
-            warranted_rent  = self.property.get_warranted_rent()
-            warranted_price = self.property.get_warranted_price()
-            maintenance     = self.property.get_maintenance()
-
-            attributes_to_append = ["dist", "m", "R_N", "p_dot", "transport_cost", "investor_bid", "warranted_rent", "warranted_price", "maintenance"]
-            for attribute in attributes_to_append:
-                value = locals()[attribute]  # Get the value of the attribute
-                # self.step_data[attribute].append((value, dist))
-                self.step_data[attribute].append(round(value, self.no_decimals))
-
-            # print(f'bid {investor_bid}, m {m}, R_N {R_N}, p_Dot {p_dot}, transp {transport_cost}')
-            # print(f'Property dist {self.property.distance_from_center}, transport_cost {self.property.transport_cost}, i_bid {investor_bid} {investor_bid_type}')
-
-            for savings_value in self.newcomer_savings:
-                # Calculate newcomers bid
-                M     = self.person.get_max_mortgage(savings_value)
-                newcomer_bid,  newcomer_bid_type = self.person.get_max_bid(m, M, R_N, p_dot, transport_cost, savings_value)
-                self.step_data["newcomer_bid"].append((round(newcomer_bid, self.no_decimals), round(dist, self.no_decimals), round(savings_value, self.no_decimals)))
-            # dist += 1
         self.datacollector.collect(self)
+        self.schedule.step_time()        
+ 
+        # print('Step')
+        # while self.time_step < 10:
+        #     self.time_step += 1
+        #     self.reset_step_data_lists()
+
+        #     print(self.time_step)
+        #     # Firm updates wages based on agglomeration population
+        #     # self.firm.step()
+        #     self.schedule.step_breed(Firm)
+
+        #     # Firm updates agglomeration population based on calculated city extent
+        #     extent = self.city_extent_calc
+        #     self.firm.N = self.firm.get_N_from_city_extent(extent)
+
+        #     self.schedule.step_breed(Bid_Storage)
+            # # Calculate bid_rent values function of distance and person's savings
+            # # TODO does this exclude some of the city, effectively rounding down? Do rounding effects matter for the city extent/population calculations?
+            # # dist = 0
+            # # while dist <= extent:
+            # num_steps = 3
+            # step_size = extent // (num_steps - 1) if num_steps > 1 else 1  # Calculate the step size
+
+            # # TODO REPLICATE THIS LOGIC
+            # for step in range(num_steps):
+            #     dist = step * step_size
+            #     m       = self.max_mortgage_share
+            #     self.property.change_dist(dist)
+
+            #     R_N             = self.property.net_rent
+            #     p_dot           = self.property.p_dot
+            #     transport_cost  = self.property.transport_cost
+            #     investor_bid,  investor_bid_type = self.investor.get_max_bid(m = m,
+            #                                     R_N   = R_N,
+            #                                     p_dot = p_dot,
+            #                                     transport_cost = transport_cost)
+
+            #     warranted_rent  = self.property.get_warranted_rent()
+            #     warranted_price = self.property.get_warranted_price()
+            #     maintenance     = self.property.get_maintenance()
+
+            #     attributes_to_append = ["dist", "m", "R_N", "p_dot", "transport_cost", "investor_bid", "warranted_rent", "warranted_price", "maintenance"]
+            #     for attribute in attributes_to_append:
+            #         value = locals()[attribute]  # Get the value of the attribute
+            #         # self.step_data[attribute].append((value, dist))
+            #         self.step_data[attribute].append(round(value, self.no_decimals))
+
+            #     # print(f'bid {investor_bid}, m {m}, R_N {R_N}, p_Dot {p_dot}, transp {transport_cost}')
+            #     # print(f'Property dist {self.property.distance_from_center}, transport_cost {self.property.transport_cost}, i_bid {investor_bid} {investor_bid_type}')
+
+            #     for savings_value in self.newcomer_savings:
+            #         # Calculate newcomers bid
+            #         M     = self.person.get_max_mortgage(savings_value)
+            #         newcomer_bid,  newcomer_bid_type = self.person.get_max_bid(m, M, R_N, p_dot, transport_cost, savings_value)
+            #         self.step_data["newcomer_bid"].append((round(newcomer_bid, self.no_decimals), round(dist, self.no_decimals), round(savings_value, self.no_decimals)))
+            #     # dist += 1
+
+
 
     def setup_run_data_collection(self):
         # TODO adjust as in model for batch runs
@@ -394,62 +440,69 @@ class City(Model):
         model_reporters      = {
             # "workers":                   lambda m: m.firm.N,
             # "MPL":                       lambda m: m.firm.MPL,
-            "time_step":                 lambda m: m.time_step,
+            "time_step":                   lambda m: m.schedule.time,
             # "companies":                 lambda m: m.schedule.get_breed_count(Firm),
-            "city_extent_calc":          lambda m: round(m.city_extent_calc, self.no_decimals),
-            # "people":                    lambda m: m.schedule.get_breed_count(Person),
-            # "market_rent":               lambda m: m.market_rent,
-            # "net_rent":                  lambda m: m.net_rent,
-            # "potential_dissipated_rent": lambda m: m.potential_dissipated_rent,
-            # "dissipated_rent":           lambda m: m.dissipated_rent,
-            # "available_rent":            lambda m: m.available_rent,
-            # "rent_captured_by_finance":  lambda m: m.rent_captured_by_finance,
-            # "share_captured_by_finance": lambda m: m.share_captured_by_finance,
-            # "urban_surplus":             lambda m: m.urban_surplus,
-            # "removed_agents":            lambda m: m.removed_agents,
-            "n":                         lambda m: round(m.firm.n, self.no_decimals),
-            "y":                         lambda m: round(m.firm.y, self.no_decimals),
-            "F_target":                  lambda m: round(m.firm.F_target, self.no_decimals),
-            "F":                         lambda m: round(m.firm.F, self.no_decimals),
-            "k":                         lambda m: round(m.firm.k, self.no_decimals),
-            "N":                         lambda m: round(m.firm.N, self.no_decimals),
-            # # "agglomeration_population":  lambda m: m.firm.agglomeration_population, # TODO delete
-            # "Y":                         lambda m: m.firm.Y,
-            "wage_premium":              lambda m: round(m.firm.wage_premium, self.no_decimals),
-            "p_dot":                     lambda m: round(m.firm.p_dot, self.no_decimals),
-            # "subsistence_wage":          lambda m: m.firm.subsistence_wage,
-            # "wage":                      lambda m: m.firm.wage,
-            # # "worker_agents":           lambda m: m.workforce.get_agent_count(m.workforce.workers),
-            # "worker_agents":             lambda m: len(m.workforce.workers),
-            # "newcomer_agents":           lambda m: len(m.workforce.newcomers),
-            # "retiring_urban_owner":      lambda m: len(m.workforce.retiring_urban_owner),
-            # "urban_resident_owners":     lambda m: m.urban_resident_owners_count,
-            # "urban_investor_owners":     lambda m: m.urban_investor_owners_count,
-            # "urban_other_owners":        lambda m: m.urban_other_owners_count,
-            # "investor_ownership_share":  lambda m: m.urban_investor_owners_count / (m.urban_resident_owners_count + m.urban_investor_owners_count) if (m.urban_resident_owners_count + m.urban_investor_owners_count) != 0 else 1,
-            # "workers":        lambda m: len(
-            #     [a for a in self.schedule.agents_by_breed[Person].values()
-            #              if a.is_working == 1]
-            # )
-            "investor_bid":    lambda m: m.step_data["investor_bid"],
-            "warranted_rent":  lambda m: m.step_data["warranted_rent"],
-            "warranted_price": lambda m: m.step_data["warranted_price"],
-            "dist":            lambda m: m.step_data["dist"],
-            # "m":               lambda m: m.step_data["m"],
-            "R_N":             lambda m: m.step_data["R_N"],
-            # "p_dot":           lambda m: m.step_data["p_dot"],
-            "transport_cost":  lambda m: m.step_data["transport_cost"],
-            "maintenance":     lambda m: m.step_data["maintenance"],
-            "newcomer_bid":    lambda m: m.step_data["newcomer_bid"],
+            "city_extent_calc":            lambda m: round(m.city_extent_calc, self.no_decimals),
+            # # "people":                    lambda m: m.schedule.get_breed_count(Person),
+            # # "market_rent":               lambda m: m.market_rent,
+            # # "net_rent":                  lambda m: m.net_rent,
+            # # "potential_dissipated_rent": lambda m: m.potential_dissipated_rent,
+            # # "dissipated_rent":           lambda m: m.dissipated_rent,
+            # # "available_rent":            lambda m: m.available_rent,
+            # # "rent_captured_by_finance":  lambda m: m.rent_captured_by_finance,
+            # # "share_captured_by_finance": lambda m: m.share_captured_by_finance,
+            # # "urban_surplus":             lambda m: m.urban_surplus,
+            # # "removed_agents":            lambda m: m.removed_agents,
+            # "n":                         lambda m: round(m.firm.n, self.no_decimals),
+            # "y":                         lambda m: round(m.firm.y, self.no_decimals),
+            # "F_target":                  lambda m: round(m.firm.F_target, self.no_decimals),
+            # "F":                         lambda m: round(m.firm.F, self.no_decimals),
+            # "k":                         lambda m: round(m.firm.k, self.no_decimals),
+            # "N":                         lambda m: round(m.firm.N, self.no_decimals),
+            # # # "agglomeration_population":  lambda m: m.firm.agglomeration_population, # TODO delete
+            # # "Y":                         lambda m: m.firm.Y,
+            # "wage_premium":              lambda m: round(m.firm.wage_premium, self.no_decimals),
+            # "p_dot":                     lambda m: round(m.firm.p_dot, self.no_decimals),
+            # # "subsistence_wage":          lambda m: m.firm.subsistence_wage,
+            # # "wage":                      lambda m: m.firm.wage,
+            # # # "worker_agents":           lambda m: m.workforce.get_agent_count(m.workforce.workers),
+            # # "worker_agents":             lambda m: len(m.workforce.workers),
+            # # "newcomer_agents":           lambda m: len(m.workforce.newcomers),
+            # # "retiring_urban_owner":      lambda m: len(m.workforce.retiring_urban_owner),
+            # # "urban_resident_owners":     lambda m: m.urban_resident_owners_count,
+            # # "urban_investor_owners":     lambda m: m.urban_investor_owners_count,
+            # # "urban_other_owners":        lambda m: m.urban_other_owners_count,
+            # # "investor_ownership_share":  lambda m: m.urban_investor_owners_count / (m.urban_resident_owners_count + m.urban_investor_owners_count) if (m.urban_resident_owners_count + m.urban_investor_owners_count) != 0 else 1,
+            # # "workers":        lambda m: len(
+            # #     [a for a in self.schedule.agents_by_breed[Person].values()
+            # #              if a.is_working == 1]
+            # # )
+            #     # "investor_bid":    lambda m: m.step_data["investor_bid"],
+            #     # "warranted_rent":  lambda m: m.step_data["warranted_rent"],
+            #     # "warranted_price": lambda m: m.step_data["warranted_price"],
+            #     # "dist":            lambda m: m.step_data["dist"],
+            #     # # "m":               lambda m: m.step_data["m"],
+            #     # "R_N":             lambda m: m.step_data["R_N"],
+            #     # # "p_dot":           lambda m: m.step_data["p_dot"],
+            #     # "transport_cost":  lambda m: m.step_data["transport_cost"],
+            #     # "maintenance":     lambda m: m.step_data["maintenance"],
+            #     # "newcomer_bid":    lambda m: m.step_data["newcomer_bid"],
         }
 
         agent_reporters      = {
-            "time_step":         lambda a: a.model.time_step,
-            # "agent_class":       lambda a: type(a),
-            "agent_type":        lambda a: type(a).__name__,
-            # "id":                lambda a: a.unique_id,
-            "x":                 lambda a: a.pos[0],
-            "y":                 lambda a: a.pos[1],
+            "Time Step":             lambda a: a.model.schedule.time,
+            # # "agent_class":       lambda a: type(a),
+            "agent_type":            lambda a: type(a).__name__,
+            "Bidder Name":           lambda a: getattr(a, "bidder_name", None)           if isinstance(a, Bid_Storage) else None,
+            "Bidder Savings":        lambda a: getattr(a, "bidder_savings", None)        if isinstance(a, Bid_Storage) else None,
+            "Distance":              lambda a: getattr(a, "distance_from_center", None)  if isinstance(a, Bid_Storage) else None,
+            "Transport Cost":        lambda a: getattr(a, "transport_cost", None)        if isinstance(a, Bid_Storage) else None,
+            "Bid":                   lambda a: getattr(a, "bid_value", None)             if isinstance(a, Bid_Storage) else None,
+            "R_N":                   lambda a: getattr(a, "R_N", None)                   if isinstance(a, Bid_Storage) else None,
+            # "Density":               lambda a: getattr(a, "density", None)               if isinstance(a, Bid_Storage) else None,
+            # # "id":                lambda a: a.unique_id,
+            # "x":                 lambda a: a.pos[0],
+            # "y":                 lambda a: a.pos[1],
             # "is_working":        lambda a: None if not isinstance(a, Person) else 1 if a.unique_id in a.model.workforce.workers else 0,  # TODO does this need to be in model? e.g. a.model.workforce
             # "is_working_check":  lambda a: None if not isinstance(a, Person) else a.is_working_check,
             # "working_period":    lambda a: getattr(a, "working_period", None)  if isinstance(a, Person)       else None,

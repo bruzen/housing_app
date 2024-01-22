@@ -79,7 +79,11 @@ class Land(Agent):
             raise ValueError("Invalid distance calculation method."
                             "Supported methods are 'euclidean' and 'cityblock'.")
 
-    def calculate_transport_cost(self):
+    def calculate_transport_cost(self, dist=None):
+        if dist:
+            dist = dist
+        else:
+            dist = self.distance_from_center
         cost = self.distance_from_center * self.model.transport_cost_per_dist
         return cost
 
@@ -951,6 +955,50 @@ class Realtor(Agent):
             
             renter.work_if_worthwhile_to_work()
         self.rental_listings.clear()
+
+class Bid_Storage(Agent):
+    """Stores bids in fast run."""
+    # Must be created after firm
+    def __init__(self, unique_id, model, pos,
+                 bidder_name,
+                 distance_from_center,
+                 bidder_savings = 0,
+                ):
+        super().__init__(unique_id, model) 
+        self.bidder_name    = bidder_name
+        self.bidder_savings = bidder_savings
+        self.distance_from_center = distance_from_center
+        self.transport_cost = self.model.property.calculate_transport_cost(self.distance_from_center)
+        
+        self.bid_type  = None # TODO this would stay constant
+        self.bid_value = 0
+        self.R_N       = 0
+        self.density   = self.model.firm.density
+         
+        # m
+        # M
+        # p_dot
+        # transport_cost, savings_value
+    def step(self):
+        # TODO this part could be done just once for each dist in each time step to speed up..
+        self.model.property.change_dist(self.distance_from_center)
+        self.R_N             = self.model.property.net_rent
+        self.p_dot           = self.model.property.p_dot
+        transport_cost  = self.model.property.transport_cost
+        m  = self.model.max_mortgage_share
+        if self.bidder_name == 'Investor':
+            self.bid_value,  self.bid_type = self.model.investor.get_max_bid(m = m,
+                            R_N   = self.R_N,
+                            p_dot = self.p_dot,
+                            transport_cost = transport_cost)
+        else: # TODO CHECK THIS IS actually person type and catch errors
+            M     = self.model.person.get_max_mortgage(self.bidder_savings)
+            self.bid_value,  self.bid_type = self.model.person.get_max_bid(m, M, self.R_N, self.p_dot, transport_cost, self.bidder_savings)
+            # self.step_data["newcomer_bid"].append((round(newcomer_bid, self.no_decimals), round(dist, self.no_decimals), round(savings_value, self.no_decimals)))
+            # dist += 1
+
+        # TODO dynamically generate for all the savings bids
+        # savings_1_bid = 
 
 class Listing:
     def __init__(
