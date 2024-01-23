@@ -50,6 +50,29 @@ def downsample(df, var, no_vals_to_plot):
     # Filter the DataFrame based on the sampled values
     return df[df[var].isin(sampled_values)]
 
+def get_bidder_color_palette(bidder_categories):
+    numeric_values = [int(category.split()[-1]) for category in bidder_categories if category.startswith('Savings')]
+    min_value = min(numeric_values) if numeric_values else 0
+    max_value = max(numeric_values) if numeric_values else 1
+    brightness_factor = 0.15
+    compression_factor = 0.4
+
+    color_palette = {
+        # category: 'black' if category == 'Investor' else sns.light_palette('blue', as_cmap=True)(int(category.split()[-1]) / 480000) # GOOD
+        category: 'black' if category == 'Investor' else sns.light_palette('blue', as_cmap=True)((int(category.split()[-1]) - min_value) * compression_factor / (max_value - min_value) + brightness_factor)
+        for category in bidder_categories
+    }
+
+    return color_palette
+
+    # # Could also hard code colors
+    # color_palette = {
+    #     'savings_1': 'lightblue', 
+    #     'savings_2': 'skyblue', 
+    #     'savings_3': 'deepskyblue',   
+    #     'investor': 'black'
+    # }
+
 if __name__ == "__main__":
 
     # Generate example dataframe
@@ -68,24 +91,13 @@ if __name__ == "__main__":
                     data.append([dist, bid, param_1, time_step, agent_name])
 
     df = pd.DataFrame(data, columns=['dist', 'bid', 'param_1', 'time_step', 'agent_name'])
-
-    # Determine which df columns go on which axes
     
     # Plot dist vs bid on each subplot
-    # parameter_mapping = {
-    #     'x': 'dist',
-    #     'y': 'bid',
-    #     'x_global': 'param_1',
-    #     'y_global': 'time_step',
-    #     'line_val': 'agent_name'
-    # }
-
-    # Plot time_step vs bid on each subplot
     parameter_mapping = {
-        'x': 'time_step',
+        'x': 'dist',
         'y': 'bid',
         'x_global': 'param_1',
-        'y_global': 'dist',
+        'y_global': 'time_step',
         'line_val': 'agent_name'
     }
 
