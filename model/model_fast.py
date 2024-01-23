@@ -39,6 +39,9 @@ class Fast(Model):
             'width': 15,
             'height':15,
 
+            'distances': None,
+            'newcomer_savings': None,
+ 
             # FLAGS
             'demographics_on': True,  # Set flag to False for debugging to check firm behaviour without demographics or housing market
             'center_city':     False, # Flag for city center in center if True, or bottom corner if False
@@ -225,21 +228,27 @@ class Fast(Model):
         self.grid.place_agent(self.property, self.center)
         self.schedule.add(self.property)
 
-        # Determine maximum radius of the city (with sparseness and some extra)
-        max_radius = 300
-        sparseness = 80
-        spatial_steps = int(max_radius / sparseness)
+        # Select the distances at which to record values
+        if self.params['distances']:
+            self.distances = distances
+        else:
+            max_radius = 150
+            sparseness = 40
+            distances = int(max_radius / sparseness)
 
-        # Determine number of people to add, and their initial savings
-        min_savings = 0
-        max_savings = 2*self.bank.get_rural_home_value()
-        no_steps = 3
-        step_size = int((max_savings - min_savings) / (no_steps - 1))
-        newcomer_savings = [min_savings + i * step_size for i in range(no_steps)]
-        # print(f'Newcomer savings: {self.newcomer_savings}')
+        # Determine the initial savings values to evaluate
+        if self.params['newcomer_savings']:
+            self.newcomer_savings = newcomer_savings
+        else:
+            min_savings = 0
+            max_savings = 2*self.bank.get_rural_home_value()
+            no_steps = 3
+            step_size = int((max_savings - min_savings) / (no_steps - 1))
+            newcomer_savings = [min_savings + i * step_size for i in range(no_steps)]
+            # print(f'Newcomer savings: {self.newcomer_savings}')
 
         # Add Bid_Storage to store bids
-        for x in range(spatial_steps):
+        for x in range(distances):
             self.unique_id      += 1
             dist = x * sparseness
             bidder_name = 'Investor'         
