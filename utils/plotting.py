@@ -1,3 +1,4 @@
+import os
 import pandas as pd
 import numpy as np
 import seaborn as sns
@@ -72,6 +73,20 @@ def get_bidder_color_palette(bidder_categories):
     #     'savings_3': 'deepskyblue',   
     #     'investor': 'black'
     # }
+
+def load_last_fast_batch_run_df():
+    folder_path = os.path.join('output_data', 'fast_run_data')
+    files = os.listdir(folder_path)
+
+    # OPTIONAL Filter files that start with 'results_batch_'
+    files = [file for file in files if file.startswith('results_batch_')]
+
+    # Get the most recently modified file path
+    most_recent_file = max(files, key=lambda x: os.path.getmtime(os.path.join(folder_path, x)))
+    most_recent_file_path = os.path.join(folder_path, most_recent_file)
+    # print(most_recent_file_path)
+    
+    return pd.read_csv(most_recent_file_path)
 
 if __name__ == "__main__":
 
