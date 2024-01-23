@@ -6,7 +6,7 @@ import matplotlib.pyplot as plt
 def small_multiples_lineplot(df, param_mapping, palette=None):
     # Set up the grid of subplots using FacetGrid
     g = sns.FacetGrid(df, col=param_mapping['x_global'], row=param_mapping['y_global'], 
-                      margin_titles=True, height=1.5, aspect=1.)
+                      margin_titles=True, height=2.5, aspect=1.)
 
     # Add grey gridlines (note: only shows up on second run)
     # sns.set_style("darkgrid")
@@ -19,10 +19,10 @@ def small_multiples_lineplot(df, param_mapping, palette=None):
 
     if palette:
         g.map_dataframe(sns.lineplot, x=param_mapping['x'], y=param_mapping['y'], estimator=None, 
-                        hue=param_mapping['line_val'], marker='o', palette=palette).add_legend() #(fontsize=20)
+                        hue=param_mapping['line_val'], palette=palette).add_legend() #(fontsize=20)
     else:
         g.map_dataframe(sns.lineplot, x=param_mapping['x'], y=param_mapping['y'], estimator=None, 
-                        hue=param_mapping['line_val'], marker='o').add_legend() # (fontsize=20)
+                        hue=param_mapping['line_val']).add_legend() # (fontsize=20) , marker='o'
 
     # Set axis labels and titles for each subplot
     g.set_axis_labels(format_label(param_mapping['x']), format_label(param_mapping['y'])).set_titles(
