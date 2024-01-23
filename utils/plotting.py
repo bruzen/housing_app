@@ -37,6 +37,19 @@ def format_label(label):
     # Capitalize the first letter of each word
     return ' '.join(word.capitalize() for word in label.split('_'))
 
+def downsample(df, var, no_vals_to_plot):
+    # Get unique values for the variable
+    unique_time_steps = df[var].unique()
+
+    # Sample indices
+    sampled_indices = np.linspace(0, len(unique_time_steps) - 1, no_vals_to_plot, dtype=int)
+
+    # Use the sampled indices to get sampled values
+    sampled_values = unique_time_steps[sampled_indices]
+
+    # Filter the DataFrame based on the sampled values
+    return df[df[var].isin(sampled_values)]
+
 if __name__ == "__main__":
 
     # Generate example dataframe
