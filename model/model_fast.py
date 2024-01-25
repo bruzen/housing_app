@@ -448,7 +448,7 @@ class Fast(Model):
         # Define what data the model will collect in each time step
         model_reporters      = {
             # "workers":                   lambda m: m.firm.N,
-            # "MPL":                       lambda m: m.firm.MPL,
+            "MPL":                       lambda m: m.firm.MPL,
             "time_step":                   lambda m: m.schedule.time,
             # "companies":                 lambda m: m.schedule.get_breed_count(Firm),
             "city_extent_calc":            lambda m: round(m.city_extent_calc, self.no_decimals),
@@ -468,6 +468,7 @@ class Fast(Model):
             "F":                         lambda m: round(m.firm.F, self.no_decimals),
             "k":                         lambda m: round(m.firm.k, self.no_decimals),
             "N":                         lambda m: round(m.firm.N, self.no_decimals),
+            "N/F":                         lambda m: round(m.firm.N/m.firm.F, self.no_decimals),
             # # # "agglomeration_population":  lambda m: m.firm.agglomeration_population, # TODO delete
             # # "Y":                         lambda m: m.firm.Y,
             # "wage_premium":              lambda m: round(m.firm.wage_premium, self.no_decimals),
