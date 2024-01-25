@@ -664,13 +664,3 @@ class Retired_Agents:
             # If the agent is already in the dictionary, append the new property to the existing list
             self.property_ownership[owner_id]["properties"].append(property)
             self.model.logger(f'Agent_id {owner_id} already exists in Retired_Agents. Added property to list of properties owned.')
-
-if __name__ == '__main__':
-    num_steps  = 10
-    city = City(num_steps)
-    city.run_model()
-
-    # agent_out = city.datacollector.get_agent_vars_dataframe()
-    model_out = city.datacollector.get_model_vars_dataframe()
-
-    model_out.to_csv('test_model_out.csv', index=False)
