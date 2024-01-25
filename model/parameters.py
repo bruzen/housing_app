@@ -10,6 +10,10 @@ default_parameters = {
     # 'random_init_age': False,  # Flag for randomizing initial age. If False, all workers begin at age 0
     'random_init_age': True,  # Flag for randomizing initial age. If False, all workers begin at age 0
 
+    # Only used in model fast
+    'distances': None,
+    'newcomer_savings': None,
+
     # LABOUR MARKET AND FIRM PARAMETERS
     'subsistence_wage': 40000., # psi
     'init_city_extent': 10.,    # CUT OR CHANGE?
