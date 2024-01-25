@@ -7,6 +7,8 @@ import pandas as pd
 import matplotlib.pyplot as plt
 from contextlib import contextmanager
 from mesa.batchrunner import batch_run
+import sys
+sys.path.append('..')  # Add the parent directory to the sys.path
 from model.model import City
 
 @contextmanager
