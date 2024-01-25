@@ -28,7 +28,7 @@ default_parameters = {
     'alpha': 0.18,
     'beta':  0.75,
     'gamma': 0.12, ### reduced from .14
-    'overhead': 1.,
+    'overhead': 0.5.,
     'mult': 1.2,
     'adjN': 0.15,
     'adjk': 0.10,

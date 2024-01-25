@@ -561,7 +561,7 @@ class Firm(Agent):
 
         # ADJUST WAGE
         self.MPL = self.beta  * self.y / self.n  # marginal value product of labour known to firms
-        self.wage_target = self.subsistence_wage + (self.MPL - self.subsistence_wage) / (1 + self.overhead)       #self.wage_target = self.MPL / (1 + self.overhead) # (1+self.overhead) # economic rationality implies intention
+        self.wage_target = self.MPL / (1 + self.overhead) # self.subsistence_wage + (self.MPL - self.subsistence_wage) / (1 + self.overhead)   # (1+self.overhead) # economic rationality implies intention
         self.wage = (1 - self.adjw) * self.wage + self.adjw * self.wage_target # assume a partial adjustment process
         
         # FIND POPULATION AT NEW WAGE
