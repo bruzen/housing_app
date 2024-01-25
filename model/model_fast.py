@@ -17,6 +17,7 @@ from mesa.space import MultiGrid
 from mesa.datacollection import DataCollector
 
 import model.parameters as params
+import utils.file_utils as file_utils
 from model.agents import Land, Person, Firm, Investor, Bank, Realtor, Bid_Storage
 from model.schedule import RandomActivationByBreed
 
@@ -336,8 +337,6 @@ class Fast(Model):
             #         self.step_data["newcomer_bid"].append((round(newcomer_bid, self.no_decimals), round(dist, self.no_decimals), round(savings_value, self.no_decimals)))
             #     # dist += 1
 
-
-
     def setup_run_data_collection(self):
         # TODO adjust as in model for batch runs
         # Get timestamp
@@ -348,15 +347,15 @@ class Fast(Model):
         self.timestamp = timestamp
         
         # Create folder and filename for logging
-        log_folder = self.get_subfolder(folder_name = "output_data", subfolder_name = "fast_logs")
-        self.run_id    = self.get_run_id(self.model_name, self.timestamp, self.model_version)
+        log_folder = file_utils.get_subfolder(folder_name = "output_data", subfolder_name = "fast_logs")
+        self.run_id    = file_utils.get_run_id(self.model_name, self.timestamp, self.model_version)
         self.log_filename = os.path.join(log_folder, f'logfile_{self.run_id}.log')
 
         # Create folder for plots
-        self.figures_folder = self.get_subfolder(folder_name = "output_data", subfolder_name = "fast_figures")
+        self.figures_folder = file_utils.get_subfolder(folder_name = "output_data", subfolder_name = "fast_figures")
 
         # Create folder and filenames for data output
-        data_folder = self.get_subfolder(folder_name = "output_data", subfolder_name = "fast_run_data")
+        data_folder = file_utils.get_subfolder(folder_name = "output_data", subfolder_name = "fast_run_data")
         self.data_folder = data_folder
         agent_filename         = self.run_id + '_agent' + '.csv'
         model_filename         = self.run_id + '_model' + '.csv'
@@ -368,11 +367,11 @@ class Fast(Model):
         # metadata = {
         #     'model_description':     self.model_description,
         #     'num_steps':             self.num_steps,
-        #     'git_version':           self.get_git_commit_hash(),
+        #     'git_version':           file_utils.get_git_commit_hash(),
         #     'simulation_parameters': self.params
         # }
 
-        # self.record_metadata(metadata, self.metadata_file_path)
+        # file_utils.record_metadata(metadata, self.metadata_file_path)
 
     def setup_mesa_data_collection(self):
 
@@ -494,23 +493,6 @@ class Fast(Model):
                 model_out.to_csv(self.model_file_path, index=False)
             except Exception as e:
                 logging.error("Error saving model data: %s", str(e))
-
-    def get_run_id(self, model_name, timestamp, model_version):
-        # Adapt the model name to lowercase and replace spaces with underscores
-        formatted_model_name = model_name.lower().replace(" ", "_")
-        unique_id = ''.join(random.choices(string.ascii_uppercase + string.digits, k=3))
-
-        # Create the run_id
-        return f"{formatted_model_name}_{timestamp}_{unique_id}_v{model_version.replace('.', '_')}"
-
-    def get_subfolder(self, folder_name = "output_data", subfolder_name = "run_data"):
-        # Create the subfolder path
-        subfolder = os.path.join(folder_name, subfolder_name)
-        
-        # Create the subfolder if it doesn't exist
-        os.makedirs(subfolder, exist_ok=True)
-        
-        return subfolder
 
     def reset_step_data_lists(self):
         # Reset all lists within step_data
