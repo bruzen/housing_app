@@ -154,11 +154,11 @@ def plot_output(df, variable_parameters, model_parameters, name = None):
     label_text = (
         f'\n {name} {" ".join(variable_parameters.keys())}'
         f'{plot_path}\n'
-        f'adjF: {model_parameters["adjF"]}, adjw: {model_parameters["adjw"]}, '
-        f'discount_rate: {model_parameters["discount_rate"]}, r_margin: {model_parameters["r_margin"]},\n'
-        f'max_mortgage_share: {model_parameters["max_mortgage_share"]}, '
-        f'cg_tax_per: {model_parameters["cg_tax_per"]}, '
-        f'cg_tax_invest: {model_parameters["cg_tax_invest"]}'
+        # f'adjF: {model_parameters["adjF"]}, adjw: {model_parameters["adjw"]}, '
+        # f'discount_rate: {model_parameters["discount_rate"]}, r_margin: {model_parameters["r_margin"]},\n'
+        # f'max_mortgage_share: {model_parameters["max_mortgage_share"]}, '
+        # f'cg_tax_per: {model_parameters["cg_tax_per"]}, '
+        # f'cg_tax_invest: {model_parameters["cg_tax_invest"]}'
     )
 
     plt.text(-1.0, -0.5, label_text, transform=plt.gca().transAxes, ha='left', va='center', wrap=True)

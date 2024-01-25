@@ -24,6 +24,7 @@ from mesa import Model
 from mesa.space import MultiGrid
 from mesa.datacollection import DataCollector
 
+import model.parameters as params
 from model.agents import Land, Person, Firm, Investor, Bank, Realtor
 from model.schedule import RandomActivationByBreed
 
@@ -57,62 +58,7 @@ class City(Model):
     def __init__(self, num_steps=10, **parameters):
         super().__init__()
 
-        # Default parameter values
-        default_parameters = {
-            'run_notes': 'Debugging model.',
-            'subfolder': None,
-            'width': 15,
-            'height':15,
-
-            # FLAGS
-            'demographics_on': True,  # Set flag to False for debugging to check firm behaviour without demographics or housing market
-            'center_city':     False, # Flag for city center in center if True, or bottom corner if False
-            # 'random_init_age': False,  # Flag for randomizing initial age. If False, all workers begin at age 0
-            'random_init_age': True,  # Flag for randomizing initial age. If False, all workers begin at age 0
-
-            # LABOUR MARKET AND FIRM PARAMETERS
-            'subsistence_wage': 40000., # psi
-            'init_city_extent': 10.,    # CUT OR CHANGE?
-            'seed_population': 400,
-            'init_wage_premium_ratio': 0.2, # 1.2, ###
-
-            # PARAMETERS MOST LIKELY TO AFFECT SCALE
-            'c': 300.0,                            ###
-            'price_of_output': 10,                 ######
-            'density':600,                         #####
-            'A': 3000,                             ### 
-            'alpha': 0.18,
-            'beta':  0.75,
-            'gamma': 0.12, ### reduced from .14
-            'overhead': 1,
-            'mult': 1.2,
-            'adjN': 0.15,
-            'adjk': 0.05,
-            'adjn': 0.25,
-            'adjF': 0.15,
-            'adjw': 0.15, 
-            'dist': 1,
-            'init_F': 100.0,
-            'init_k': 100.0,
-            'init_n': 100.0,
-
-            # HOUSING AND MORTGAGE MARKET PARAMETERS
-            'mortgage_period': 5.0,       # T, in years
-            'working_periods': 40,        # in years
-            'savings_rate': 0.3,
-            'discount_rate': 0.07,        # 1/delta
-            'r_prime': 0.05,
-            'r_margin': 0.01,
-            'r_investor': 0.05,            # Next best alternative return for investor
-            'property_tax_rate': 0.04,     # tau, annual rate, was c
-            'housing_services_share': 0.3, # a
-            'maintenance_share': 0.2,      # b
-            'max_mortgage_share': 0.9,
-            'ability_to_carry_mortgage': 0.28,
-            'wealth_sensitivity': 0.1,
-            'cg_tax_per':   0.01, # share 0-1
-            'cg_tax_invest': 0.15, # share 0-1
-        }
+        default_parameters = params.default_parameters
 
         # Merge default parameters with provided parameters
         if parameters is not None:
@@ -718,3 +664,13 @@ class Retired_Agents:
             # If the agent is already in the dictionary, append the new property to the existing list
             self.property_ownership[owner_id]["properties"].append(property)
             self.model.logger(f'Agent_id {owner_id} already exists in Retired_Agents. Added property to list of properties owned.')
+
+if __name__ == '__main__':
+    num_steps  = 10
+    city = City(num_steps)
+    city.run_model()
+
+    # agent_out = city.datacollector.get_agent_vars_dataframe()
+    model_out = city.datacollector.get_model_vars_dataframe()
+
+    model_out.to_csv('test_model_out.csv', index=False)
