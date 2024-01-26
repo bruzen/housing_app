@@ -1,17 +1,5 @@
 import logging
 import os
-# import yaml
-# import functools
-import datetime
-import random
-import string
-# from typing import Dict, List
-# from contextlib import contextmanager
-# import subprocess
-# import math
-import numpy as np
-# import pandas as pd
-# from scipy.spatial import distance
 from mesa import Model
 from mesa.space import MultiGrid
 from mesa.datacollection import DataCollector
@@ -51,7 +39,7 @@ class Fast(Model):
 
         self.setup_run_data_collection()
 
-        logging.basicConfig(filename=self.log_filename,
+        logging.basicConfig(filename=self.log_filepath,
                     filemode='w',
                     level=logging.DEBUG,
                     format='%(asctime)s %(name)s %(levelname)s:%(message)s')
@@ -338,31 +326,29 @@ class Fast(Model):
             #     # dist += 1
 
     def setup_run_data_collection(self):
-        # TODO adjust as in model for batch runs
-        # Get timestamp
+        # Set timestamp and run_id
         if 'timestamp' in self.params and self.params['timestamp'] is not None:
-            timestamp = self.params['timestamp']
+            self.timestamp     = self.params['timestamp']
         else:
-            timestamp = datetime.datetime.now().strftime("%Y-%m-%d_%H%M%S")
-        self.timestamp = timestamp
-        
-        # Create folder and filename for logging
-        log_folder = file_utils.get_subfolder(folder_name = "output_data", subfolder_name = "fast_logs")
-        self.run_id    = file_utils.get_run_id(self.model_name, self.timestamp, self.model_version)
-        self.log_filename = os.path.join(log_folder, f'logfile_{self.run_id}.log')
+            self.timestamp     = file_utils.generate_timestamp()
+        self.run_id            = file_utils.get_run_id(self.model_name, self.timestamp, self.model_version)
 
-        # Create folder for plots
-        self.figures_folder = file_utils.get_subfolder(folder_name = "output_data", subfolder_name = "fast_figures")
+        # Set log and metadata filepaths
+        self.log_filepath      = file_utils.get_filepath(folder_name = "output_data", subfolder_name = "logs", file_name = f'logfile_{self.run_id}.log')
+        self.metadata_filepath = file_utils.get_filepath(folder_name = "output_data", subfolder_name = "metadata", file_name = f'metadata_{self.run_id}.log')
 
-        # Create folder and filenames for data output
-        data_folder = file_utils.get_subfolder(folder_name = "output_data", subfolder_name = "fast_run_data")
-        self.data_folder = data_folder
-        agent_filename         = self.run_id + '_agent' + '.csv'
-        model_filename         = self.run_id + '_model' + '.csv'
-        self.agent_file_path   = os.path.join(self.data_folder, agent_filename)
-        self.model_file_path   = os.path.join(self.data_folder, model_filename)
+        # # Set figures folder
+        # self.figures_folder = file_utils.get_subfolder(folder_name = "output_data", subfolder_name = "figures")
 
-        # self.metadata_file_path = os.path.join(self.subfolder, 'metadata_run.yaml')
+        # Set data filepaths
+        if 'subfolder' in self.params and self.params['subfolder'] is not None:
+            self.data_folder = self.params['subfolder']
+        else:
+            self.data_folder = file_utils.get_subfolder(folder_name = "output_data", subfolder_name = "run_data")
+        self.agent_filepath   = os.path.join(self.data_folder, f"{self.run_id}_agent.csv")
+        self.model_filepath   = os.path.join(self.data_folder, f"{self.run_id}_model.csv")
+
+        # self.metadata_filepath = os.path.join(self.subfolder, 'metadata_run.yaml')
 
         # metadata = {
         #     'model_description':     self.model_description,
@@ -371,7 +357,7 @@ class Fast(Model):
         #     'simulation_parameters': self.params
         # }
 
-        # file_utils.record_metadata(metadata, self.metadata_file_path)
+        # file_utils.record_metadata(metadata, self.metadata_filepath)
 
     def setup_mesa_data_collection(self):
 
@@ -483,14 +469,14 @@ class Fast(Model):
         # Save agent data
         if agent_out is not None:
             try:
-                agent_out.to_csv(self.agent_file_path, index=False)
+                agent_out.to_csv(self.agent_filepath, index=False)
             except Exception as e:
                 logging.error("Error saving agent data: %s", str(e))
 
         # Save model data
         if model_out is not None:
             try:
-                model_out.to_csv(self.model_file_path, index=False)
+                model_out.to_csv(self.model_filepath, index=False)
             except Exception as e:
                 logging.error("Error saving model data: %s", str(e))
 

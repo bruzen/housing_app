@@ -1,6 +1,6 @@
 import logging
 import os
-import datetime
+
 from typing import Dict, List
 from scipy.spatial import distance
 
@@ -61,7 +61,7 @@ class City(Model):
 
         self.setup_run_data_collection()
 
-        logging.basicConfig(filename=self.log_filename,
+        logging.basicConfig(filename=self.log_filepath,
                     filemode='w',
                     level=logging.DEBUG,
                     format='%(asctime)s %(name)s %(levelname)s:%(message)s')
@@ -299,37 +299,29 @@ class City(Model):
 
         self.record_run_data_to_file()
 
+    # TODO consider moving to file_utils
     def setup_run_data_collection(self):
-        # Setup data collection
+        # Set timestamp and run_id
         if 'timestamp' in self.params and self.params['timestamp'] is not None:
-            timestamp = self.params['timestamp']
+            self.timestamp     = self.params['timestamp']
         else:
-            timestamp = datetime.datetime.now().strftime("%Y-%m-%d_%H%M%S")
-        self.timestamp = timestamp
+            self.timestamp     = file_utils.generate_timestamp()
+        self.run_id            = file_utils.get_run_id(self.model_name, self.timestamp, self.model_version)
 
+        # Set log and metadata filepaths
+        self.log_filepath      = file_utils.get_filepath(folder_name = "output_data", subfolder_name = "logs", file_name = f'logfile_{self.run_id}.log')
+        self.metadata_filepath = file_utils.get_filepath(folder_name = "output_data", subfolder_name = "metadata", file_name = f'metadata_{self.run_id}.log')
+
+        # # Set figures folder
+        # self.figures_folder = file_utils.get_subfolder(folder_name = "output_data", subfolder_name = "figures")
+
+        # Set data filepaths
         if 'subfolder' in self.params and self.params['subfolder'] is not None:
-            subfolder = self.params['subfolder']
+            self.data_folder = self.params['subfolder']
         else:
-            subfolder = file_utils.get_subfolder(folder_name = "output_data", subfolder_name = "run_data")
-        self.subfolder = subfolder
-        
-        # Create folder and filename for logging
-        log_folder = file_utils.get_subfolder(folder_name = "output_data", subfolder_name = "logs")
-        self.run_id    = file_utils.get_run_id(self.model_name, self.timestamp, self.model_version)
-        self.log_filename = os.path.join(log_folder, f'logfile_{self.run_id}.log')
-
-        # Create folder for plots
-        self.figures_folder = file_utils.get_subfolder(folder_name = "output_data", subfolder_name = "figures")
-
-        # Create the 'output_data' subfolder if it doesn't exist
-        if not os.path.exists(self.subfolder):
-            os.makedirs(self.subfolder)
-
-        agent_filename         = self.run_id + '_agent' + '.csv'
-        model_filename         = self.run_id + '_model' + '.csv'
-        self.agent_file_path   = os.path.join(self.subfolder, agent_filename)
-        self.model_file_path   = os.path.join(self.subfolder, model_filename)
-        self.metadata_file_path = os.path.join(self.subfolder, 'metadata_run.yaml')
+            self.data_folder = file_utils.get_subfolder(folder_name = "output_data", subfolder_name = "run_data")
+        self.agent_filepath   = os.path.join(self.data_folder, f"{self.run_id}_agent.csv")
+        self.model_filepath   = os.path.join(self.data_folder, f"{self.run_id}_model.csv")
 
         metadata = {
             'model_description':     self.model_description,
@@ -338,7 +330,7 @@ class City(Model):
             'simulation_parameters': self.params
         }
 
-        file_utils.record_metadata(self.run_id, metadata, self.metadata_file_path)
+        file_utils.record_metadata(self.run_id, metadata, self.metadata_filepath)
 
     def setup_mesa_data_collection(self):
 
@@ -454,14 +446,14 @@ class City(Model):
         # Save agent data
         if agent_out is not None:
             try:
-                agent_out.to_csv(self.agent_file_path, index=False)
+                agent_out.to_csv(self.agent_filepath, index=False)
             except Exception as e:
                 logging.error("Error saving agent data: %s", str(e))
 
         # Save model data
         if model_out is not None:
             try:
-                model_out.to_csv(self.model_file_path, index=False)
+                model_out.to_csv(self.model_filepath, index=False)
             except Exception as e:
                 logging.error("Error saving model data: %s", str(e))
 
