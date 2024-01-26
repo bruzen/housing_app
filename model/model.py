@@ -61,6 +61,9 @@ class City(Model):
 
         self.setup_run_data_collection()
 
+        # Record metadata
+        self.metadata  = file_utils.record_metadata(filepath = self.metadata_filepath, run_id = self.run_id, num_steps = self.num_steps, params=self.params)
+
         logging.basicConfig(filename=self.log_filepath,
                     filemode='w',
                     level=logging.DEBUG,
@@ -69,7 +72,6 @@ class City(Model):
 
         logging.getLogger('matplotlib').setLevel(logging.ERROR) 
 
-        
         self.height = self.params['height']
         self.width  = self.params['width']
 
@@ -306,11 +308,11 @@ class City(Model):
             self.timestamp     = self.params['timestamp']
         else:
             self.timestamp     = file_utils.generate_timestamp()
-        self.run_id            = file_utils.get_run_id(self.model_name, self.timestamp, self.model_version)
+        self.run_id            = file_utils.get_run_id(self.timestamp) #, self.model_name, self.model_version)
 
         # Set log and metadata filepaths
-        self.log_filepath      = file_utils.get_filepath(folder_name = "output_data", subfolder_name = "logs", file_name = f'logfile_{self.run_id}.log')
-        self.metadata_filepath = file_utils.get_filepath(folder_name = "output_data", subfolder_name = "metadata", file_name = f'metadata_{self.run_id}.log')
+        self.log_filepath      = file_utils.get_filepath(folder_name = "output_data", subfolder_name = "logs", file_name = f'log-{self.timestamp}.log')
+        self.metadata_filepath = file_utils.get_filepath(folder_name = "output_data", subfolder_name = "metadata", file_name = f'metadata-{self.run_id}.log')
 
         # # Set figures folder
         # self.figures_folder = file_utils.get_subfolder(folder_name = "output_data", subfolder_name = "figures")
@@ -319,21 +321,11 @@ class City(Model):
         if 'subfolder' in self.params and self.params['subfolder'] is not None:
             self.data_folder = self.params['subfolder']
         else:
-            self.data_folder = file_utils.get_subfolder(folder_name = "output_data", subfolder_name = "run_data")
-        self.agent_filepath   = os.path.join(self.data_folder, f"{self.run_id}_agent.csv")
-        self.model_filepath   = os.path.join(self.data_folder, f"{self.run_id}_model.csv")
-
-        metadata = {
-            'model_description':     self.model_description,
-            'num_steps':             self.num_steps,
-            'git_version':           file_utils.get_git_commit_hash(),
-            'simulation_parameters': self.params
-        }
-
-        file_utils.record_metadata(self.run_id, metadata, self.metadata_filepath)
+            self.data_folder = file_utils.get_subfolder(folder_name = "output_data", subfolder_name = "data")
+        self.agent_filepath   = os.path.join(self.data_folder, f"{self.run_id}-agent.csv")
+        self.model_filepath   = os.path.join(self.data_folder, f"{self.run_id}-model.csv")
 
     def setup_mesa_data_collection(self):
-
         # Variables for data collection
         self.rent_production = 0.
         self.rent_amenity    = 0.
@@ -348,6 +340,7 @@ class City(Model):
 
         # Define what data the model will collect in each time step
         model_reporters      = {
+            "run_id":                    lambda m: m.run_id,
             "workers":                   lambda m: m.firm.N,
             "MPL":                       lambda m: m.firm.MPL,
             "time_step":                 lambda m: m.time_step,

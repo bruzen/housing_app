@@ -39,6 +39,9 @@ class Fast(Model):
 
         self.setup_run_data_collection()
 
+        # Record metadata
+        self.metadata  = file_utils.record_metadata(filepath = self.metadata_filepath, run_id = self.run_id, num_steps = self.num_steps, params=self.params)
+
         logging.basicConfig(filename=self.log_filepath,
                     filemode='w',
                     level=logging.DEBUG,
@@ -331,11 +334,11 @@ class Fast(Model):
             self.timestamp     = self.params['timestamp']
         else:
             self.timestamp     = file_utils.generate_timestamp()
-        self.run_id            = file_utils.get_run_id(self.model_name, self.timestamp, self.model_version)
+        self.run_id            = file_utils.get_run_id(self.timestamp) # self.model_name, self.model_version)
 
         # Set log and metadata filepaths
-        self.log_filepath      = file_utils.get_filepath(folder_name = "output_data", subfolder_name = "logs", file_name = f'logfile_{self.run_id}.log')
-        self.metadata_filepath = file_utils.get_filepath(folder_name = "output_data", subfolder_name = "metadata", file_name = f'metadata_{self.run_id}.log')
+        self.log_filepath      = file_utils.get_filepath(folder_name = "output_data", subfolder_name = "logs", file_name = f'fast-log-{self.timestamp}.log')
+        self.metadata_filepath = file_utils.get_filepath(folder_name = "output_data", subfolder_name = "metadata", file_name = f'fast-metadata-{self.run_id}.log')
 
         # # Set figures folder
         # self.figures_folder = file_utils.get_subfolder(folder_name = "output_data", subfolder_name = "figures")
@@ -344,20 +347,9 @@ class Fast(Model):
         if 'subfolder' in self.params and self.params['subfolder'] is not None:
             self.data_folder = self.params['subfolder']
         else:
-            self.data_folder = file_utils.get_subfolder(folder_name = "output_data", subfolder_name = "run_data")
-        self.agent_filepath   = os.path.join(self.data_folder, f"{self.run_id}_agent.csv")
-        self.model_filepath   = os.path.join(self.data_folder, f"{self.run_id}_model.csv")
-
-        # self.metadata_filepath = os.path.join(self.subfolder, 'metadata_run.yaml')
-
-        # metadata = {
-        #     'model_description':     self.model_description,
-        #     'num_steps':             self.num_steps,
-        #     'git_version':           file_utils.get_git_commit_hash(),
-        #     'simulation_parameters': self.params
-        # }
-
-        # file_utils.record_metadata(metadata, self.metadata_filepath)
+            self.data_folder = file_utils.get_subfolder(folder_name = "output_data", subfolder_name = "data")
+        self.agent_filepath   = os.path.join(self.data_folder, f"{self.run_id}-agent.csv")
+        self.model_filepath   = os.path.join(self.data_folder, f"{self.run_id}-model.csv")
 
     def setup_mesa_data_collection(self):
 
@@ -375,8 +367,9 @@ class Fast(Model):
 
         # Define what data the model will collect in each time step
         model_reporters      = {
+            "run_id":                      lambda m: m.run_id,
             # "workers":                   lambda m: m.firm.N,
-            "MPL":                       lambda m: m.firm.MPL,
+            "MPL":                         lambda m: m.firm.MPL,
             "time_step":                   lambda m: m.schedule.time,
             # "companies":                 lambda m: m.schedule.get_breed_count(Firm),
             "city_extent_calc":            lambda m: round(m.city_extent_calc, self.no_decimals),
