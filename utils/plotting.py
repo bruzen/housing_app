@@ -6,18 +6,19 @@ import matplotlib.pyplot as plt
 import utils.file_utils as file_utils
 
 PAGE_WIDTH   = 6.3764 # thesis \the\textwidth = 460.72124pt / 72 pts_per_inch
-GOLDEN_RATIO = 1.618  # (5**.5 - 1) / 2 
+GOLDEN_RATIO = 1.618  # (5**.5 - 1) / 2
 
 def set_style():
     sns.set_style("whitegrid", {'axes.grid' : True})
     plt.rcParams['font.family'] = 'serif'
     plt.rcParams['font.serif'] = ['cmr10']
-    plt.rcParams['font.size'] = 12
+    
     # sns.set_style("darkgrid")
     # sns.set_style("ticks",{'axes.grid' : True})
 
 def small_multiples_lineplot(df, param_mapping, palette=None):
     set_style()
+    plt.rcParams['font.size'] = 12
 
     # Desired width (thesis) and space (sns default) values
     width = PAGE_WIDTH  # inches, minus 1 inch for the legend
@@ -49,6 +50,8 @@ def small_multiples_lineplot(df, param_mapping, palette=None):
 
 def batch_quantities_lineplot(df, variable_parameters = None):
     set_style()
+    plt.rcParams['font.size'] = 11
+
     # df = pd.DataFrame(results)
     timestamp = df['timestamp'].iloc[0] # Same timestep for all rows in df
     figures_folder = file_utils.get_figures_subfolder()
@@ -62,11 +65,8 @@ def batch_quantities_lineplot(df, variable_parameters = None):
     linestyles = ['solid', 'dashed', 'dashdot', 'dotted']  # Add more if needed
     alpha      = 0.8   
 
-    # Set the default font size for the figures
-    plt.rcParams.update({'font.size': 28})
-
     # Create subplots with a 4x2 grid
-    fig, axes = plt.subplots(4, 2, figsize=(22, 24), gridspec_kw={'hspace': 0.6})  # 4 rows, 2 columns
+    fig, axes = plt.subplots(4, 2, figsize=(PAGE_WIDTH, 1.5*PAGE_WIDTH), gridspec_kw={'hspace': 0.8, 'wspace': 0.5})  # 4 rows, 2 columns
 
     # Loop through each run
     for i, run_id in enumerate(df['RunId'].unique()):
@@ -93,7 +93,7 @@ def batch_quantities_lineplot(df, variable_parameters = None):
         axes[0, 0].set_ylabel('MPL')
         axes[0, 0].set_title(f'MPL over time')
         axes[0, 0].grid(True)
-        axes[0, 0].legend()
+        axes[0, 0].legend().set_visible(False)
 
         # Plot n
         axes[0, 1].plot(subset_df['time_step'], subset_df['n'], label=label, color=color, alpha=alpha, linestyle=linestyle, linewidth=linewidth)
@@ -141,14 +141,20 @@ def batch_quantities_lineplot(df, variable_parameters = None):
         axes[3, 0].set_ylabel('Ownership share')
         axes[3, 0].set_title('Owner-occupier fraction over time')
         axes[3, 0].grid(True)
-        axes[3, 0].legend().set_visible(False)
 
         # Display a single legend outside the figure
-        axes[0, 0].legend(loc='center left', bbox_to_anchor=(1.15, -4.4))
+        axes[3, 0].legend(loc='center left', bbox_to_anchor=(1.35, 0.5), frameon=False)
         axes[3, 1].set_axis_off() 
 
+    # Override font sizes
+    default_font_size = plt.rcParams['font.size']
+    for ax in axes.flatten():
+        ax.set_title(ax.get_title(), fontsize=default_font_size)
+        ax.set_xlabel(ax.get_xlabel(), fontsize=default_font_size)
+        ax.set_ylabel(ax.get_ylabel(), fontsize=default_font_size)
+
     figure_filepath = file_utils.get_figures_filepath(f'timeseries-plots-{timestamp}.pdf')
-       
+
     label_text = (
         # f'\n {name} {" ".join(variable_parameters.keys())}'
         f'{figure_filepath}\n'
@@ -159,9 +165,8 @@ def batch_quantities_lineplot(df, variable_parameters = None):
         # f'cg_tax_invest: {model_parameters["cg_tax_invest"]}'
     )
 
-    plt.text(-1.0, -0.5, label_text, transform=plt.gca().transAxes, ha='left', va='center', wrap=True)
+    plt.text(-1.0, -0.7, label_text, transform=plt.gca().transAxes, ha='left', va='center', wrap=True)
     plt.savefig(figure_filepath, format='pdf')
-
 
 def format_label(label):
     # Capitalize the first letter of each word
