@@ -337,8 +337,8 @@ class Fast(Model):
         self.run_id            = file_utils.get_run_id(self.timestamp) # self.model_name, self.model_version)
 
         # Set log and metadata filepaths
-        self.log_filepath      = file_utils.get_filepath(folder_name = file_utils.output_folder, subfolder_name = "logs", file_name = f'fast-log-{self.timestamp}.log')
-        self.metadata_filepath = file_utils.get_filepath(folder_name = file_utils.output_folder, subfolder_name = "metadata", file_name = f'fast-metadata-{self.run_id}.log')
+        self.log_filepath      = file_utils.get_log_filepath(file_name = f'fast-log-{self.timestamp}.log')
+        self.metadata_filepath = file_utils.get_metadata_filepath(file_name = f'fast-metadata-{self.run_id}.log')
 
         # # Set figures folder
         # self.figures_folder  = get_figures_subfolder()
