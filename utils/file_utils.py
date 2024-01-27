@@ -65,17 +65,17 @@ def get_subfolder(folder_name = output_folder, subfolder_name = "data"):
     
     return subfolder
 
-def get_figures_subfolder():
-    return get_subfolder(folder_name = output_folder, subfolder_name = "figures")
-
-def get_data_subfolder():
-    return get_subfolder(folder_name = output_folder, subfolder_name = "data")
-
 def get_metadata_subfolder():
     return get_subfolder(folder_name = output_folder, subfolder_name = "metadata")
 
 def get_log_subfolder():
     return get_subfolder(folder_name = output_folder, subfolder_name = "logs")
+
+def get_figures_subfolder():
+    return get_subfolder(folder_name = output_folder, subfolder_name = "figures")
+
+def get_data_subfolder():
+    return get_subfolder(folder_name = output_folder, subfolder_name = "data")
 
 def get_metadata_filepath(file_name):
     subfolder = get_metadata_subfolder()
@@ -84,6 +84,11 @@ def get_metadata_filepath(file_name):
 def get_log_filepath(file_name):
     subfolder = get_log_subfolder()
     return os.path.join(subfolder, file_name)
+
+def get_figures_filepath(file_name):
+    subfolder = get_figures_subfolder()
+    return os.path.join(subfolder, file_name)
+
 
 def get_filepath(folder_name=None, subfolder_name=None, file_name=None):
     # Create the subfolder path

@@ -9,6 +9,7 @@ from contextlib import contextmanager
 from mesa.batchrunner import batch_run
 import sys
 sys.path.append('..')  # Add the parent directory to the sys.path
+import utils.plotting as plotting
 import utils.file_utils as file_utils
 from model.model import City
 
@@ -51,121 +52,122 @@ def run_batch_simulation(batch_parameters, variable_parameters, model_parameters
     else:
         data_output_path = os.path.join(subfolder, f'results_batch_{timestamp}.csv')
     df.to_csv(data_output_path, index=False)
-    plot_output(df, variable_parameters, model_parameters, name)
+    # plot_output(df, variable_parameters, model_parameters, name)
+    # plotting.batch_quantities_lineplot(df)
+    plotting.batch_quantities_lineplot(df, variable_parameters)
 
-def plot_output(df, variable_parameters, model_parameters, name = None):
-    # Create the figures subfolder if it doesn't exist
-    figures_folder = os.path.join('output_data', 'batch_figures')
-    os.makedirs(figures_folder, exist_ok=True)
+# def plot_output(df, variable_parameters, model_parameters, name = None):
+#     # Create the figures subfolder if it doesn't exist
+#     figures_folder = file_utils.get_figures_subfolder()
 
-    # Define plotting styles for runs
-    cmap       = plt.get_cmap('tab10')
-    num_runs   = len(df['RunId'].unique())
-    colors     = [cmap(i) for i in np.linspace(0, 1, num_runs)]
-    linewidths = [1, 2, 3, 4]
-    linestyles = ['solid', 'dashed', 'dashdot', 'dotted']  # Add more if needed
-    alpha      = 0.8
+#     # Define plotting styles for runs
+#     cmap       = plt.get_cmap('tab10')
+#     num_runs   = len(df['RunId'].unique())
+#     colors     = [cmap(i) for i in np.linspace(0, 1, num_runs)]
+#     linewidths = [1, 2, 3, 4]
+#     linestyles = ['solid', 'dashed', 'dashdot', 'dotted']  # Add more if needed
+#     alpha      = 0.8
 
-    # Set the default font size for the figures
-    plt.rcParams.update({'font.size': 26})
+#     # Set the default font size for the figures
+#     plt.rcParams.update({'font.size': 26})
 
-    # Create subplots with a 4x2 grid
-    fig, axes = plt.subplots(4, 2, figsize=(22, 24), gridspec_kw={'hspace': 0.6})  # 4 rows, 2 columns
+#     # Create subplots with a 4x2 grid
+#     fig, axes = plt.subplots(4, 2, figsize=(22, 24), gridspec_kw={'hspace': 0.6})  # 4 rows, 2 columns
 
-    # Loop through each run
-    for i, run_id in enumerate(df['RunId'].unique()):
-        # Subset the DataFrame for the current run and exclude time_step 0
-        subset_df = df[(df['RunId'] == run_id) & (df['Step'] > 0)]
+#     # Loop through each run
+#     for i, run_id in enumerate(df['RunId'].unique()):
+#         # Subset the DataFrame for the current run and exclude time_step 0
+#         subset_df = df[(df['RunId'] == run_id) & (df['Step'] > 0)]
 
-        # Extract variable parameter values for the current RunId
-        variable_values = {param: subset_df[param].iloc[0] for param in variable_parameters.keys()}
+#         # Extract variable parameter values for the current RunId
+#         variable_values = {param: subset_df[param].iloc[0] for param in variable_parameters.keys()}
 
-        # Construct label using variable parameter values
-        label = f'{", ".join(f"{key} {value}" for key, value in variable_values.items())}'
+#         # Construct label using variable parameter values
+#         label = f'{", ".join(f"{key} {value}" for key, value in variable_values.items())}'
 
-        # Use the defined styles for each run
-        color = colors[i]
-        linestyle = linestyles[i % len(linestyles)]  # Cycle through linestyles
-        linewidth = linewidths[i % len(linewidths)]  # Cycle through linewidths
+#         # Use the defined styles for each run
+#         color = colors[i]
+#         linestyle = linestyles[i % len(linestyles)]  # Cycle through linestyles
+#         linewidth = linewidths[i % len(linewidths)]  # Cycle through linewidths
 
-        # Plot MPL
-        axes[0, 0].plot(subset_df['time_step'], subset_df['MPL'], label=label, color=color, alpha=alpha, linestyle=linestyle, linewidth=linewidth)
-        axes[0, 0].set_xlabel('Time Step')
-        axes[0, 0].set_ylabel('MPL')
-        axes[0, 0].set_title(f'MPL over time')
-        axes[0, 0].grid(True)
-        axes[0, 0].legend()
+#         # Plot MPL
+#         axes[0, 0].plot(subset_df['time_step'], subset_df['MPL'], label=label, color=color, alpha=alpha, linestyle=linestyle, linewidth=linewidth)
+#         axes[0, 0].set_xlabel('Time Step')
+#         axes[0, 0].set_ylabel('MPL')
+#         axes[0, 0].set_title(f'MPL over time')
+#         axes[0, 0].grid(True)
+#         axes[0, 0].legend()
 
-        # Plot n
-        axes[0, 1].plot(subset_df['time_step'], subset_df['n'], label=label, color=color, alpha=alpha, linestyle=linestyle, linewidth=linewidth)
-        axes[0, 1].set_xlabel('Time Step')
-        axes[0, 1].set_ylabel('n')
-        axes[0, 1].set_title(f'Urban firm workforce n over time')
-        axes[0, 1].grid(True)
-        axes[0, 1].legend().set_visible(False)
+#         # Plot n
+#         axes[0, 1].plot(subset_df['time_step'], subset_df['n'], label=label, color=color, alpha=alpha, linestyle=linestyle, linewidth=linewidth)
+#         axes[0, 1].set_xlabel('Time Step')
+#         axes[0, 1].set_ylabel('n')
+#         axes[0, 1].set_title(f'Urban firm workforce n over time')
+#         axes[0, 1].grid(True)
+#         axes[0, 1].legend().set_visible(False)
 
-        # Plot N
-        axes[1, 0].plot(subset_df['time_step'], subset_df['N'], label=label, color=color, alpha=alpha, linestyle=linestyle, linewidth=linewidth)
-        axes[1, 0].set_xlabel('Time Step')
-        axes[1, 0].set_ylabel('N')
-        axes[1, 0].set_title(f'Total urban workforce over time')
-        axes[1, 0].grid(True)
-        axes[1, 0].legend().set_visible(False)
+#         # Plot N
+#         axes[1, 0].plot(subset_df['time_step'], subset_df['N'], label=label, color=color, alpha=alpha, linestyle=linestyle, linewidth=linewidth)
+#         axes[1, 0].set_xlabel('Time Step')
+#         axes[1, 0].set_ylabel('N')
+#         axes[1, 0].set_title(f'Total urban workforce over time')
+#         axes[1, 0].grid(True)
+#         axes[1, 0].legend().set_visible(False)
 
-        # Plot F
-        axes[1, 1].plot(subset_df['time_step'], subset_df['F'], label=label, color=color, alpha=alpha, linestyle=linestyle, linewidth=linewidth)
-        axes[1, 1].set_xlabel('Time Step')
-        axes[1, 1].set_ylabel('F')
-        axes[1, 1].set_title(f'Number of firms over time')
-        axes[1, 1].grid(True)
-        axes[1, 1].legend().set_visible(False)
+#         # Plot F
+#         axes[1, 1].plot(subset_df['time_step'], subset_df['F'], label=label, color=color, alpha=alpha, linestyle=linestyle, linewidth=linewidth)
+#         axes[1, 1].set_xlabel('Time Step')
+#         axes[1, 1].set_ylabel('F')
+#         axes[1, 1].set_title(f'Number of firms over time')
+#         axes[1, 1].grid(True)
+#         axes[1, 1].legend().set_visible(False)
 
-        # Plot city extent
-        axes[2, 0].plot(subset_df['time_step'], subset_df['city_extent_calc'], label=label, color=color, alpha=alpha, linestyle=linestyle, linewidth=linewidth)
-        axes[2, 0].set_xlabel('Time Step')
-        axes[2, 0].set_ylabel('Lot widths')
-        axes[2, 0].set_title(f'Calculated city extent over time')
-        axes[2, 0].grid(True)
-        axes[2, 0].legend().set_visible(False)
+#         # Plot city extent
+#         axes[2, 0].plot(subset_df['time_step'], subset_df['city_extent_calc'], label=label, color=color, alpha=alpha, linestyle=linestyle, linewidth=linewidth)
+#         axes[2, 0].set_xlabel('Time Step')
+#         axes[2, 0].set_ylabel('Lot widths')
+#         axes[2, 0].set_title(f'Calculated city extent over time')
+#         axes[2, 0].grid(True)
+#         axes[2, 0].legend().set_visible(False)
 
-        # Plot 'k'
-        axes[2, 1].plot(subset_df['time_step'], subset_df['k'], label=label, color=color, alpha=alpha, linestyle=linestyle, linewidth=linewidth)
-        axes[2, 1].set_xlabel('Time Step')
-        axes[2, 1].set_ylabel('k')
-        axes[2, 1].set_title(f'Urban firm capital over time')
-        axes[2, 1].grid(True)
-        axes[2, 1].legend().set_visible(False)
+#         # Plot 'k'
+#         axes[2, 1].plot(subset_df['time_step'], subset_df['k'], label=label, color=color, alpha=alpha, linestyle=linestyle, linewidth=linewidth)
+#         axes[2, 1].set_xlabel('Time Step')
+#         axes[2, 1].set_ylabel('k')
+#         axes[2, 1].set_title(f'Urban firm capital over time')
+#         axes[2, 1].grid(True)
+#         axes[2, 1].legend().set_visible(False)
 
-        # Plot 'investor_ownership_share'
-        axes[3, 0].plot(subset_df['time_step'], (1- subset_df['investor_ownership_share']), label=label, color=color, alpha=alpha, linestyle=linestyle, linewidth=linewidth)
-        axes[3, 0].set_xlabel('Time Step')
-        axes[3, 0].set_ylabel('Ownership share')
-        axes[3, 0].set_title('Owner-occupier fraction over time')
-        axes[3, 0].grid(True)
-        axes[3, 0].legend().set_visible(False)
+#         # Plot 'investor_ownership_share'
+#         axes[3, 0].plot(subset_df['time_step'], (1- subset_df['investor_ownership_share']), label=label, color=color, alpha=alpha, linestyle=linestyle, linewidth=linewidth)
+#         axes[3, 0].set_xlabel('Time Step')
+#         axes[3, 0].set_ylabel('Ownership share')
+#         axes[3, 0].set_title('Owner-occupier fraction over time')
+#         axes[3, 0].grid(True)
+#         axes[3, 0].legend().set_visible(False)
 
-        # Display a single legend outside the figure
-        axes[0, 0].legend(loc='center left', bbox_to_anchor=(1.15, -4.4))
-        axes[3, 1].set_axis_off() 
+#         # Display a single legend outside the figure
+#         axes[0, 0].legend(loc='center left', bbox_to_anchor=(1.15, -4.4))
+#         axes[3, 1].set_axis_off() 
 
-    timestamp = model_parameters['timestamp']
-    if name:
-        plot_path = os.path.join(figures_folder, f'{timestamp}-{name}-timeseries-plots.pdf')
-    else:
-        plot_path = os.path.join(figures_folder, 'timeseries-plots.pdf')
+#     timestamp = model_parameters['timestamp']
+#     if name:
+#         plot_path = os.path.join(figures_folder, f'{timestamp}-{name}-timeseries-plots.pdf')
+#     else:
+#         plot_path = os.path.join(figures_folder, 'timeseries-plots.pdf')
 
-    label_text = (
-        f'\n {name} {" ".join(variable_parameters.keys())}'
-        f'{plot_path}\n'
-        # f'adjF: {model_parameters["adjF"]}, adjw: {model_parameters["adjw"]}, '
-        # f'discount_rate: {model_parameters["discount_rate"]}, r_margin: {model_parameters["r_margin"]},\n'
-        # f'max_mortgage_share: {model_parameters["max_mortgage_share"]}, '
-        # f'cg_tax_per: {model_parameters["cg_tax_per"]}, '
-        # f'cg_tax_invest: {model_parameters["cg_tax_invest"]}'
-    )
+#     label_text = (
+#         f'\n {name} {" ".join(variable_parameters.keys())}'
+#         f'{plot_path}\n'
+#         # f'adjF: {model_parameters["adjF"]}, adjw: {model_parameters["adjw"]}, '
+#         # f'discount_rate: {model_parameters["discount_rate"]}, r_margin: {model_parameters["r_margin"]},\n'
+#         # f'max_mortgage_share: {model_parameters["max_mortgage_share"]}, '
+#         # f'cg_tax_per: {model_parameters["cg_tax_per"]}, '
+#         # f'cg_tax_invest: {model_parameters["cg_tax_invest"]}'
+#     )
 
-    plt.text(-1.0, -0.5, label_text, transform=plt.gca().transAxes, ha='left', va='center', wrap=True)
-    plt.savefig(plot_path, format='pdf')
+#     plt.text(-1.0, -0.5, label_text, transform=plt.gca().transAxes, ha='left', va='center', wrap=True)
+#     plt.savefig(plot_path, format='pdf')
 
 # def get_subfolder(timestamp, variable_parameters = None):
 #     # Name is used in subfolder name if variable_parameters are not passed
