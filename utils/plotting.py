@@ -4,19 +4,31 @@ import numpy as np
 import seaborn as sns
 import matplotlib.pyplot as plt
 
-def small_multiples_lineplot(df, param_mapping, palette=None):
-    # Set up the grid of subplots using FacetGrid
-    g = sns.FacetGrid(df, col=param_mapping['x_global'], row=param_mapping['y_global'], 
-                      margin_titles=True, height=2.5, aspect=1.)
+PAGE_WIDTH   = 6.3764 # thesis \the\textwidth = 460.72124pt / 72 pts_per_inch
+GOLDEN_RATIO = 1.618  # (5**.5 - 1) / 2 
 
-    # Add grey gridlines (note: only shows up on second run)
+def set_style():
+    sns.set_style("whitegrid", {'axes.grid' : True})
+    plt.rcParams['font.family'] = 'serif'
+    plt.rcParams['font.serif'] = ['cmr10']
+    plt.rcParams['font.size'] = 12
     # sns.set_style("darkgrid")
     # sns.set_style("ticks",{'axes.grid' : True})
-    sns.set_style("whitegrid", {'axes.grid' : True})
 
-    # sns.set(font_scale=1.5)
-    # sns.set_context("paper", rc={"font.size":20,"axes.titlesize":20,"axes.labelsize":20})   
-    # sns.set(rc={'figure.figsize':(11.7,8.27),"font.size":20,"axes.titlesize":20,"axes.labelsize":20},style="white")
+def small_multiples_lineplot(df, param_mapping, palette=None):
+    set_style()
+
+    # Desired width (thesis) and space (sns default) values
+    width = PAGE_WIDTH  # inches, minus 1 inch for the legend
+    space = 0.2  # replace with your desired space
+    no_facets_in_height = df[param_mapping['y_global']].nunique()
+    # print(no_facets_in_height)
+    height       = width / GOLDEN_RATIO
+    facet_height = height / ((no_facets_in_height) * (1 + space))
+
+    # Set up the grid of subplots using FacetGrid
+    g = sns.FacetGrid(df, col=param_mapping['x_global'], row=param_mapping['y_global'], 
+                      margin_titles=True, height=facet_height, aspect=GOLDEN_RATIO)
 
     if palette:
         g.map_dataframe(sns.lineplot, x=param_mapping['x'], y=param_mapping['y'], estimator=None, 
@@ -75,11 +87,11 @@ def get_bidder_color_palette(bidder_categories):
     # }
 
 def load_last_fast_batch_run_df():
-    folder_path = os.path.join('output_data', 'fast_run_data')
+    folder_path = os.path.join('output_data', 'data')
     files = os.listdir(folder_path)
 
     # OPTIONAL Filter files that start with 'results_batch_'
-    files = [file for file in files if file.startswith('results_batch_')]
+    files = [file for file in files if file.startswith('fast-results-batch-')]
 
     # Get the most recently modified file path
     most_recent_file = max(files, key=lambda x: os.path.getmtime(os.path.join(folder_path, x)))
