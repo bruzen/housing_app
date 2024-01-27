@@ -5,6 +5,8 @@ import random
 import string
 import subprocess
 
+output_folder = "output_data"
+
 def record_metadata(filepath, run_id=None, num_steps=None, params=None, timestamp=None, batch_parameters=None, variable_parameters=None):
     if variable_parameters:
         metadata = {
@@ -52,10 +54,9 @@ def get_run_id(timestamp): # , model_name=None , model_version=None):
     return f"{timestamp}-{unique_id}"
     # Adapt the model name to lowercase and replace spaces with underscores
     # formatted_model_name = model_name.lower().replace(" ", "_")
-    # return f"{formatted_model_name}_{timestamp}_{unique_id}_v{model_version.replace('.', '_')}"
-    
+    # return f"{formatted_model_name}_{timestamp}_{unique_id}_v{model_version.replace('.', '_')}"    
 
-def get_subfolder(folder_name = "output_data", subfolder_name = "data"):
+def get_subfolder(folder_name = output_folder, subfolder_name = "data"):
     # Create the subfolder path
     subfolder = os.path.join(folder_name, subfolder_name)
     
@@ -63,6 +64,12 @@ def get_subfolder(folder_name = "output_data", subfolder_name = "data"):
     os.makedirs(subfolder, exist_ok=True)
     
     return subfolder
+
+def get_figures_subfolder():
+    return get_subfolder(folder_name = output_folder, subfolder_name = "figure")
+
+def get_data_subfolder():
+    return get_subfolder(folder_name = output_folder, subfolder_name = "data")
 
 def get_filepath(folder_name=None, subfolder_name=None, file_name=None):
     # Create the subfolder path

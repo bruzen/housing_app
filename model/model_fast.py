@@ -337,36 +337,36 @@ class Fast(Model):
         self.run_id            = file_utils.get_run_id(self.timestamp) # self.model_name, self.model_version)
 
         # Set log and metadata filepaths
-        self.log_filepath      = file_utils.get_filepath(folder_name = "output_data", subfolder_name = "logs", file_name = f'fast-log-{self.timestamp}.log')
-        self.metadata_filepath = file_utils.get_filepath(folder_name = "output_data", subfolder_name = "metadata", file_name = f'fast-metadata-{self.run_id}.log')
+        self.log_filepath      = file_utils.get_filepath(folder_name = file_utils.output_folder, subfolder_name = "logs", file_name = f'fast-log-{self.timestamp}.log')
+        self.metadata_filepath = file_utils.get_filepath(folder_name = file_utils.output_folder, subfolder_name = "metadata", file_name = f'fast-metadata-{self.run_id}.log')
 
         # # Set figures folder
-        # self.figures_folder = file_utils.get_subfolder(folder_name = "output_data", subfolder_name = "figures")
+        # self.figures_folder  = get_figures_subfolder()
 
         # Set data filepaths
         if 'subfolder' in self.params and self.params['subfolder'] is not None:
-            self.data_folder = self.params['subfolder']
+            self.data_folder   = self.params['subfolder']
         else:
-            self.data_folder = file_utils.get_subfolder(folder_name = "output_data", subfolder_name = "data")
-        self.agent_filepath   = os.path.join(self.data_folder, f"{self.run_id}-agent.csv")
-        self.model_filepath   = os.path.join(self.data_folder, f"{self.run_id}-model.csv")
+            self.data_folder   = file_utils.get_subfolder(folder_name = file_utils.output_folder, subfolder_name = "data")
+        self.agent_filepath    = os.path.join(self.data_folder, f"fast-data-{self.run_id}-agent.csv")
+        self.model_filepath    = os.path.join(self.data_folder, f"fast-data-{self.run_id}-model.csv")
 
     def setup_mesa_data_collection(self):
 
         # Variables for data collection
-        self.rent_production = 0.
-        self.rent_amenity    = 0.
-        self.market_rent     = 0.
-        self.net_rent        = 0.
+        self.rent_production   = 0.
+        self.rent_amenity      = 0.
+        self.market_rent       = 0.
+        self.net_rent          = 0.
         self.potential_dissipated_rent = 0.
-        self.dissipated_rent = 0.
-        self.available_rent  = 0.
+        self.dissipated_rent   = 0.
+        self.available_rent    = 0.
         self.rent_captured_by_finance  = 0.
         self.share_captured_by_finance = 0.
-        self.urban_surplus   = 0.
+        self.urban_surplus     = 0.
 
         # Define what data the model will collect in each time step
-        model_reporters      = {
+        model_reporters = {
             "run_id":                      lambda m: m.run_id,
             # "workers":                   lambda m: m.firm.N,
             "MPL":                         lambda m: m.firm.MPL,
