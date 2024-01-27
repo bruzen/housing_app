@@ -327,6 +327,11 @@ class Fast(Model):
             #         newcomer_bid,  newcomer_bid_type = self.person.get_max_bid(m, M, R_N, p_dot, transport_cost, savings_value)
             #         self.step_data["newcomer_bid"].append((round(newcomer_bid, self.no_decimals), round(dist, self.no_decimals), round(savings_value, self.no_decimals)))
             #     # dist += 1
+    def run_model(self):
+        for t in range(self.num_steps):
+            self.step()
+
+        self.record_run_data_to_file()
 
     def setup_run_data_collection(self):
         # Set timestamp and run_id
@@ -338,7 +343,7 @@ class Fast(Model):
 
         # Set log and metadata filepaths
         self.log_filepath      = file_utils.get_log_filepath(file_name = f'fast-log-{self.timestamp}.log')
-        self.metadata_filepath = file_utils.get_metadata_filepath(file_name = f'fast-metadata-{self.run_id}.log')
+        self.metadata_filepath = file_utils.get_metadata_filepath(file_name = f'fast-metadata-{self.run_id}.json')
 
         # # Set figures folder
         # self.figures_folder  = get_figures_subfolder()
