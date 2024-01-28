@@ -95,13 +95,13 @@ def variables_vs_time(df, variable_parameters = None):
         axes[0, 0].grid(True)
         axes[0, 0].legend().set_visible(False)
 
-        # Plot n
-        axes[1, 1].plot(subset_df['time_step'], subset_df['n'], label=label, color=color, alpha=alpha, linestyle=linestyle, linewidth=linewidth)
+        # Plot 'k'
+        axes[0, 1].plot(subset_df['time_step'], subset_df['k'], label=label, color=color, alpha=alpha, linestyle=linestyle, linewidth=linewidth)
         # axes[0, 1].set_xlabel('Time Step')
-        axes[1, 1].set_ylabel('n')
-        # axes[0, 1].set_title(f'Firm workforce') # (n)')
-        axes[1, 1].grid(True)
-        axes[1, 1].legend().set_visible(False)
+        axes[0, 1].set_ylabel('k ($)')
+        # axes[0, 1].set_title(f'Firm capital') # (k)')
+        axes[0, 1].grid(True)
+        axes[0, 1].legend().set_visible(False)
 
         # Plot N
         axes[1, 0].plot(subset_df['time_step'], subset_df['N'], label=label, color=color, alpha=alpha, linestyle=linestyle, linewidth=linewidth)
@@ -111,13 +111,13 @@ def variables_vs_time(df, variable_parameters = None):
         axes[1, 0].grid(True)
         axes[1, 0].legend().set_visible(False)
 
-        # Plot F
-        axes[2, 1].plot(subset_df['time_step'], subset_df['F'], label=label, color=color, alpha=alpha, linestyle=linestyle, linewidth=linewidth)
-        # axes[1, 1].set_xlabel('Time Step')
-        axes[2, 1].set_ylabel('F')
-        # axes[1, 1].set_title(f'Number of firms') # (F)')
-        axes[2, 1].grid(True)
-        axes[2, 1].legend().set_visible(False)
+        # Plot n
+        axes[1, 1].plot(subset_df['time_step'], subset_df['n'], label=label, color=color, alpha=alpha, linestyle=linestyle, linewidth=linewidth)
+        # axes[0, 1].set_xlabel('Time Step')
+        axes[1, 1].set_ylabel('n')
+        # axes[0, 1].set_title(f'Firm workforce') # (n)')
+        axes[1, 1].grid(True)
+        axes[1, 1].legend().set_visible(False)
 
         # Plot city extent
         axes[2, 0].plot(subset_df['time_step'], subset_df['city_extent_calc'], label=label, color=color, alpha=alpha, linestyle=linestyle, linewidth=linewidth)
@@ -127,13 +127,13 @@ def variables_vs_time(df, variable_parameters = None):
         axes[2, 0].grid(True)
         axes[2, 0].legend().set_visible(False)
 
-        # Plot 'k'
-        axes[0, 1].plot(subset_df['time_step'], subset_df['k'], label=label, color=color, alpha=alpha, linestyle=linestyle, linewidth=linewidth)
-        # axes[0, 1].set_xlabel('Time Step')
-        axes[0, 1].set_ylabel('k ($)')
-        # axes[0, 1].set_title(f'Firm capital') # (k)')
-        axes[0, 1].grid(True)
-        axes[0, 1].legend().set_visible(False)
+        # Plot F
+        axes[2, 1].plot(subset_df['time_step'], subset_df['F'], label=label, color=color, alpha=alpha, linestyle=linestyle, linewidth=linewidth)
+        # axes[1, 1].set_xlabel('Time Step')
+        axes[2, 1].set_ylabel('F')
+        # axes[1, 1].set_title(f'Number of firms') # (F)')
+        axes[2, 1].grid(True)
+        axes[2, 1].legend().set_visible(False)
 
         # Plot 'Owner-occupier_share'
         axes[3, 0].plot(subset_df['time_step'], (1- subset_df['investor_ownership_share']), label=label, color=color, alpha=alpha, linestyle=linestyle, linewidth=linewidth)
