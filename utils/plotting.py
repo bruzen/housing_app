@@ -67,7 +67,7 @@ def variables_vs_time(df, variable_parameters = None):
     alpha      = 0.8   
 
     # Create subplots with a 4x2 grid
-    fig, axes = plt.subplots(4, 2, figsize=(.5*PAGE_WIDTH, .6*PAGE_WIDTH), gridspec_kw={'hspace': .5, 'wspace': 0.7})  # 4 rows, 2 columns
+    fig, axes = plt.subplots(4, 2, figsize=(.5*PAGE_WIDTH, .7*PAGE_WIDTH), gridspec_kw={'hspace': .78, 'wspace': 0.7})  # 4 rows, 2 columns
 
     # Loop through each run
     for i, run_id in enumerate(df['RunId'].unique()):
@@ -104,19 +104,19 @@ def variables_vs_time(df, variable_parameters = None):
         axes[0, 1].grid(True)
         axes[0, 1].legend().set_visible(False)
 
-        # Plot N
-        axes[1, 0].plot(subset_df['time_step'], subset_df['N'], label=label, color=color, alpha=alpha, linestyle=linestyle, linewidth=linewidth)
-        # axes[1, 0].set_xlabel('Time Step')
-        axes[1, 0].set_ylabel('N')
-        # axes[1, 0].set_title(f'Total workforce') # (N)')
+        # Plot n
+        axes[1, 0].plot(subset_df['time_step'], subset_df['n'], label=label, color=color, alpha=alpha, linestyle=linestyle, linewidth=linewidth)
+        # axes[0, 1].set_xlabel('Time Step')
+        axes[1, 0].set_ylabel('n')
+        # axes[0, 1].set_title(f'Firm workforce') # (n)')
         axes[1, 0].grid(True)
         axes[1, 0].legend().set_visible(False)
 
-        # Plot n
-        axes[1, 1].plot(subset_df['time_step'], subset_df['n'], label=label, color=color, alpha=alpha, linestyle=linestyle, linewidth=linewidth)
-        # axes[0, 1].set_xlabel('Time Step')
-        axes[1, 1].set_ylabel('n')
-        # axes[0, 1].set_title(f'Firm workforce') # (n)')
+        # Plot N
+        axes[1, 1].plot(subset_df['time_step'], subset_df['N'], label=label, color=color, alpha=alpha, linestyle=linestyle, linewidth=linewidth)
+        # axes[1, 0].set_xlabel('Time Step')
+        axes[1, 1].set_ylabel('N')
+        # axes[1, 0].set_title(f'Total workforce') # (N)')
         axes[1, 1].grid(True)
         axes[1, 1].legend().set_visible(False)
 
