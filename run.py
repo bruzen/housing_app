@@ -38,7 +38,17 @@ def run():
 def batch():
     from model.model import City
     from mesa.batchrunner import batch_run
-    pass
+    model_parameters = {**parameters, **variable_parameters} # OR model_parameters = variable_parameters
+    results = batch_run(City, model_parameters, **batch_parameters)
+    # results = batch_run(Fast, model_parameters, **batch_parameters)
+    df = pd.DataFrame(results)
+
+    metadata_filepath = file_utils.get_metadata_filepath(f'metadata-{timestamp}.json')
+    metadata = file_utils.record_metadata(filepath = metadata_filepath, timestamp = timestamp, batch_parameters = batch_parameters, variable_parameters = variable_parameters)
+    data_filepath = file_utils.get_data_filepath(f'results-batch-{timestamp}.csv')
+    df.to_csv(data_filepath, index=False)
+
+    return df, variable_parameters # metadata
 
 def fast():
     from model.model_fast import Fast
@@ -57,11 +67,11 @@ def fast_batch():
     df = pd.DataFrame(results)
 
     metadata_filepath = file_utils.get_metadata_filepath(f'fast-metadata-{timestamp}.json')
-    # metadata = 
-    file_utils.record_metadata(filepath = metadata_filepath, timestamp = timestamp, batch_parameters = batch_parameters, variable_parameters = variable_parameters)
-    print(timestamp)
+    metadata = file_utils.record_metadata(filepath = metadata_filepath, timestamp = timestamp, batch_parameters = batch_parameters, variable_parameters = variable_parameters)
     data_filepath = file_utils.get_data_filepath(f'fast-results-batch-{timestamp}.csv')
     df.to_csv(data_filepath, index=False)
+
+    return df, variable_parameters # metadata
 
 if __name__ == "__main__":
     # TODO add --all to run all
@@ -94,18 +104,19 @@ if __name__ == "__main__":
         city, agent_out, model_out = main()
         if args.plot:
             print('Plot run')
-            # plotting.plot_main(city, agent_out, model_out)
     elif args.batch:
         print('Batch')
-        results = batch()
+        df, variable_parameters = batch()
         if args.plot:
             print('Plot batch')
+            plotting.variables_vs_time(df, variable_parameters)
     elif args.fast_run:
         print('Fast run')
         if args.plot:
-            print('plot')
+            print('Plot')
     elif args.fast_batch:
         print('Fast batch')
-        fast_batch()
+        df, variable_parameters = fast_batch()
         if args.plot:
-            print('plot')
+            print('Plot')
+            plotting.variables_vs_time(df, variable_parameters)

@@ -25,7 +25,7 @@ def metadata_recorder(batch_parameters, variable_parameters, fixed_parameters, s
     # }
 
     timestamp = fixed_parameters['timestamp']
-    metadata_filepath = file_utils.get_filepath(folder_name = "output_data", subfolder_name = "metadata", file_name = f'metadata_{timestamp}.log')
+    metadata_filepath = file_utils.get_metadata_filepath(f'metadata_{timestamp}.log')
     metadata = file_utils.record_metadata(filepath = metadata_filepath, timestamp = timestamp, batch_parameters = batch_parameters, variable_parameters = variable_parameters)
     # if name:
     #     metadata__filepath = os.path.join(subfolder, f'metadata_batch_{timestamp}_{name}.yaml')
@@ -47,14 +47,14 @@ def run_batch_simulation(batch_parameters, variable_parameters, model_parameters
     results = batch_run(City, model_parameters, **batch_parameters)
     df = pd.DataFrame(results)
     timestamp = model_parameters['timestamp']
-    if name:
-        data_output_path = os.path.join(subfolder, f'results_batch_{timestamp}_{name}.csv')
-    else:
-        data_output_path = os.path.join(subfolder, f'results_batch_{timestamp}.csv')
+    # if name:
+    #     data_output_path = os.path.join(subfolder, f'results_batch_{timestamp}_{name}.csv')
+    # else:
+    data_output_path = os.path.join(subfolder, f'results_batch_{timestamp}.csv')
     df.to_csv(data_output_path, index=False)
     # plot_output(df, variable_parameters, model_parameters, name)
     # plotting.batch_quantities_lineplot(df)
-    plotting.batch_quantities_lineplot(df, variable_parameters)
+    plotting.variables_vs_time(df, variable_parameters)
 
 # def plot_output(df, variable_parameters, model_parameters, name = None):
 #     # Create the figures subfolder if it doesn't exist

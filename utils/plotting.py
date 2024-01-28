@@ -135,16 +135,20 @@ def variables_vs_time(df, variable_parameters = None):
         axes[2, 1].grid(True)
         axes[2, 1].legend().set_visible(False)
 
-        # Plot 'Owner-occupier_share'
-        axes[3, 0].plot(subset_df['time_step'], (1- subset_df['investor_ownership_share']), label=label, color=color, alpha=alpha, linestyle=linestyle, linewidth=linewidth)
-        axes[3, 0].set_xlabel('Time Step')
-        axes[3, 0].set_ylabel('Owner-occupier \n share') #('Ownership share')
-        # axes[3, 0].set_title('Owner-occupier') #('Owner-occupier fraction')
-        axes[3, 0].grid(True)
+        if 'investor_ownership_share' in subset_df:
+            # Plot 'Owner-occupier_share'
+            axes[3, 0].plot(subset_df['time_step'], (1- subset_df['investor_ownership_share']), label=label, color=color, alpha=alpha, linestyle=linestyle, linewidth=linewidth)
+            axes[3, 0].set_xlabel('Time Step')
+            axes[3, 0].set_ylabel('Owner-occupier \n share') #('Ownership share')
+            # axes[3, 0].set_title('Owner-occupier') #('Owner-occupier fraction')
+            axes[3, 0].grid(True)
+
+        else:
+            axes[3, 0].set_axis_off()
 
         # Display a single legend outside the figure
         axes[3, 0].legend(loc='center left', bbox_to_anchor=(1.2, 0.5), frameon=False)
-        axes[3, 1].set_axis_off() 
+        axes[3, 1].set_axis_off()
 
     # for ax_row in axes:
     # for ax in ax_row:
