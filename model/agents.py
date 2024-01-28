@@ -565,9 +565,12 @@ class Firm(Agent):
         # ADJUST WAGE: 
         self.wage = (1 - self.adjw) * self.wage + self.adjw * self.wage_target # partial adjustment process
         
-        # FIND POPULATION AT NEW WAGE
+        # FIND NEW WAGE PREMIUM
         self.old_wage_premium  = self.wage_premium
-        self.wage_premium = self.wage - self.subsistence_wage # find wage available for transportation
+        self.wage_premium = self.wage /(1+self.overhead) - self.subsistence_wage # find wage available for transportation
+
+
+        # FIND POPULATION AT NEW WAGE
         #self.dist = self.wage_premium / self.c  # find calculated extent of city at wage
         #self.N = self.dist * self.model.height * self.density / self.mult # calculate total firm population from city size # TODO make this expected pop
         #self.n =  self.N / self.F # distribute workforce across firms
@@ -582,7 +585,7 @@ class Firm(Agent):
         self.k = (1 - self.adjk) * self.k + self.adjk * self.k_target
     
         # CALCULATE P_DOT
-        self.wage_delta = (self.wage_premium - self.old_wage_premium)
+        self.wage_delta = (self.wage_premium - self.old_wage_premium ) #  -1 ???
         #self.F_target = self.F * self.n_target/self.n  #this is completely argbitrary but harmless
         # self.F_target = self.F*(self.n_target/self.n)**.5 # TODO name the .5
         ####self.F_target = (1-self.adjF)*self.F + self.adjF*self.F*(self.n_target/self.n) 
