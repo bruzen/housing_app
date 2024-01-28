@@ -66,7 +66,7 @@ def variables_vs_time(df, variable_parameters = None):
     alpha      = 0.8   
 
     # Create subplots with a 4x2 grid
-    fig, axes = plt.subplots(4, 2, figsize=(.8*PAGE_WIDTH/GOLDEN_RATIO, .8*PAGE_WIDTH), gridspec_kw={'hspace': .5, 'wspace': 0.7})  # 4 rows, 2 columns
+    fig, axes = plt.subplots(4, 2, figsize=(.5*PAGE_WIDTH, .6*PAGE_WIDTH), gridspec_kw={'hspace': .5, 'wspace': 0.7})  # 4 rows, 2 columns
 
     # Loop through each run
     for i, run_id in enumerate(df['RunId'].unique()):
@@ -173,7 +173,7 @@ def variables_vs_time(df, variable_parameters = None):
         # f'cg_tax_invest: {model_parameters["cg_tax_invest"]}'
     )
 
-    plt.text(-1.3, -1.1, label_text, transform=plt.gca().transAxes, ha='left', va='center', wrap=True)
+    plt.text(-1.3, -1.3, label_text, transform=plt.gca().transAxes, ha='left', va='center', wrap=True)
     plt.savefig(figure_filepath, format='pdf', bbox_inches='tight')
 
 def format_label(label):
