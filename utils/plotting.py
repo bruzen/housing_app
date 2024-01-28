@@ -10,6 +10,7 @@ GOLDEN_RATIO = 1.618  # (5**.5 - 1) / 2
 
 def set_style():
     sns.set_style("whitegrid", {'axes.grid' : True})
+    plt.rcParams['axes.formatter.use_mathtext'] = True
     plt.rcParams['font.family'] = 'serif'
     plt.rcParams['font.serif'] = ['cmr10']
     
