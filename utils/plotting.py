@@ -143,15 +143,14 @@ def variables_vs_time(df, variable_parameters = None):
             axes[3, 0].set_ylabel('Owner-occupier \n share') #('Ownership share')
             # axes[3, 0].set_title('Owner-occupier') #('Owner-occupier fraction')
             axes[3, 0].grid(True)
+            # Display a single legend outside the figure
+            axes[3, 0].legend(loc='center left', bbox_to_anchor=(1.2, 0.5), frameon=False)
 
         else:
-            # Display nothing, just an empty grid, but use a df value to create the legend
-            axes[3, 0].plot(subset_df['time_step'], subset_df['city_extent_calc'], label=label, color='none', alpha=0, linestyle='', linewidth=0)
-            axes[3, 0].legend()
             axes[3, 0].set_axis_off()
-
-        # Display a single legend outside the figure
-        axes[3, 0].legend(loc='center left', bbox_to_anchor=(1.2, 0.5), frameon=False)
+            # Display a single legend outside the figure
+            axes[2, 1].legend(loc='center left', bbox_to_anchor=(-1.5, -1.1), frameon=False)
+        
         axes[3, 1].set_axis_off()
 
     # for ax_row in axes:

@@ -11,8 +11,8 @@ timestamp  = file_utils.generate_timestamp()
 parameters = {
     'run_notes': 'Debugging model.',
     'timestamp': timestamp,
-    'width':     2,
-    'height':    2,
+    'width':     50,
+    'height':    50,
 }
 
 variable_parameters = {
