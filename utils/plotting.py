@@ -147,9 +147,12 @@ def variables_vs_time(df, variable_parameters = None):
             axes[3, 0].legend(loc='center left', bbox_to_anchor=(1.2, 0.5), frameon=False)
 
         else:
+            axes[2, 0].set_xlabel('Time Step')
+            axes[2, 1].set_xlabel('Time Step')
+
             axes[3, 0].set_axis_off()
             # Display a single legend outside the figure
-            axes[2, 1].legend(loc='center left', bbox_to_anchor=(-1.5, -1.1), frameon=False)
+            axes[2, 1].legend(loc='center left', bbox_to_anchor=(-1.3, -1.5), frameon=False)
         
         axes[3, 1].set_axis_off()
 
