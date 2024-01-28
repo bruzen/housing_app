@@ -16,7 +16,7 @@ parameters = {
 }
 
 variable_parameters = {
-    'density': [1, 100],
+    'density': [600, 100, 1],
     # 'subsistence_wage': [10000, 30000],
     # 'gamma': [0.02]   
 }

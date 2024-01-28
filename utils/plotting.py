@@ -61,9 +61,9 @@ def variables_vs_time(df, variable_parameters = None):
      # Define plotting styles for runs
     cmap       = plt.get_cmap('tab10')
     num_runs   = len(df['RunId'].unique())
-    colors     = [(0.5, 0.5, 1.0), 'black', (0.2, 0.6, 1.0), 'cyan', 'red', 'pink'] # [cmap(i) for i in np.linspace(0, 1, num_runs)]
+    colors     = [(0.2, 0.6, 1.0), 'black', (0.5, 0.5, 1.0), 'cyan', 'red', 'pink'] # [cmap(i) for i in np.linspace(0, 1, num_runs)]
     linewidths = [1, .5, 1, 1] # linewidths = [1, 2, 3, 4]
-    linestyles = ['dotted', 'solid', 'dashed', 'dashdot']  # Add more if needed
+    linestyles = ['dashed', 'solid', 'dotted', 'dashdot']  # Add more if needed
     alpha      = 0.8   
 
     # Create subplots with a 4x2 grid
