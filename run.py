@@ -87,23 +87,23 @@ if __name__ == "__main__":
     group.add_argument('--fast_batch', action='store_true', help='Run model_fast in batch mode')
 
     # Add an option for plotting
-    parser.add_argument('--plot', action='store_true', help='Enable plotting (default: disabled)')
+    parser.add_argument('--plot', action='store_true',default=True, help='Enable plotting (default: disabled)')
 
     args = parser.parse_args()
 
     # Convert argparse Namespace to dictionary
     config = vars(args)
 
-    # If no option is specified, set --run to True
-    if not any(vars(args).values()):
-        args.run = True
+    # Set default value
+    if not any(vars(args).get(key, False) for key in ['run', 'batch', 'fast_run', 'fast_batch']):
+        args.fast_batch = True
 
     # Import and call the appropriate module based on the selected configuration
     if args.run:
         print('Run')
         city, agent_out, model_out = main()
         if args.plot:
-            print('Plot run')
+            print('TODO Add plot')
     elif args.batch:
         print('Batch')
         df, variable_parameters = batch()
@@ -113,10 +113,10 @@ if __name__ == "__main__":
     elif args.fast_run:
         print('Fast run')
         if args.plot:
-            print('Plot')
+            print('TODO Add plot')
     elif args.fast_batch:
         print('Fast batch')
         df, variable_parameters = fast_batch()
         if args.plot:
-            print('Plot')
+            print('Plot fast batch')
             plotting.variables_vs_time(df, variable_parameters)
