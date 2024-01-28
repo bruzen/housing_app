@@ -89,6 +89,9 @@ def get_figures_filepath(file_name):
     subfolder = get_figures_subfolder()
     return os.path.join(subfolder, file_name)
 
+def get_data_filepath(file_name):
+    subfolder = get_data_subfolder()
+    return os.path.join(subfolder, file_name)
 
 def get_filepath(folder_name=None, subfolder_name=None, file_name=None):
     # Create the subfolder path

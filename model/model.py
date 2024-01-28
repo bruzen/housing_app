@@ -312,7 +312,7 @@ class City(Model):
 
         # Set log and metadata filepaths
         self.log_filepath      = file_utils.get_log_filepath(file_name = f'log-{self.timestamp}.log')
-        self.metadata_filepath = file_utils.get_metadata_filepath(file_name = f'metadata-{self.run_id}.log')
+        self.metadata_filepath = file_utils.get_metadata_filepath(file_name = f'metadata-{self.run_id}.json')
 
         # # Set figures folder
         # self.figures_folder  = file_utils.get_figures_subfolder()
