@@ -118,7 +118,7 @@ class Land(Agent):
         subsistence_wage  = self.model.firm.subsistence_wage # subsistence_wage
         return a * b * subsistence_wage
 
-    def get_warranted_rent(self):
+    def get_warranted_rent(self):  ####   ADD AMENITY HERE
         wage_premium     = self.model.firm.wage_premium
         subsistence_wage = self.model.firm.subsistence_wage
         a                = self.model.housing_services_share
@@ -551,7 +551,7 @@ class Firm(Agent):
         self.wage         = self.wage_premium + self.subsistence_wage
         self.MPL          = self.beta  * self.y / self.n  # marginal value product of labour known to firms
         self.wage_delta   = 0.0
-        self.old_wage_premium = -1
+        self.old_wage_premium = init_wage_premium_ratio * self.subsistence_wage   ### REVISED should remove inital problems
 
     def step(self):
         # GET POPULATION AND OUTPUT TODO replace N with agent count
@@ -559,14 +559,18 @@ class Firm(Agent):
         self.n =  self.N / self.F # distribute workforce across firms
         self.y = self.A * self.N**self.gamma *  self.k**self.alpha * self.n**self.beta
 
-        # ADJUST WAGE
+        # SET TARGET WAGE EQUAL VALUE OF MARGINAL PRODUCT OF LABOUR
         self.MPL = self.beta  * self.y / self.n  # marginal value product of labour known to firms
-        self.wage_target = self.MPL / (1 + self.overhead) # self.subsistence_wage + (self.MPL - self.subsistence_wage) / (1 + self.overhead)   # (1+self.overhead) # economic rationality implies intention
-        self.wage = (1 - self.adjw) * self.wage + self.adjw * self.wage_target # assume a partial adjustment process
+        self.wage_target = self.price_of_output * self.MPL / (1 + self.overhead) # 
+        # ADJUST WAGE: 
+        self.wage = (1 - self.adjw) * self.wage + self.adjw * self.wage_target # partial adjustment process
         
-        # FIND POPULATION AT NEW WAGE
+        # FIND NEW WAGE PREMIUM
         self.old_wage_premium  = self.wage_premium
-        self.wage_premium = self.wage - self.subsistence_wage # find wage available for transportation
+        self.wage_premium = self.wage /(1+self.overhead) - self.subsistence_wage # find wage available for transportation
+
+
+        # FIND POPULATION AT NEW WAGE
         #self.dist = self.wage_premium / self.c  # find calculated extent of city at wage
         #self.N = self.dist * self.model.height * self.density / self.mult # calculate total firm population from city size # TODO make this expected pop
         #self.n =  self.N / self.F # distribute workforce across firms
@@ -581,7 +585,7 @@ class Firm(Agent):
         self.k = (1 - self.adjk) * self.k + self.adjk * self.k_target
     
         # CALCULATE P_DOT
-        self.wage_delta = (self.wage_premium - self.old_wage_premium)
+        self.wage_delta = (self.wage_premium - self.old_wage_premium ) #  -1 ???
         #self.F_target = self.F * self.n_target/self.n  #this is completely argbitrary but harmless
         # self.F_target = self.F*(self.n_target/self.n)**.5 # TODO name the .5
         ####self.F_target = (1-self.adjF)*self.F + self.adjF*self.F*(self.n_target/self.n) 

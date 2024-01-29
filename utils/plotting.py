@@ -153,6 +153,7 @@ def variables_vs_time(df, variable_parameters = None):
             # Plot 'Owner-occupier_share'
             axes[3, 0].plot(subset_df['time_step'], (1- subset_df['investor_ownership_share']), label=label, color=color, alpha=alpha, linestyle=linestyle, linewidth=linewidth)
             axes[3, 0].set_xlabel('Time Step')
+            axes[3,0].set_ylim(-0.01, 1.01)
             axes[3, 0].set_ylabel('Owner-occupier \n share') #('Ownership share')
             # axes[3, 0].set_title('Owner-occupier') #('Owner-occupier fraction')
             axes[3, 0].grid(True)
