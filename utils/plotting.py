@@ -4,6 +4,7 @@ import numpy as np
 import seaborn as sns
 import matplotlib.pyplot as plt
 import utils.file_utils as file_utils
+from matplotlib.ticker import MaxNLocator
 
 PAGE_WIDTH   = 6.3764 # thesis \the\textwidth = 460.72124pt / 72 pts_per_inch
 GOLDEN_RATIO = 1.618  # (5**.5 - 1) / 2
@@ -13,7 +14,10 @@ def set_style():
     plt.rcParams['axes.formatter.use_mathtext'] = True
     plt.rcParams['font.family'] = 'serif'
     plt.rcParams['font.serif'] = ['cmr10']
-    
+    plt.rcParams['axes.linewidth'] = 0.4
+    plt.rcParams['grid.linewidth'] = 0.4     # (default is 0.8)
+    # plt.rcParams['grid.alpha'] = 0.5       # (default is 1.0)
+
     # sns.set_style("darkgrid")
     # sns.set_style("ticks",{'axes.grid' : True})
 
@@ -49,10 +53,12 @@ def small_multiples_lineplot(df, param_mapping, palette=None):
     # Show the plot
     plt.show()
 
+# single_variable_vs_time()
+
 def variables_vs_time(df, variable_parameters = None):
     set_style()
     plt.rcParams['font.size'] = 10
-
+    
     # df = pd.DataFrame(results)
     timestamp = df['timestamp'].iloc[0] # Same timestep for all rows in df
     figures_folder = file_utils.get_figures_subfolder()
@@ -64,8 +70,9 @@ def variables_vs_time(df, variable_parameters = None):
     colors     = [(0.2, 0.6, 1.0), 'black', (0.5, 0.5, 1.0), 'cyan', 'red', 'pink'] # [cmap(i) for i in np.linspace(0, 1, num_runs)]
     linewidths = [1, .5, 1, 1] # linewidths = [1, 2, 3, 4]
     linestyles = ['dashed', 'solid', 'dotted', 'dashdot']  # Add more if needed
-    alpha      = 0.8   
-
+    alpha      = 0.8
+    nbins      = 4 # Number of tick marks/grid lines
+    
     # Create subplots with a 4x2 grid
     fig, axes = plt.subplots(4, 2, figsize=(.5*PAGE_WIDTH, .7*PAGE_WIDTH), gridspec_kw={'hspace': .78, 'wspace': 0.7})  # 4 rows, 2 columns
 
@@ -95,6 +102,7 @@ def variables_vs_time(df, variable_parameters = None):
         # axes[0, 0].set_title(f'MPL')
         axes[0, 0].grid(True)
         axes[0, 0].legend().set_visible(False)
+        axes[0, 0].yaxis.set_major_locator(MaxNLocator(nbins=nbins))
 
         # Plot 'k'
         axes[0, 1].plot(subset_df['time_step'], subset_df['k'], label=label, color=color, alpha=alpha, linestyle=linestyle, linewidth=linewidth)
@@ -103,6 +111,7 @@ def variables_vs_time(df, variable_parameters = None):
         # axes[0, 1].set_title(f'Firm capital') # (k)')
         axes[0, 1].grid(True)
         axes[0, 1].legend().set_visible(False)
+        axes[0, 1].yaxis.set_major_locator(MaxNLocator(nbins=nbins))
 
         # Plot n
         axes[1, 0].plot(subset_df['time_step'], subset_df['n'], label=label, color=color, alpha=alpha, linestyle=linestyle, linewidth=linewidth)
@@ -111,6 +120,7 @@ def variables_vs_time(df, variable_parameters = None):
         # axes[0, 1].set_title(f'Firm workforce') # (n)')
         axes[1, 0].grid(True)
         axes[1, 0].legend().set_visible(False)
+        axes[1, 0].yaxis.set_major_locator(MaxNLocator(nbins=nbins))
 
         # Plot N
         axes[1, 1].plot(subset_df['time_step'], subset_df['N'], label=label, color=color, alpha=alpha, linestyle=linestyle, linewidth=linewidth)
@@ -119,6 +129,7 @@ def variables_vs_time(df, variable_parameters = None):
         # axes[1, 0].set_title(f'Total workforce') # (N)')
         axes[1, 1].grid(True)
         axes[1, 1].legend().set_visible(False)
+        axes[1, 1].yaxis.set_major_locator(MaxNLocator(nbins=nbins))
 
         # Plot city extent
         axes[2, 0].plot(subset_df['time_step'], subset_df['city_extent_calc'], label=label, color=color, alpha=alpha, linestyle=linestyle, linewidth=linewidth)
@@ -127,6 +138,7 @@ def variables_vs_time(df, variable_parameters = None):
         # axes[2, 0].set_title(f'City extent')
         axes[2, 0].grid(True)
         axes[2, 0].legend().set_visible(False)
+        axes[2, 0].yaxis.set_major_locator(MaxNLocator(nbins=nbins))
 
         # Plot F
         axes[2, 1].plot(subset_df['time_step'], subset_df['F'], label=label, color=color, alpha=alpha, linestyle=linestyle, linewidth=linewidth)
@@ -135,6 +147,7 @@ def variables_vs_time(df, variable_parameters = None):
         # axes[1, 1].set_title(f'Number of firms') # (F)')
         axes[2, 1].grid(True)
         axes[2, 1].legend().set_visible(False)
+        axes[2, 1].yaxis.set_major_locator(MaxNLocator(nbins=nbins))
 
         if 'investor_ownership_share' in subset_df:
             # Plot 'Owner-occupier_share'
@@ -146,6 +159,7 @@ def variables_vs_time(df, variable_parameters = None):
             axes[3, 0].grid(True)
             # Display a single legend outside the figure
             axes[3, 0].legend(loc='center left', bbox_to_anchor=(1.2, 0.5), frameon=False)
+            axes[3, 0].yaxis.set_major_locator(MaxNLocator(nbins=nbins))
 
         else:
             axes[2, 0].set_xlabel('Time Step')
@@ -156,12 +170,6 @@ def variables_vs_time(df, variable_parameters = None):
             axes[2, 1].legend(loc='center left', bbox_to_anchor=(-1.3, -1.5), frameon=False)
         
         axes[3, 1].set_axis_off()
-
-    # for ax_row in axes:
-    # for ax in ax_row:
-    #     ax.yaxis.set_major_formatter(ScalarFormatter(useMathText=True, useOffset=False))
-    #     ax.ticklabel_format(style='plain', axis='y')
-
 
     # Override font sizes
     default_font_size = plt.rcParams['font.size']
@@ -183,6 +191,7 @@ def variables_vs_time(df, variable_parameters = None):
         # f'cg_tax_per: {model_parameters["cg_tax_per"]}, '
         # f'cg_tax_invest: {model_parameters["cg_tax_invest"]}'
     )
+
 
     plt.text(-1.3, -1.3, label_text, transform=plt.gca().transAxes, ha='left', va='center', wrap=True)
     plt.savefig(figure_filepath, format='pdf', bbox_inches='tight')
