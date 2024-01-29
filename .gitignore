@@ -21,6 +21,7 @@ __pycache__/
 
 # Output data
 /output_data/
+/output_data-OLD/
 
 # macOS specific files
 .DS_Store 
@@ -31,3 +32,5 @@ model/temp_comments.py
 tests/test_bidding.ipynb
 
 test_model.ipynb
+
+
