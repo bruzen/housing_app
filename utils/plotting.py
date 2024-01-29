@@ -78,98 +78,101 @@ def variables_vs_time(df, variable_parameters = None):
 
     # Loop through each run
     for i, run_id in enumerate(df['RunId'].unique()):
-        # Subset the DataFrame for the current run and exclude time_step 0
-        subset_df = df[(df['RunId'] == run_id) & (df['Step'] > 0)]
-
-        if variable_parameters:
-            # Extract variable parameter values for the current RunId
-            variable_values = {param: subset_df[param].iloc[0] for param in variable_parameters.keys()}
-
-            # Construct label using variable parameter values
-            label = f'{", ".join(f"{key} {value}" for key, value in variable_values.items())}'
-        else:
-            label = None
-
         # Use the defined styles for each run
         color = colors[i % len(colors)] # colors[i]
         linestyle = linestyles[i % len(linestyles)]  # Cycle through linestyles
         linewidth = linewidths[i % len(linewidths)]  # Cycle through linewidths
 
-        # Plot MPL
-        axes[0, 0].plot(subset_df['time_step'], subset_df['MPL'], label=label, color=color, alpha=alpha, linestyle=linestyle, linewidth=linewidth)
-        # axes[0, 0].set_xlabel('Time Step')
-        axes[0, 0].set_ylabel('MPL ($)')
-        # axes[0, 0].set_title(f'MPL')
-        axes[0, 0].grid(True)
-        axes[0, 0].legend().set_visible(False)
-        axes[0, 0].yaxis.set_major_locator(MaxNLocator(nbins=nbins))
+        for j, iteration_value in enumerate(df['iteration'].unique()): 
+            subset_df = df[(df['RunId'] == run_id) & (df['iteration'] == iteration_value) & (df['Step'] > 0)]
 
-        # Plot 'k'
-        axes[0, 1].plot(subset_df['time_step'], subset_df['k'], label=label, color=color, alpha=alpha, linestyle=linestyle, linewidth=linewidth)
-        # axes[0, 1].set_xlabel('Time Step')
-        axes[0, 1].set_ylabel('k ($)')
-        # axes[0, 1].set_title(f'Firm capital') # (k)')
-        axes[0, 1].grid(True)
-        axes[0, 1].legend().set_visible(False)
-        axes[0, 1].yaxis.set_major_locator(MaxNLocator(nbins=nbins))
+            # Subset the DataFrame for the current run and exclude time_step 0
+            subset_df = df[(df['RunId'] == run_id) & (df['Step'] > 0)]
 
-        # Plot n
-        axes[1, 0].plot(subset_df['time_step'], subset_df['n'], label=label, color=color, alpha=alpha, linestyle=linestyle, linewidth=linewidth)
-        # axes[0, 1].set_xlabel('Time Step')
-        axes[1, 0].set_ylabel('n')
-        # axes[0, 1].set_title(f'Firm workforce') # (n)')
-        axes[1, 0].grid(True)
-        axes[1, 0].legend().set_visible(False)
-        axes[1, 0].yaxis.set_major_locator(MaxNLocator(nbins=nbins))
+            if variable_parameters:
+                # Extract variable parameter values for the current RunId
+                variable_values = {param: subset_df[param].iloc[0] for param in variable_parameters.keys()}
 
-        # Plot N
-        axes[1, 1].plot(subset_df['time_step'], subset_df['N'], label=label, color=color, alpha=alpha, linestyle=linestyle, linewidth=linewidth)
-        # axes[1, 0].set_xlabel('Time Step')
-        axes[1, 1].set_ylabel('N')
-        # axes[1, 0].set_title(f'Total workforce') # (N)')
-        axes[1, 1].grid(True)
-        axes[1, 1].legend().set_visible(False)
-        axes[1, 1].yaxis.set_major_locator(MaxNLocator(nbins=nbins))
+                # Construct label using variable parameter values
+                label = f'{", ".join(f"{key} {value}" for key, value in variable_values.items())}'
+            else:
+                label = None
 
-        # Plot city extent
-        axes[2, 0].plot(subset_df['time_step'], subset_df['city_extent_calc'], label=label, color=color, alpha=alpha, linestyle=linestyle, linewidth=linewidth)
-        # axes[2, 0].set_xlabel('Time Step')
-        axes[2, 0].set_ylabel('Properties')
-        # axes[2, 0].set_title(f'City extent')
-        axes[2, 0].grid(True)
-        axes[2, 0].legend().set_visible(False)
-        axes[2, 0].yaxis.set_major_locator(MaxNLocator(nbins=nbins))
+            # Plot MPL
+            axes[0, 0].plot(subset_df['time_step'], subset_df['MPL'], label=label, color=color, alpha=alpha, linestyle=linestyle, linewidth=linewidth)
+            # axes[0, 0].set_xlabel('Time Step')
+            axes[0, 0].set_ylabel('MPL ($)')
+            # axes[0, 0].set_title(f'MPL')
+            axes[0, 0].grid(True)
+            axes[0, 0].legend().set_visible(False)
+            axes[0, 0].yaxis.set_major_locator(MaxNLocator(nbins=nbins))
 
-        # Plot F
-        axes[2, 1].plot(subset_df['time_step'], subset_df['F'], label=label, color=color, alpha=alpha, linestyle=linestyle, linewidth=linewidth)
-        # axes[1, 1].set_xlabel('Time Step')
-        axes[2, 1].set_ylabel('F')
-        # axes[1, 1].set_title(f'Number of firms') # (F)')
-        axes[2, 1].grid(True)
-        axes[2, 1].legend().set_visible(False)
-        axes[2, 1].yaxis.set_major_locator(MaxNLocator(nbins=nbins))
+            # Plot 'k'
+            axes[0, 1].plot(subset_df['time_step'], subset_df['k'], label=label, color=color, alpha=alpha, linestyle=linestyle, linewidth=linewidth)
+            # axes[0, 1].set_xlabel('Time Step')
+            axes[0, 1].set_ylabel('k ($)')
+            # axes[0, 1].set_title(f'Firm capital') # (k)')
+            axes[0, 1].grid(True)
+            axes[0, 1].legend().set_visible(False)
+            axes[0, 1].yaxis.set_major_locator(MaxNLocator(nbins=nbins))
 
-        if 'investor_ownership_share' in subset_df:
-            # Plot 'Owner-occupier_share'
-            axes[3, 0].plot(subset_df['time_step'], (1- subset_df['investor_ownership_share']), label=label, color=color, alpha=alpha, linestyle=linestyle, linewidth=linewidth)
-            axes[3, 0].set_xlabel('Time Step')
-            axes[3,0].set_ylim(-0.01, 1.01)
-            axes[3, 0].set_ylabel('Owner-occupier \n share') #('Ownership share')
-            # axes[3, 0].set_title('Owner-occupier') #('Owner-occupier fraction')
-            axes[3, 0].grid(True)
-            # Display a single legend outside the figure
-            axes[3, 0].legend(loc='center left', bbox_to_anchor=(1.2, 0.5), frameon=False)
-            axes[3, 0].yaxis.set_major_locator(MaxNLocator(nbins=nbins))
+            # Plot n
+            axes[1, 0].plot(subset_df['time_step'], subset_df['n'], label=label, color=color, alpha=alpha, linestyle=linestyle, linewidth=linewidth)
+            # axes[0, 1].set_xlabel('Time Step')
+            axes[1, 0].set_ylabel('n')
+            # axes[0, 1].set_title(f'Firm workforce') # (n)')
+            axes[1, 0].grid(True)
+            axes[1, 0].legend().set_visible(False)
+            axes[1, 0].yaxis.set_major_locator(MaxNLocator(nbins=nbins))
 
-        else:
-            axes[2, 0].set_xlabel('Time Step')
-            axes[2, 1].set_xlabel('Time Step')
+            # Plot N
+            axes[1, 1].plot(subset_df['time_step'], subset_df['N'], label=label, color=color, alpha=alpha, linestyle=linestyle, linewidth=linewidth)
+            # axes[1, 0].set_xlabel('Time Step')
+            axes[1, 1].set_ylabel('N')
+            # axes[1, 0].set_title(f'Total workforce') # (N)')
+            axes[1, 1].grid(True)
+            axes[1, 1].legend().set_visible(False)
+            axes[1, 1].yaxis.set_major_locator(MaxNLocator(nbins=nbins))
 
-            axes[3, 0].set_axis_off()
-            # Display a single legend outside the figure
-            axes[2, 1].legend(loc='center left', bbox_to_anchor=(-1.3, -1.5), frameon=False)
-        
-        axes[3, 1].set_axis_off()
+            # Plot city extent
+            axes[2, 0].plot(subset_df['time_step'], subset_df['city_extent_calc'], label=label, color=color, alpha=alpha, linestyle=linestyle, linewidth=linewidth)
+            # axes[2, 0].set_xlabel('Time Step')
+            axes[2, 0].set_ylabel('Properties')
+            # axes[2, 0].set_title(f'City extent')
+            axes[2, 0].grid(True)
+            axes[2, 0].legend().set_visible(False)
+            axes[2, 0].yaxis.set_major_locator(MaxNLocator(nbins=nbins))
+
+            # Plot F
+            axes[2, 1].plot(subset_df['time_step'], subset_df['F'], label=label, color=color, alpha=alpha, linestyle=linestyle, linewidth=linewidth)
+            # axes[1, 1].set_xlabel('Time Step')
+            axes[2, 1].set_ylabel('F')
+            # axes[1, 1].set_title(f'Number of firms') # (F)')
+            axes[2, 1].grid(True)
+            axes[2, 1].legend().set_visible(False)
+            axes[2, 1].yaxis.set_major_locator(MaxNLocator(nbins=nbins))
+
+            if 'investor_ownership_share' in subset_df:
+                # Plot 'Owner-occupier_share'
+                axes[3, 0].plot(subset_df['time_step'], (1- subset_df['investor_ownership_share']), label=label, color=color, alpha=alpha, linestyle=linestyle, linewidth=linewidth)
+                axes[3, 0].set_xlabel('Time Step')
+                axes[3,0].set_ylim(-0.01, 1.01)
+                axes[3, 0].set_ylabel('Owner-occupier \n share') #('Ownership share')
+                # axes[3, 0].set_title('Owner-occupier') #('Owner-occupier fraction')
+                axes[3, 0].grid(True)
+                # Display a single legend outside the figure
+                axes[3, 0].legend(loc='center left', bbox_to_anchor=(1.2, 0.5), frameon=False)
+                axes[3, 0].yaxis.set_major_locator(MaxNLocator(nbins=nbins))
+
+            else:
+                axes[2, 0].set_xlabel('Time Step')
+                axes[2, 1].set_xlabel('Time Step')
+
+                axes[3, 0].set_axis_off()
+                # Display a single legend outside the figure
+                axes[2, 1].legend(loc='center left', bbox_to_anchor=(-1.3, -1.5), frameon=False)
+            
+            axes[3, 1].set_axis_off()
 
     # Override font sizes
     default_font_size = plt.rcParams['font.size']
