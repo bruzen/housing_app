@@ -70,7 +70,7 @@ def batch():
 
     return df, variable_parameters # metadata
 
-def fast():
+def fast_run():
     from model.model_fast import Fast
     city = Fast(num_steps, **parameters)
     city.run_model()
@@ -121,7 +121,7 @@ if __name__ == "__main__":
     # Import and call the appropriate module based on the selected configuration
     if args.run:
         print('Run')
-        city, agent_out, model_out = main()
+        city, agent_out, model_out = run()
         if args.plot:
             print('TODO Add plot')
     elif args.batch:
@@ -132,6 +132,7 @@ if __name__ == "__main__":
             plotting.variables_vs_time(df, variable_parameters)
     elif args.fast_run:
         print('Fast run')
+        city, agent_out, model_out = fast_run()
         if args.plot:
             print('TODO Add plot')
     elif args.fast_batch:
