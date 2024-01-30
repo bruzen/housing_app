@@ -80,7 +80,7 @@ def variables_vs_time(df, variable_parameters = None):
     # Loop through each run
     for i, run_id in enumerate(df['RunId'].unique()):
         # Subset the DataFrame for the current run and exclude time_step 0
-        subset_df = df[(df['RunId'] == run_id) & (df['Step'] > 0)]
+        subset_df = df[(df['RunId'] == run_id)] # & (df['Step'] > 0)]
 
         if variable_parameters:
             # Extract variable parameter values for the current RunId
@@ -139,7 +139,7 @@ def variables_vs_time(df, variable_parameters = None):
         # Plot city extent
         axes[2, 0].plot(subset_df['time_step'], subset_df['city_extent_calc'], label=label, color=color, alpha=alpha, linestyle=linestyle, linewidth=linewidth)
         # axes[2, 0].set_xlabel('Time Step')
-        axes[2, 0].set_ylabel('Properties')
+        axes[2, 0].set_ylabel('City extent \n (lot lengths)')
         # axes[2, 0].set_title(f'City extent')
         axes[2, 0].grid(True)
         axes[2, 0].legend().set_visible(False)
