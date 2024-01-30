@@ -181,7 +181,7 @@ def variables_vs_time(df, variable_parameters = None):
         ax.set_xlabel(ax.get_xlabel(), fontsize=default_font_size)
         ax.set_ylabel(ax.get_ylabel(), fontsize=default_font_size)
 
-    name = f'{" ".join(variable_parameters.keys())}-{timestamp}'
+    name = f'{"-".join(variable_parameters.keys())}-{model_name}-{timestamp}'
     figure_filepath = file_utils.get_figures_filepath(f'{name}.pdf')
     label_text = (
         # name
@@ -197,6 +197,30 @@ def variables_vs_time(df, variable_parameters = None):
 
     plt.text(-1.3, -1.3, label_text, transform=plt.gca().transAxes, ha='left', va='center', wrap=True)
     plt.savefig(figure_filepath, format='pdf', bbox_inches='tight')
+
+def mpl_vs_time(df):
+    set_style()
+    plt.rcParams['font.size'] = 10
+    
+    # Create a subplot
+    fig, ax = plt.subplots(figsize=(8, 6))
+
+    # Plot MPL
+    ax.plot(df['time_step'], df['MPL'], linestyle = 'solid', label=f'MPL')
+    ax.plot(df['time_step'], df['subsistence_wage'], linestyle = 'solid', label=f'Subsistence wage')
+    ax.plot(df['time_step'], df['wage'], linestyle = 'dashed', label=f'Wage')
+    ax.plot(df['time_step'], df['wage_target'], linestyle = 'dotted', label=f'Wage target')
+    # Set labels and title wage_premium subsistence_wage wage
+    ax.set_xlabel('Time Step')
+    ax.set_ylabel('MPL ($)')
+    ax.set_title('MPL Over Time')
+
+    # Add legend
+    ax.legend()
+
+    # Display the plot
+    plt.show()
+
 
 def format_label(label):
     # Capitalize the first letter of each word
