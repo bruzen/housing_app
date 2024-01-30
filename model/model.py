@@ -368,6 +368,7 @@ class City(Model):
             "wage_premium":              lambda m: m.firm.wage_premium,
             "subsistence_wage":          lambda m: m.firm.subsistence_wage,
             "wage":                      lambda m: m.firm.wage,
+            "wage_target":               lambda m: m.firm.wage_target,
             # "worker_agents":           lambda m: m.workforce.get_agent_count(m.workforce.workers),
             "worker_agents":             lambda m: len(m.workforce.workers),
             "newcomer_agents":           lambda m: len(m.workforce.newcomers),
