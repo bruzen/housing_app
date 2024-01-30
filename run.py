@@ -16,27 +16,34 @@ parameters = {
 }
 
 variable_parameters = {
-    #   'density': [900, 600, 400],#[600, 100, 1],
-    #   'c': [500, 300, 200], 
-    #   `'wealth_sensitivity': [0.15, 0.1, 0.5],
-    #    'cg_tax_per':   [0.6, 0.3, 0],# 3, 4, 5], # share 0-1
-        'cg_tax_invest': [1, 0.5, 0.0], # share 0-1
-    #   'subsistence_wage': [60000, 40000 30000], # [10000, 30000],
+#   'c': [500, 300, 200], 
+    #    'price_of_output': [6.6, 10, 15]
+    #   'density': [1200, 600, 100],#[600, 100, 1],
+    #    'A': [3000, 2500, 2000],
     #    'alpha': [0.19, 0.18, 0.17],
     #    'beta':  [0.77, 0.75, 0.73],
-    #   'gamma': [0.14, 0.12, 0.10],
-    #    'A': [3000, 2500, 2000],  
+    #   'gamma': [0.14, 0.12, 0.10],  
+    # 'overhead': 0.5,
+    # 'mult': 1.2,
+     'adjN': [0.2, 0.15, 0.1, 0.05, 0.02],
+    # 'adjk': 0.10,
+    # 'adjn': 0.15,
+    # 'adjF': 0.02,
+    # 'adjw': [0.09 ,.06, .03], 
+    # 'dist': 1, 
+    # 'init_F': 100.0,
+    # 'init_k': 500.0,
+    # 'init_n': 100.0,  
+    #   `'wealth_sensitivity': [0.15, 0.1, 0.5],
+    #   'cg_tax_per':   [0.5, 0.4, 0.35, .3, .2],# 3, 4, 5], # share 0-1
+    #    'cg_tax_invest': [0.5, 0.35, 0.2], #*, # share 0-1
+    #   'subsistence_wage': [60000, 40000 30000], # [10000, 30000],
     #    'property_tax_rate': [0.08, 0.04, .02]
-    #    'price_of_output': [6.6, 10, 15]
     #    'r_prime': [0.12, 0.05, .02], 
     #    'r_investor': [0.1, 0.05, .01] 
     #    'gamma': [0.001, 0.02, 0.7]
     # 'subsistence_wage': [10000, 30000],
     # 'gamma': [0.02]  
-    # 'perturbation': [True, False], 
-    # # 'pertubation_time': [10, 1000]
-    # 'perterbation_experiment_name': [perturbat5, perturbat20,..]
-    # 'my_list': np.linspace(3,300,10)
 }
 
 
