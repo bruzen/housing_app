@@ -53,8 +53,6 @@ def small_multiples_lineplot(df, param_mapping, palette=None):
     # Show the plot
     plt.show()
 
-# single_variable_vs_time()
-
 def variables_vs_time(df, variable_parameters = None):
     set_style()
     plt.rcParams['font.size'] = 10
@@ -75,6 +73,8 @@ def variables_vs_time(df, variable_parameters = None):
     
     # Create subplots with a 4x2 grid
     fig, axes = plt.subplots(4, 2, figsize=(.5*PAGE_WIDTH, .7*PAGE_WIDTH), gridspec_kw={'hspace': .78, 'wspace': 0.7})  # 4 rows, 2 columns
+    if 'iteration' in df.columns:
+        df['RunGroup'] = df.groupby('iteration')['RunId'].transform(lambda x: pd.factorize(x)[0])
 
     # Loop through each run
     for i, run_id in enumerate(df['RunId'].unique()):
@@ -90,10 +90,14 @@ def variables_vs_time(df, variable_parameters = None):
         else:
             label = None
 
+        if 'iteration' in df.columns:
+            run_group = subset_df['RunGroup'].iloc[0]
+        else:
+            run_group = subset_df['RunId'].iloc[0]
         # Use the defined styles for each run
-        color = colors[i % len(colors)] # colors[i]
-        linestyle = linestyles[i % len(linestyles)]  # Cycle through linestyles
-        linewidth = linewidths[i % len(linewidths)]  # Cycle through linewidths
+        color     =     colors[run_group % len(colors)] # colors[i % len(colors)]
+        linestyle = linestyles[run_group % len(linestyles)]  # linestyles[i % len(linestyles)]  # Cycle through linestyles
+        linewidth = linewidths[run_group % len(linewidths)]  # linewidths[i % len(linewidths)]  # Cycle through linewidths
 
         # Plot MPL
         axes[0, 0].plot(subset_df['time_step'], subset_df['MPL'], label=label, color=color, alpha=alpha, linestyle=linestyle, linewidth=linewidth)
@@ -146,7 +150,6 @@ def variables_vs_time(df, variable_parameters = None):
         axes[2, 1].set_ylabel('F')
         # axes[1, 1].set_title(f'Number of firms') # (F)')
         axes[2, 1].grid(True)
-        axes[2, 1].legend().set_visible(False)
         axes[2, 1].yaxis.set_major_locator(MaxNLocator(nbins=nbins))
 
         if 'investor_ownership_share' in subset_df:
@@ -157,24 +160,23 @@ def variables_vs_time(df, variable_parameters = None):
             axes[3, 0].set_ylabel('Owner-occupier \n share') #('Ownership share')
             # axes[3, 0].set_title('Owner-occupier') #('Owner-occupier fraction')
             axes[3, 0].grid(True)
-            # Display a single legend outside the figure
-            axes[3, 0].legend(loc='center left', bbox_to_anchor=(1.2, 0.5), frameon=False)
             axes[3, 0].yaxis.set_major_locator(MaxNLocator(nbins=nbins))
-
+            # Display a single legend outside the figure
+            if(subset_df['iteration'].iloc[0] == 0):
+                axes[3, 0].legend(loc='center left', bbox_to_anchor=(1.2, 0.5), frameon=False)
         else:
             axes[2, 0].set_xlabel('Time Step')
             axes[2, 1].set_xlabel('Time Step')
-
-            axes[3, 0].set_axis_off()
             # Display a single legend outside the figure
-            axes[2, 1].legend(loc='center left', bbox_to_anchor=(-1.3, -1.5), frameon=False)
-        
+            if(subset_df['iteration'].iloc[0] == 0):
+                axes[2, 1].legend(loc='center left', bbox_to_anchor=(-1.3, -1.5), frameon=False)
+            axes[3, 0].set_axis_off()
         axes[3, 1].set_axis_off()
 
     # Override font sizes
     default_font_size = plt.rcParams['font.size']
     for ax in axes.flatten():
-        ax.set_title(ax.get_title(), fontsize=default_font_size)
+        ax.set_title(ax.get_title(),   fontsize=default_font_size)
         ax.set_xlabel(ax.get_xlabel(), fontsize=default_font_size)
         ax.set_ylabel(ax.get_ylabel(), fontsize=default_font_size)
 
@@ -191,7 +193,6 @@ def variables_vs_time(df, variable_parameters = None):
         # f'cg_tax_per: {model_parameters["cg_tax_per"]}, '
         # f'cg_tax_invest: {model_parameters["cg_tax_invest"]}'
     )
-
 
     plt.text(-1.3, -1.3, label_text, transform=plt.gca().transAxes, ha='left', va='center', wrap=True)
     plt.savefig(figure_filepath, format='pdf', bbox_inches='tight')
