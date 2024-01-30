@@ -37,6 +37,28 @@ class Fast(Model):
         self.num_steps = num_steps
         # self.time_step = 0
 
+        # Interventions
+        if 'intervention' in self.params and self.params['intervention'] is True:
+            self.intervention = True
+            perturb_at_time = {'var': 'cg_tax_invest', 'val': .9, 'time': 5},
+            # if 'perturb_at_time' in self.params:
+            try:
+                # perturb_at_time_data = self.params['perturb_at_time']
+
+                # if not isinstance(perturb_at_time_data, dict):
+                #     raise TypeError("'perturb_at_time' should be a dictionary.")
+
+                self.perturb_var  = perturb_at_time.get('var', None)
+                self.perturb_val  = perturb_at_time.get('val', None)
+                self.perturb_time = perturb_at_time.get('time', None)
+
+                if any(var is None for var in (self.perturb_var, self.perturb_val, self.perturb_time)):
+                    raise ValueError("Invalid or missing data in 'perturb_at_time'.")
+            except Exception as e:
+                print(f"An error occurred with processing perturb_at_time: {e}")
+        else:
+            self.intervention = False # TODO Can use to control the logic for any intervention
+
         self.setup_run_data_collection()
 
         # Record metadata

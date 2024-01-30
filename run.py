@@ -16,7 +16,7 @@ parameters = {
 }
 
 variable_parameters = {
-    #   'density': [900, 600, 400],#[600, 100, 1],
+    #   'intervention': [True, False],
     #   'c': [500, 300, 200], 
     #   `'wealth_sensitivity': [0.15, 0.1, 0.5],
     #    'cg_tax_per':   [0.6, 0.3, 0],# 3, 4, 5], # share 0-1

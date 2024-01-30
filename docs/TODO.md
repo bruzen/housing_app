@@ -1,7 +1,4 @@
 # TODO List
-## Next experiments
-- [ ] 
-
 ## Experiments and plan (results experiments diagram measures figures)
 -  [ ] Results: 
    -  [ ] Ownership pattern: under what circumstances do we see institutions take out ownership
@@ -33,6 +30,10 @@
 - [ ] Investors can sell
 - [ ] Move more plots to plotting.py (single, heatmap, check analysis and analysis_new)
 - [ ] Record/plot total rents
+- [ ] Dataframe Var names to caps like RunID
+- [ ] Load data for multiple replicate runs
+- [ ] Single plot
+- [ ] Load data to plot 
 
 ## Plotting and runs
 - [ ] Do scenario analysis - hypercube spacing
