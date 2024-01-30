@@ -198,7 +198,8 @@ def variables_vs_time(df, variable_parameters = None):
     plt.text(-1.3, -1.3, label_text, transform=plt.gca().transAxes, ha='left', va='center', wrap=True)
     plt.savefig(figure_filepath, format='pdf', bbox_inches='tight')
 
-def mpl_vs_time(df):
+def mpl_vs_time(model_out):
+    df = pd.DataFrame(model_out)
     set_style()
     plt.rcParams['font.size'] = 10
     
