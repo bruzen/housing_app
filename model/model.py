@@ -53,7 +53,7 @@ class City(Model):
             self.params = default_parameters
 
         # Model
-        self.model_name        = 'Housing Market'
+        self.model_name        = 'main' # 'Housing Market'
         self.model_version     = '0.0.1'
         self.model_description = 'Agent-based housing market model with rent and urban agglomeration.'
         self.num_steps = num_steps
@@ -340,6 +340,7 @@ class City(Model):
 
         # Define what data the model will collect in each time step
         model_reporters = {
+            "model_name":                lambda m: m.model_name,
             "run_id":                    lambda m: m.run_id,
             "workers":                   lambda m: m.firm.N,
             "MPL":                       lambda m: m.firm.MPL,

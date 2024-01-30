@@ -58,7 +58,8 @@ def variables_vs_time(df, variable_parameters = None):
     plt.rcParams['font.size'] = 10
     
     # df = pd.DataFrame(results)
-    timestamp = df['timestamp'].iloc[0] # Same timestep for all rows in df
+    timestamp  = df['timestamp'].iloc[0] # Same timestep for all rows in df
+    model_name = df['model_name'].iloc[0]
     figures_folder = file_utils.get_figures_subfolder()
 
     # TODO move to style
@@ -184,7 +185,7 @@ def variables_vs_time(df, variable_parameters = None):
     figure_filepath = file_utils.get_figures_filepath(f'{name}.pdf')
     label_text = (
         # name
-        f'{timestamp}\n'
+        f'{model_name} {timestamp}\n'
         # f'\n {name} {" ".join(variable_parameters.keys())}'
         # f'{figure_filepath}\n'
         # f'adjF: {model_parameters["adjF"]}, adjw: {model_parameters["adjw"]}, '
