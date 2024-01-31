@@ -16,7 +16,7 @@ parameters = {
 }
 
 variable_parameters = {
-#   'c': [500, 300, 200], 
+    #   'c': [500, 300, 200], 
     #    'price_of_output': [6.6, 10, 15]
     #   'density': [1200, 600, 100],#[600, 100, 1],
     #    'A': [3000, 2500, 2000],
@@ -25,7 +25,7 @@ variable_parameters = {
     #   'gamma': [0.14, 0.12, 0.10],  
     # 'overhead': 0.5,
     # 'mult': 1.2,
-     'adjN': [0.2, 0.15, 0.1, 0.05, 0.02],
+    #  'adjN': [0.2, 0.15, 0.1, 0.05, 0.02],
     # 'adjk': 0.10,
     # 'adjn': 0.15,
     # 'adjF': 0.02,
@@ -40,7 +40,8 @@ variable_parameters = {
     #   'subsistence_wage': [60000, 40000 30000], # [10000, 30000],
     #    'property_tax_rate': [0.08, 0.04, .02]
     #    'r_prime': [0.12, 0.05, .02], 
-    #    'r_investor': [0.1, 0.05, .01] 
+    #    'r_investor': [0.1, 0.05, .01]
+    'r_investor': [0.025, 0.05, .1] 
     #    'gamma': [0.001, 0.02, 0.7]
     # 'subsistence_wage': [10000, 30000],
     # 'gamma': [0.02]  
