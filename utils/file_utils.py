@@ -107,12 +107,48 @@ def get_filepath(folder_name=None, subfolder_name=None, file_name=None):
 
 def get_git_commit_hash():
     try:
-        # Run 'git rev-parse HEAD' to get the commit hash
-        result = subprocess.check_output(['git', 'rev-parse', 'HEAD']).strip()
+        # Run 'git rev-parse --short HEAD' to get the short commit hash
+        result = subprocess.check_output(['git', 'rev-parse', '--short', 'HEAD']).strip()
         return result.decode('utf-8')
     except subprocess.CalledProcessError as e:
         print(f"Error: {e}")
         return None
+    except Exception as e:
+        print(f"An unexpected error occurred: {e}")
+        return None
+
+def get_git_details():
+    try:
+        # Run the git log command to get details of the latest commit, including the commit message and date
+        result = subprocess.run(['git', 'log', '-1', '--pretty=format:%cd%n%h%n%an%n%s', '--date=iso'], stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
+        
+        # Check if the command was successful
+        if result.returncode == 0:
+            # The output contains date, commit hash, author, and commit message
+            commit_details = result.stdout.strip().split('\n')
+            commit_message = commit_details[3]
+            
+            # Extract as many full words as possible within 30 characters
+            words = commit_message.split()
+            truncated_message = ''
+            char_count = 0
+            for word in words:
+                if char_count + len(word) <= 30:
+                    truncated_message += word + ' '
+                    char_count += len(word) + 1  # Account for the space between words
+                else:
+                    break
+            
+            formatted_date = commit_details[0][:16]  # Extract the date in 'YYYY-MM-DD HH:mm' format
+            return f"{truncated_message.strip()}.. {formatted_date}"
+        else:
+            # If there was an error, print the error message
+            print(f"Error: {result.stderr.strip()}")
+            return None
+    except Exception as e:
+        print(f"An error occurred: {e}")
+        return None
+
 
 def generate_timestamp():
     return datetime.datetime.now().strftime("%Y-%m-%d_%H%M%S")

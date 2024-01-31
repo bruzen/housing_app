@@ -185,7 +185,9 @@ def variables_vs_time(df, variable_parameters = None):
     figure_filepath = file_utils.get_figures_filepath(f'{name}.pdf')
     label_text = (
         # name
-        f'{model_name} {timestamp}\n'
+        f'{model_name} {timestamp} \n'
+        f'Commit ID {file_utils.get_git_commit_hash()} \n'
+        f'{file_utils.get_git_details()}'
         # f'\n {name} {" ".join(variable_parameters.keys())}'
         # f'{figure_filepath}\n'
         # f'adjF: {model_parameters["adjF"]}, adjw: {model_parameters["adjw"]}, '
@@ -195,7 +197,7 @@ def variables_vs_time(df, variable_parameters = None):
         # f'cg_tax_invest: {model_parameters["cg_tax_invest"]}'
     )
 
-    plt.text(-1.3, -1.3, label_text, transform=plt.gca().transAxes, ha='left', va='center', wrap=True)
+    plt.text(-2.1, -1.3, label_text, transform=plt.gca().transAxes, ha='left', va='center', wrap=True)
     plt.savefig(figure_filepath, format='pdf', bbox_inches='tight')
 
 def mpl_vs_time(model_out):
@@ -221,7 +223,6 @@ def mpl_vs_time(model_out):
 
     # Display the plot
     plt.show()
-
 
 def format_label(label):
     # Capitalize the first letter of each word
