@@ -476,7 +476,7 @@ class Firm(Agent):
         except ZeroDivisionError:
             # Handle division by zero
             p_dot = None
-            logging.error(f"ZeroDivisionError at time_step {self.model.time_step} for Land ID {self.unique_id}, old_wage_premium {self.model.firm.old_wage_premium}")
+            logging.error(f"ZeroDivisionError at time_step {self.model.schedule.time} for Land ID {self.unique_id}, old_wage_premium {self.model.firm.old_wage_premium}")
         except Exception as e:
             # Handle other exceptions
             self.model.logger.error(f"An error occurred: {str(e)}")
@@ -795,14 +795,14 @@ class Realtor(Agent):
             allocation.sale_property.realized_price = allocation.final_price
             allocation.sale_property.realized_all_steps_price = allocation.final_price # Record that it sold
 
-            # Record data for forecasting
-            new_row = {
-            'land_id':        allocation.sale_property.unique_id,
-            'realized_price': allocation.final_price,
-            'time_step':      self.model.time_step,
-            'transport_cost': allocation.sale_property.transport_cost,
-            'wage':           self.model.firm.wage,
-            }
+            # # Record data for forecasting
+            # new_row = {
+            # 'land_id':        allocation.sale_property.unique_id,
+            # 'realized_price': allocation.final_price,
+            # 'time_step':      self.model.schedule.time,
+            # 'transport_cost': allocation.sale_property.transport_cost,
+            # 'wage':           self.model.firm.wage,
+            # }
 
             # if isinstance(allocation.seller, Person):
             #     pass
@@ -812,7 +812,7 @@ class Realtor(Agent):
             # else:
             #     self.model.logger.debug(f'In complete_transaction, before purchase, seller {allocation.seller.unique_id} was not a person or investor. Seller {allocation.seller}.')
 
-            # self.model.logger.debug(f'Time {self.model.time_step}, Property {allocation.property.unique_id}, Price {allocation.property.realized_price}')
+            # self.model.logger.debug(f'Time {self.model.schedule.time}, Property {allocation.property.unique_id}, Price {allocation.property.realized_price}')
             if isinstance(allocation.buyer, Investor):
                 self.handle_investor_purchase(allocation)
             elif isinstance(allocation.buyer, Person):
@@ -862,7 +862,7 @@ class Realtor(Agent):
             self.model.workforce.remove(allocation.buyer, self.model.workforce.newcomers)
         else:
             self.model.logger.warning(f'Person buyer was not a newcomer: {allocation.buyer.unique_id}')
-        # self.model.logger.debug(f'Time {self.model.time_step} New worker {buyer.unique_id} Loc {sale_property}') # TEMP
+        # self.model.logger.debug(f'Time {self.model.schedule.time} New worker {buyer.unique_id} Loc {sale_property}') # TEMP
 
     def handle_seller_departure(self, allocation):
         """Handles the departure of a selling agent."""

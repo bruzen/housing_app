@@ -56,7 +56,6 @@ class City(Model):
         self.model_version     = '0.1.0'
         self.model_description = 'Agent-based housing market model with rent and urban agglomeration.'
         self.num_steps = num_steps
-        self.time_step = 0
 
         # Interventions
         if 'intervention' in self.params and self.params['intervention'] is True:
@@ -237,8 +236,6 @@ class City(Model):
         for analysis.
         """
 
-        self.time_step += 1
-
         # Reset counters
         self.urban_investor_owners_count = 0
         self.urban_resident_owners_count = 0
@@ -370,7 +367,6 @@ class City(Model):
         #     "run_id":                    lambda m: m.run_id,
         #     "workers":                   lambda m: m.firm.N,
         #     "MPL":                       lambda m: m.firm.MPL,
-        #     "time_step":                 lambda m: m.time_step,
         #     "companies":                 lambda m: m.schedule.get_breed_count(Firm),
         #     "city_extent_calc":          lambda m: m.city_extent_calc,
         #     "people":                    lambda m: m.schedule.get_breed_count(Person),
@@ -423,7 +419,7 @@ class City(Model):
             self.urban_surplus     = 0.
 
             agent_reporters      = {
-                "time_step":         lambda a: a.model.time_step,
+                "time_step":         lambda a: a.model.schedule.time,
                 "agent_class":       lambda a: type(a),
                 "agent_type":        lambda a: type(a).__name__,
                 "id":                lambda a: a.unique_id,

@@ -35,7 +35,6 @@ class Fast(Model):
         self.model_version     = '0.1.0'
         self.model_description = 'Model of urban agglomeration, excluding the land market, to inform the main agent-based housing market model.'
         self.num_steps = num_steps
-        # self.time_step = 0
 
         # Interventions
         if 'intervention' in self.params and self.params['intervention'] is True:
@@ -295,11 +294,11 @@ class Fast(Model):
         self.schedule.step_time()        
  
         # print('Step')
-        # while self.time_step < 10:
-        #     self.time_step += 1
+        # while self.schedule.time < 10:
+        #     # self.time_step += 1
         #     self.reset_step_data_lists()
 
-        #     print(self.time_step)
+        #     print(self.schedule.time)
         #     # Firm updates wages based on agglomeration population
         #     # self.firm.step()
         #     self.schedule.step_breed(Firm)
