@@ -1,5 +1,5 @@
 default_parameters = {
-    'run_notes': 'Debugging model.',
+    'run_notes': 'Exploring behavior.',
     'subfolder': None,
     'width':     50, #30,
     'height':    50, #30,

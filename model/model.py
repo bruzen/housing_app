@@ -52,8 +52,8 @@ class City(Model):
             self.params = default_parameters
 
         # Model
-        self.model_name        = 'main' # 'Housing Market'
-        self.model_version     = '0.0.1'
+        self.model_name        = 'Main' # 'Housing Market'
+        self.model_version     = '0.1.0'
         self.model_description = 'Agent-based housing market model with rent and urban agglomeration.'
         self.num_steps = num_steps
         self.time_step = 0
@@ -82,7 +82,7 @@ class City(Model):
         self.setup_run_data_collection()
 
         # Record metadata
-        self.metadata  = file_utils.record_metadata(filepath = self.metadata_filepath, run_id = self.run_id, num_steps = self.num_steps, params=self.params)
+        self.metadata  = file_utils.record_metadata(self, filepath = self.metadata_filepath)
 
         logging.basicConfig(filename=self.log_filepath,
                     filemode='w',
