@@ -37,6 +37,9 @@ class Fast(Model):
         self.num_steps = num_steps
         # self.time_step = 0
 
+        # TODO make a parameter
+        self.store_agent_data = False
+        
         # Interventions
         if 'intervention' in self.params and self.params['intervention'] is True:
             self.intervention = True
@@ -268,7 +271,6 @@ class Fast(Model):
         #     "newcomer_bid":    [],
         # }
 
-        self.no_decimals = 1
         self.setup_mesa_data_collection()
         # self.record_step_data()
 
@@ -379,38 +381,13 @@ class Fast(Model):
         self.model_filepath    = os.path.join(self.data_folder, f"fast-data-{self.run_id}-model.csv")
 
     def setup_mesa_data_collection(self):
-
-        # Variables for data collection
-        self.rent_production   = 0.
-        self.rent_amenity      = 0.
-        self.market_rent       = 0.
-        self.net_rent          = 0.
-        self.potential_dissipated_rent = 0.
-        self.dissipated_rent   = 0.
-        self.available_rent    = 0.
-        self.rent_captured_by_finance  = 0.
-        self.share_captured_by_finance = 0.
-        self.urban_surplus     = 0.
-
-        # Define what data the model will collect in each time step
+        self.no_decimals = 1
         model_reporters = {
-            "model_name":                  lambda m: m.model_name,
-            "run_id":                      lambda m: m.run_id,
-            # "workers":                   lambda m: m.firm.N,
-            "MPL":                         lambda m: m.firm.MPL,
-            "time_step":                   lambda m: m.schedule.time,
-            # "companies":                 lambda m: m.schedule.get_breed_count(Firm),
-            "city_extent_calc":            lambda m: round(m.city_extent_calc, self.no_decimals),
-            # # "people":                    lambda m: m.schedule.get_breed_count(Person),
-            # # "market_rent":               lambda m: m.market_rent,
-            # # "net_rent":                  lambda m: m.net_rent,
-            # # "potential_dissipated_rent": lambda m: m.potential_dissipated_rent,
-            # # "dissipated_rent":           lambda m: m.dissipated_rent,
-            # # "available_rent":            lambda m: m.available_rent,
-            # # "rent_captured_by_finance":  lambda m: m.rent_captured_by_finance,
-            # # "share_captured_by_finance": lambda m: m.share_captured_by_finance,
-            # # "urban_surplus":             lambda m: m.urban_surplus,
-            # # "removed_agents":            lambda m: m.removed_agents,
+            "model_name":                lambda m: m.model_name,
+            "run_id":                    lambda m: m.run_id,
+            "time_step":                 lambda m: m.schedule.time,
+            "MPL":                       lambda m: round(m.firm.MPL),
+            "city_extent_calc":          lambda m: round(m.city_extent_calc, self.no_decimals),
             "n":                         lambda m: round(m.firm.n, self.no_decimals),
             "y":                         lambda m: round(m.firm.y, self.no_decimals),
             "F_target":                  lambda m: round(m.firm.F_target, self.no_decimals),
@@ -418,71 +395,57 @@ class Fast(Model):
             "k":                         lambda m: round(m.firm.k, self.no_decimals),
             "N":                         lambda m: round(m.firm.N, self.no_decimals),
             "N/F":                       lambda m: round(m.firm.N/m.firm.F, self.no_decimals),
-            "wage_target":               lambda m: m.firm.wage_target,
-            # # # "agglomeration_population":  lambda m: m.firm.agglomeration_population, # TODO delete
-            # # "Y":                         lambda m: m.firm.Y,
-            # "wage_premium":              lambda m: round(m.firm.wage_premium, self.no_decimals),
-            # "p_dot":                     lambda m: round(m.firm.p_dot, self.no_decimals),
-            # # "subsistence_wage":          lambda m: m.firm.subsistence_wage,
-            # # "wage":                      lambda m: m.firm.wage,
-            # # # "worker_agents":           lambda m: m.workforce.get_agent_count(m.workforce.workers),
-            # # "worker_agents":             lambda m: len(m.workforce.workers),
-            # # "newcomer_agents":           lambda m: len(m.workforce.newcomers),
-            # # "retiring_urban_owner":      lambda m: len(m.workforce.retiring_urban_owner),
-            # # "urban_resident_owners":     lambda m: m.urban_resident_owners_count,
-            # # "urban_investor_owners":     lambda m: m.urban_investor_owners_count,
-            # # "urban_other_owners":        lambda m: m.urban_other_owners_count,
-            # # "investor_ownership_share":  lambda m: m.urban_investor_owners_count / (m.urban_resident_owners_count + m.urban_investor_owners_count) if (m.urban_resident_owners_count + m.urban_investor_owners_count) != 0 else 1,
-            # # "workers":        lambda m: len(
-            # #     [a for a in self.schedule.agents_by_breed[Person].values()
-            # #              if a.is_working == 1]
-            # # )
-            #     # "investor_bid":    lambda m: m.step_data["investor_bid"],
-            #     # "warranted_rent":  lambda m: m.step_data["warranted_rent"],
-            #     # "warranted_price": lambda m: m.step_data["warranted_price"],
-            #     # "dist":            lambda m: m.step_data["dist"],
-            #     # # "m":               lambda m: m.step_data["m"],
-            #     # "R_N":             lambda m: m.step_data["R_N"],
-            #     # # "p_dot":           lambda m: m.step_data["p_dot"],
-            #     # "transport_cost":  lambda m: m.step_data["transport_cost"],
-            #     # "maintenance":     lambda m: m.step_data["maintenance"],
-            #     # "newcomer_bid":    lambda m: m.step_data["newcomer_bid"],
+            "wage_target":               lambda m: round(m.firm.wage_target),
         }
+        if self.store_agent_data:
+            # Variables for data collection
+            self.rent_production   = 0.
+            self.rent_amenity      = 0.
+            self.market_rent       = 0.
+            self.net_rent          = 0.
+            self.potential_dissipated_rent = 0.
+            self.dissipated_rent   = 0.
+            self.available_rent    = 0.
+            self.rent_captured_by_finance  = 0.
+            self.share_captured_by_finance = 0.
+            self.urban_surplus     = 0.
 
-        agent_reporters      = {
-            "time_step":             lambda a: a.model.schedule.time,
-            # # "agent_class":       lambda a: type(a),
-            "agent_type":            lambda a: type(a).__name__,
-            "bidder_name":           lambda a: getattr(a, "bidder_name", None)           if isinstance(a, Bid_Storage) else None,
-            "bidder_savings":        lambda a: getattr(a, "bidder_savings", None)        if isinstance(a, Bid_Storage) else None,
-            "distance":              lambda a: getattr(a, "distance_from_center", None)  if isinstance(a, Bid_Storage) else None,
-            "transport_cost":        lambda a: getattr(a, "transport_cost", None)        if isinstance(a, Bid_Storage) else None,
-            "bid":                   lambda a: getattr(a, "bid_value", None)             if isinstance(a, Bid_Storage) else None,
-            "R_N":                   lambda a: getattr(a, "R_N", None)                   if isinstance(a, Bid_Storage) else None,
-            # "Density":               lambda a: getattr(a, "density", None)               if isinstance(a, Bid_Storage) else None,
-            # # "id":                lambda a: a.unique_id,
-            # "x":                 lambda a: a.pos[0],
-            # "y":                 lambda a: a.pos[1],
-            # "is_working":        lambda a: None if not isinstance(a, Person) else 1 if a.unique_id in a.model.workforce.workers else 0,  # TODO does this need to be in model? e.g. a.model.workforce
-            # "is_working_check":  lambda a: None if not isinstance(a, Person) else a.is_working_check,
-            # "working_period":    lambda a: getattr(a, "working_period", None)  if isinstance(a, Person)       else None,
-            # "wage_delta":        lambda a: getattr(a, "wage_delta", None)      if isinstance(a, Firm)         else None,
-            # "p_dot":             lambda a: getattr(a, "p_dot", None)           if isinstance(a, Land)         else None,
-            # "net_rent":          lambda a: getattr(a, "net_rent", None)        if isinstance(a, Land)         else None,
-            # "warranted_rent":    lambda a: getattr(a, "warranted_rent", None)  if isinstance(a, Land)         else None,
-            # "warranted_price":   lambda a: getattr(a, "warranted_price", None) if isinstance(a, Land)         else None,
-            # "realized_price":    lambda a: getattr(a, "realized_price", None)  if isinstance(a, Land)         else None,
-            # "realized_all_steps_price": lambda a: getattr(a, "realized_all_steps_price", None)  if isinstance(a, Land) else None,
-            # "sold_this_step":    lambda a: getattr(a, "sold_this_step", None)  if isinstance(a, Land)         else None,
-            # "ownership_type":    lambda a: getattr(a, "ownership_type", None)  if isinstance(a, Land)         else None,
-            # "distance_from_center": lambda a: getattr(a, "distance_from_center", None) if isinstance(a, Land) else None,
-        }
+            agent_reporters      = {
+                "time_step":             lambda a: a.model.schedule.time,
+                # # "agent_class":       lambda a: type(a),
+                "agent_type":            lambda a: type(a).__name__,
+                "bidder_name":           lambda a: getattr(a, "bidder_name", None)           if isinstance(a, Bid_Storage) else None,
+                "bidder_savings":        lambda a: getattr(a, "bidder_savings", None)        if isinstance(a, Bid_Storage) else None,
+                "distance":              lambda a: getattr(a, "distance_from_center", None)  if isinstance(a, Bid_Storage) else None,
+                "transport_cost":        lambda a: getattr(a, "transport_cost", None)        if isinstance(a, Bid_Storage) else None,
+                "bid":                   lambda a: getattr(a, "bid_value", None)             if isinstance(a, Bid_Storage) else None,
+                "R_N":                   lambda a: getattr(a, "R_N", None)                   if isinstance(a, Bid_Storage) else None,
+                # "Density":               lambda a: getattr(a, "density", None)               if isinstance(a, Bid_Storage) else None,
+                # # "id":                lambda a: a.unique_id,
+                # "x":                 lambda a: a.pos[0],
+                # "y":                 lambda a: a.pos[1],
+                # "is_working":        lambda a: None if not isinstance(a, Person) else 1 if a.unique_id in a.model.workforce.workers else 0,  # TODO does this need to be in model? e.g. a.model.workforce
+                # "is_working_check":  lambda a: None if not isinstance(a, Person) else a.is_working_check,
+                # "working_period":    lambda a: getattr(a, "working_period", None)  if isinstance(a, Person)       else None,
+                # "wage_delta":        lambda a: getattr(a, "wage_delta", None)      if isinstance(a, Firm)         else None,
+                # "p_dot":             lambda a: getattr(a, "p_dot", None)           if isinstance(a, Land)         else None,
+                # "net_rent":          lambda a: getattr(a, "net_rent", None)        if isinstance(a, Land)         else None,
+                # "warranted_rent":    lambda a: getattr(a, "warranted_rent", None)  if isinstance(a, Land)         else None,
+                # "warranted_price":   lambda a: getattr(a, "warranted_price", None) if isinstance(a, Land)         else None,
+                # "realized_price":    lambda a: getattr(a, "realized_price", None)  if isinstance(a, Land)         else None,
+                # "realized_all_steps_price": lambda a: getattr(a, "realized_all_steps_price", None)  if isinstance(a, Land) else None,
+                # "sold_this_step":    lambda a: getattr(a, "sold_this_step", None)  if isinstance(a, Land)         else None,
+                # "ownership_type":    lambda a: getattr(a, "ownership_type", None)  if isinstance(a, Land)         else None,
+                # "distance_from_center": lambda a: getattr(a, "distance_from_center", None) if isinstance(a, Land) else None,
+            }
 
-        
+            
 
-        self.datacollector  = DataCollector(model_reporters = model_reporters,
-                                            agent_reporters = agent_reporters
-                                            )
+            self.datacollector  = DataCollector(model_reporters = model_reporters,
+                                                agent_reporters = agent_reporters
+                                                )
+        else:
+            self.datacollector  = DataCollector(model_reporters = model_reporters)
 
     def record_run_data_to_file(self):
         model_out = self.datacollector.get_model_vars_dataframe()
