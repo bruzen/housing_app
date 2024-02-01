@@ -7,8 +7,9 @@ import subprocess
 
 output_folder = "output_data"
 
-def record_metadata(filepath, run_id=None, num_steps=None, params=None, timestamp=None, batch_parameters=None, variable_parameters=None):
+def record_metadata(model=None, filepath=None, timestamp=None, batch_parameters=None, variable_parameters=None):
     if variable_parameters:
+        # Record metadata about a batch with multiple runs
         metadata = {
             'timestamp':           timestamp, 
             'git_version':         get_git_commit_hash(),
@@ -19,35 +20,21 @@ def record_metadata(filepath, run_id=None, num_steps=None, params=None, timestam
             # 'simulation_parameters': model_parameters
         }
     else:
+        # Record metadata for each individual run
         metadata = {
-            'run_id':                run_id,
-            'git_version':           get_git_commit_hash(),
-            'num_steps':             num_steps, 
-            'simulation_parameters': params
-            # 'model_description':     self.model_description,
+            'name':                model.model_name,
+            'version':             model.model_version,
+            'description':         model.model_description,
+            'run_id':              model.run_id, 
+            'num_steps':           model.num_steps, 
+            'params':              model.params,
         }
-    with open(filepath, 'w') as json_file:
-        json.dump(metadata, json_file, indent=4)
-    return metadata
-
-    """Append metadata for each experiment to a metadata file."""
-
-    # # Check if the file exists
-    # file_exists = os.path.isfile(metadata_file_path)
-
-    # # If the file exists, load the existing metadata; otherwise, create an empty dictionary
-    # if file_exists:
-    #     with open(metadata_file_path, 'r') as file:
-    #         existing_metadata = yaml.safe_load(file)
-    # else:
-    #     existing_metadata = {}
-
-    # # Append the metadata for the current experiment to the existing metadata dictionary
-    # existing_metadata[run_id] = metadata
-
-    # # Write the updated metadata back to the file
-    # with open(metadata_file_path, 'w') as file:
-    #     yaml.safe_dump(existing_metadata, file)
+    if filepath:
+        with open(filepath, 'w') as json_file:
+            json.dump(metadata, json_file, indent=4)
+        return metadata
+    else:
+        print('Filepath needed to record_metadata')
 
 def get_run_id(timestamp): # , model_name=None , model_version=None):
     unique_id = ''.join(random.choices(string.ascii_uppercase + string.digits, k=3))

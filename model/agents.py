@@ -504,6 +504,7 @@ class Firm(Agent):
                  init_F,
                  init_k,
                  init_n,
+                 animal_spirits,
                  ):
         super().__init__(unique_id, model)
         self.pos             = pos
@@ -536,6 +537,7 @@ class Firm(Agent):
         self.dist     = dist
         # agent_count = 50 # TODO comes from agents deciding
         self.r        = r_prime # Firm cost of capital
+        self.animal_spirits = animal_spirits # Or enthusiasm
 
         # Initial values # TODO do we need all these initial values?
         self.y        = 100000

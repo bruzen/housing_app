@@ -1,5 +1,5 @@
 default_parameters = {
-    'run_notes': 'Debugging model.',
+    'run_notes': 'Exploring behavior.',
     'subfolder': None,
     'width':     50, #30,
     'height':    50, #30,
@@ -10,7 +10,11 @@ default_parameters = {
     # 'random_init_age': False,  # Flag for randomizing initial age. If False, all workers begin at age 0
     'random_init_age': True,  # Flag for randomizing initial age. If False, all workers begin at age 0
 
-    # Only used in model fast
+    # DATA STORAGE
+    'store_agent_data': True,
+    'no_decimals':      1,
+
+    # STORAGE VALUES, JUST FOR MODEL FAST
     'distances': None,
     'newcomer_savings': None,
 
@@ -39,6 +43,7 @@ default_parameters = {
     'init_F': 100.0,
     'init_k': 500.0,
     'init_n': 100.0,
+    'animal_spirits': 1.,
 
     # HOUSING AND MORTGAGE MARKET PARAMETERS
     'mortgage_period': 5.0,       # T, in years
