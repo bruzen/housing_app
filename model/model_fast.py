@@ -395,7 +395,7 @@ class Fast(Model):
             "k":                         lambda m: round(m.firm.k, self.no_decimals),
             # "N":                         lambda m: round(m.firm.N, self.no_decimals),
             # "N/F":                       lambda m: round(m.firm.N/m.firm.F, self.no_decimals),
-            "wage_target":               lambda m: round(m.firm.wage_target, self.no_decimals),
+            # "wage_target":               lambda m: round(m.firm.wage_target, self.no_decimals),
             "worker_supply":             lambda m: round(m.firm.worker_supply, self.no_decimals),
             "worker_demand":             lambda m: round(m.firm.worker_demand, self.no_decimals),
             "agglomeration_population":  lambda m: round(m.firm.agglom_pop, self.no_decimals),
