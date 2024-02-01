@@ -551,7 +551,7 @@ class Firm(Agent):
         self.wage         = self.wage_premium + self.subsistence_wage
         self.MPL          = self.beta  * self.y / self.n  # marginal value product of labour known to firms
         self.wage_delta   = 0.0
-        self.old_wage_premium = init_wage_premium_ratio * self.subsistence_wage   ### REVISED should remove inital problems
+        self.old_wage_premium = -1 # init_wage_premium_ratio * self.subsistence_wage   ### REVISED should remove inital problems
 
     def step(self):
         # GET POPULATION AND OUTPUT TODO replace N with agent count
@@ -561,13 +561,15 @@ class Firm(Agent):
 
         # SET TARGET WAGE EQUAL VALUE OF MARGINAL PRODUCT OF LABOUR
         self.MPL = self.beta  * self.y / self.n  # marginal value product of labour known to firms
-        self.wage_target = self.price_of_output * self.MPL / (1 + self.overhead) # 
+        # self.wage_target = self.price_of_output * self.MPL / (1 + self.overhead) # 
+        self.wage_target = self.subsistence_wage + (self.MPL - self.subsistence_wage) / (1 + self.overhead)       #self.wage_target = self.MPL / (1 + self.overhead) # (1+self.overhead) # economic rationality implies intention
         # ADJUST WAGE: 
         self.wage = (1 - self.adjw) * self.wage + self.adjw * self.wage_target # partial adjustment process
         
         # FIND NEW WAGE PREMIUM
         self.old_wage_premium  = self.wage_premium
-        self.wage_premium = self.wage /(1+self.overhead) - self.subsistence_wage # find wage available for transportation
+        # self.wage_premium = self.wage /(1+self.overhead) - self.subsistence_wage # find wage available for transportation
+        self.wage_premium = self.wage - self.subsistence_wage # find wage available for transportation
 
 
         # FIND POPULATION AT NEW WAGE
