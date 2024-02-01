@@ -175,7 +175,8 @@ class City(Model):
                                     dist=self.params['dist'],
                                     init_F=self.params['init_F'],
                                     init_k=self.params['init_k'],
-                                    init_n=self.params['init_n']
+                                    init_n=self.params['init_n'],
+                                    animal_spirits=self.params['animal_spirits'],
                                     )
         self.grid.place_agent(self.firm, self.center)
         self.schedule.add(self.firm)

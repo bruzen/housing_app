@@ -43,6 +43,7 @@ default_parameters = {
     'init_F': 100.0,
     'init_k': 500.0,
     'init_n': 100.0,
+    'animal_spirits': 1.,
 
     # HOUSING AND MORTGAGE MARKET PARAMETERS
     'mortgage_period': 5.0,       # T, in years
