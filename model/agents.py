@@ -541,7 +541,6 @@ class Firm(Agent):
         self.wage_premium = init_wage_premium_ratio * self.subsistence_wage 
         self.wage         = self.wage_premium + self.subsistence_wage
         self.MPL          = self.beta  * self.y / self.n  # marginal value product of labour known to firms
-        self.wage_delta       = 0.0
         self.old_wage_premium = -1 # init_wage_premium_ratio * self.subsistence_wage   ### REVISED should remove inital problems
         self.N_demand         = -1
         self.N_supply         = -1
@@ -579,10 +578,6 @@ class Firm(Agent):
         self.old_wage_premium = self.wage_premium
         # self.wage_premium = self.wage /(1 + self.overhead) - self.subsistence_wage # find wage available for transportation
         self.wage_premium = self.wage - self.subsistence_wage # find wage available for transportation
-
-        # CALCULATE P_DOT
-        # TODO delete wage_delta
-        # self.wage_delta = (self.wage_premium - self.old_wage_premium ) #  -1 ???
 
 
         # TEMP
