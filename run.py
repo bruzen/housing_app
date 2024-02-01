@@ -5,7 +5,7 @@ import model.parameters as params
 import utils.plotting as plotting
 import utils.file_utils as file_utils
 
-num_steps  = 300   
+num_steps  = 150   
 timestamp  = file_utils.generate_timestamp()
 
 parameters = {

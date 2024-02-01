@@ -125,7 +125,9 @@ class Land(Agent):
         # return max(wage_premium - self.transport_cost, 0)
         # Note, this is the locational_rent. It is the warranted level of extraction. It is the economic_rent when its extracted.
         # We set the rural land value to zero to study the urban land market, with the agricultural price, warranted rent would be:
-        return max(wage_premium - self.transport_cost + a * subsistence_wage, 0)
+        warranted_rent = wage_premium - self.transport_cost + a * subsistence_wage
+        print(f' Odly warranted_rent is complex, wage premium {wage_premium}, wr {warranted_rent}')
+        return max(warranted_rent, 0)
         # TODO add amenity + A
         # TODO should it be positive outside the city? How to handle markets outside the city if it is?
         # TODO but outside the city, any concern with transportation cost is only speculative - how to handle
@@ -539,39 +541,60 @@ class Firm(Agent):
         self.wage_premium = init_wage_premium_ratio * self.subsistence_wage 
         self.wage         = self.wage_premium + self.subsistence_wage
         self.MPL          = self.beta  * self.y / self.n  # marginal value product of labour known to firms
-        self.wage_delta   = 0.0
+        self.wage_delta       = 0.0
         self.old_wage_premium = -1 # init_wage_premium_ratio * self.subsistence_wage   ### REVISED should remove inital problems
+        self.N_demand         = -1
+        self.N_supply         = -1
 
     def step(self):
+        self.N_supply = self.N # TODO REPLACE AND RENAME
         # GET POPULATION AND OUTPUT
-        self.y = self.A * self.N**self.gamma *  self.k**self.alpha * self.n**self.beta
+        self.y = self.A * self.N_demand**self.gamma *  self.k**self.alpha * self.n**self.beta
 
         # SET TARGET WAGE EQUAL VALUE OF MARGINAL PRODUCT OF LABOUR
-        self.MPL = self.beta  * self.y / self.n  # marginal value product of labour known to firms
-        # self.n =  self.N / self.F # Use n from last step, distribute workforce across firms
-        self.wage_target = self.price_of_output * self.MPL / (1 + self.overhead)
+        self.MPL      = self.beta  * self.y / self.n  # marginal value product of labour known to firms
+        self.n_target =  self.beta * self.y / ((1 + self.overhead) * (self.wage)) # Use n from last step, distribute workforce across firms
+        self.n        = (1 - self.adjn) * self.n + self.adjn * self.n_target
+
+        # ADJUST NUMBER OF FIRMS
+        # self.F_target = self.F * 1.0 * self.wage_target/self.wage
+        self.F_target = self.F *  1.0 * self.p_dot # TODO add back in some kind of wage adjustment mechanism
+        self.F = (1 - self.adjF) * self.F + self.adjF * self.F_target
+ 
+        # SET DESIRED NUMBER OF WORKERS
+        self.N_demand = self.F * self.n
+
+        # ADJUST CAPITAL STOCK 
+        self.y_target = self.price_of_output * self.A * self.N_supply**self.gamma *  self.k**self.alpha * self.n**self.beta
+        self.k_target = self.alpha * self.y_target/self.r
+        self.k = (1 - self.adjk) * self.k + self.adjk * self.k_target
+    
+        # ADJUST WAGE
+        #self.wage_target = self.price_of_output * self.MPL / (1 + self.overhead)
         # self.wage_target = self.subsistence_wage + (self.MPL - self.subsistence_wage) / (1 + self.overhead) # economic rationality implies intention
-        # ADJUST WAGE: 
-        self.wage = (1 - self.adjw) * self.wage + self.adjw * self.wage_target # partial adjustment process
+        self.wage = self.N_demand / self.N_supply *  self.wage
+        #(1 - self.adjw) * self.wage + self.adjw * self.wage_target # partial adjustment process
         
         # FIND NEW WAGE PREMIUM
         self.old_wage_premium = self.wage_premium
         # self.wage_premium = self.wage /(1 + self.overhead) - self.subsistence_wage # find wage available for transportation
         self.wage_premium = self.wage - self.subsistence_wage # find wage available for transportation
 
-        # ADJUST NUMBER OF FIRMS
-        # self.F_target = self.F * 1.0 * self.wage_target/self.wage
-        self.F_target = self.F * 1.0 * self.p_dot # TODO add back in some kind of wage adjustment mechanism
-        self.F = (1 - self.adjF) * self.F + self.adjF * self.F_target
- 
-        # ADJUST CAPITAL STOCK 
-        self.y_target = self.price_of_output * self.A * self.N**self.gamma *  self.k**self.alpha * self.n**self.beta
-        self.k_target = self.alpha * self.y_target/self.r
-        self.k = (1 - self.adjk) * self.k + self.adjk * self.k_target
-    
         # CALCULATE P_DOT
-        self.wage_delta = (self.wage_premium - self.old_wage_premium ) #  -1 ???
- 
+        # TODO delete wage_delta
+        # self.wage_delta = (self.wage_premium - self.old_wage_premium ) #  -1 ???
+
+
+        # TEMP
+        self.N = self.N_supply
+
+
+
+
+
+
+
+
     def get_N(self):
         # If the city is in the bottom corner center_city is false, and effective population must be multiplied by 4
         # TODO think about whether this multiplier needs to come in elsewhere
