@@ -541,13 +541,13 @@ class Firm(Agent):
         self.wage         = self.wage_premium + self.subsistence_wage
         self.MPL          = self.beta  * self.y / self.n  # marginal value product of labour known to firms
         self.old_wage_premium = -1 # init_wage_premium_ratio * self.subsistence_wage   ### REVISED should remove inital problems
-        self.worker_demand         = -1
-        self.worker_supply         = -1
-        self.agglom_pop            = self.F * self.n
+        self.worker_demand    = self.F * self.n
+        self.worker_supply    = self.F * self.n
+        self.agglom_pop       = self.F * self.n
 
     def step(self):
         # GET POPULATION AND OUTPUT
-        self.y = self.A * self.worker_demand**self.gamma *  self.k**self.alpha * self.n**self.beta
+        self.y = self.A * self.agglom_pop**self.gamma *  self.k**self.alpha * self.n**self.beta
 
         # SET TARGET WAGE EQUAL VALUE OF MARGINAL PRODUCT OF LABOUR
         self.MPL      = self.beta  * self.y / self.n  # marginal value product of labour known to firms
@@ -563,14 +563,14 @@ class Firm(Agent):
         self.worker_demand = self.F * self.n
 
         # ADJUST CAPITAL STOCK 
-        self.y_target = self.price_of_output * self.A * self.worker_supply**self.gamma *  self.k**self.alpha * self.n**self.beta
+        self.y_target = self.price_of_output * self.A * self.agglom_pop**self.gamma *  self.k**self.alpha * self.n**self.beta
         self.k_target = self.alpha * self.y_target/self.r
         self.k = (1 - self.adjk) * self.k + self.adjk * self.k_target
     
         # ADJUST WAGE
         #self.wage_target = self.price_of_output * self.MPL / (1 + self.overhead)
         # self.wage_target = self.subsistence_wage + (self.MPL - self.subsistence_wage) / (1 + self.overhead) # economic rationality implies intention
-        self.wage = self.worker_demand / self.worker_supply *  self.wage
+        self.wage = self.worker_demand / self.worker_supply * self.wage # TODO check this line
         #(1 - self.adjw) * self.wage + self.adjw * self.wage_target # partial adjustment process
         
         # FIND NEW WAGE PREMIUM
