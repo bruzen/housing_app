@@ -12,7 +12,7 @@ default_parameters = {
 
     # DATA STORAGE
     'store_agent_data': True,
-    'no_decimals':      5,
+    'no_decimals':      1,
 
     # STORAGE VALUES, JUST FOR MODEL FAST
     'distances': None,
