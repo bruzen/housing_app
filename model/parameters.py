@@ -16,20 +16,20 @@ default_parameters = {
 
     # LABOUR MARKET AND FIRM PARAMETERS
     'subsistence_wage': 40000., # psi
-    'init_city_extent': 10.,    # CUT OR CHANGE?
+    'init_city_extent': 1.,    # CUT OR CHANGE?
     'seed_population': 400,
     'init_wage_premium_ratio': 0.2, # 1.2, ###
 
     # PARAMETERS MOST LIKELY TO AFFECT SCALE
-    'c': 300.0,                            ###
-    'price_of_output': 10,                 ######
-    'density': 600,                        #####
-    'A': 3000,                             ### 
+    'c': 300.0,                            ### transportation costs
+    'price_of_output': 5,                 ######
+    'density': 5,                        #####
+    'A': 1800,                             ### 
     'alpha': 0.18,
     'beta':  0.75,
     'gamma': 0.12, ### reduced from .14
-    'overhead': 1.5,
-    'mult': 1.2,
+    'overhead': .5,
+    'mult': 1.0,
     'adjN': 0.15,
     'adjk': 0.10,
     'adjn': 0.15,
