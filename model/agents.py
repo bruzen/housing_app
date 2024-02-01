@@ -509,15 +509,6 @@ class Firm(Agent):
         super().__init__(unique_id, model)
         self.pos             = pos
 
-        # Old initialization calculations
-        # # Calculate scale factor A for a typical urban firm
-        # Y_R      = n_R * subsistence_wage / beta_F
-        # Y_U      = self.n * self.wage / beta_F
-        # k_R      = alpha_F * Y_R / self.r
-        # self.k   = alpha_F * Y_U / self.r
-        # self.A_F = 3500 # Y_R/(k_R**alpha_F * n_R * self.subsistence_wage**beta_F)
-
-        # TEMP New parameter values
         self.subsistence_wage = subsistence_wage # subsistence_wage
         self.alpha    = alpha
         self.beta     = beta
@@ -528,14 +519,12 @@ class Firm(Agent):
         self.A        = A
         self.overhead = overhead    # labour overhead costs for firm
         self.mult     = mult
-        # self.c        = c
         self.adjN     = adjN
         self.adjk     = adjk
         self.adjn     = adjn
         self.adjF     = adjF
         self.adjw     = adjw
         self.dist     = dist
-        # agent_count = 50 # TODO comes from agents deciding
         self.r        = r_prime # Firm cost of capital
         self.animal_spirits = animal_spirits # Or enthusiasm
 
@@ -546,8 +535,6 @@ class Firm(Agent):
         self.k        = init_k #1.360878e+09 #100
         self.n        = init_n
         self.F_target = init_F
-        #self.k_target = 10000      
-        #self.y_target = 10000
         self.N = self.F * self.n
         self.wage_premium = init_wage_premium_ratio * self.subsistence_wage 
         self.wage         = self.wage_premium + self.subsistence_wage
@@ -556,35 +543,25 @@ class Firm(Agent):
         self.old_wage_premium = -1 # init_wage_premium_ratio * self.subsistence_wage   ### REVISED should remove inital problems
 
     def step(self):
-        # GET POPULATION AND OUTPUT TODO replace N with agent count
-        # self.N = self.get_N()
+        # GET POPULATION AND OUTPUT
         self.y = self.A * self.N**self.gamma *  self.k**self.alpha * self.n**self.beta
 
         # SET TARGET WAGE EQUAL VALUE OF MARGINAL PRODUCT OF LABOUR
         self.MPL = self.beta  * self.y / self.n  # marginal value product of labour known to firms
         # self.n =  self.N / self.F # Use n from last step, distribute workforce across firms
-
         self.wage_target = self.price_of_output * self.MPL / (1 + self.overhead)
-        # self.wage_target = self.subsistence_wage + (self.MPL - self.subsistence_wage) / (1 + self.overhead)       #self.wage_target = self.MPL / (1 + self.overhead) # (1+self.overhead) # economic rationality implies intention
+        # self.wage_target = self.subsistence_wage + (self.MPL - self.subsistence_wage) / (1 + self.overhead) # economic rationality implies intention
         # ADJUST WAGE: 
         self.wage = (1 - self.adjw) * self.wage + self.adjw * self.wage_target # partial adjustment process
         
         # FIND NEW WAGE PREMIUM
         self.old_wage_premium = self.wage_premium
-        # self.wage_premium = self.wage /(1+self.overhead) - self.subsistence_wage # find wage available for transportation
+        # self.wage_premium = self.wage /(1 + self.overhead) - self.subsistence_wage # find wage available for transportation
         self.wage_premium = self.wage - self.subsistence_wage # find wage available for transportation
 
-        # TODO end firm step - get new poplulation and n, then do a new step with the population
-
-        # FIND POPULATION AT NEW WAGE
-        #self.dist = self.wage_premium / self.c  # find calculated extent of city at wage
-        #self.N = self.dist * self.model.height * self.density / self.mult # calculate total firm population from city size # TODO make this expected pop
-        #self.n =  self.N / self.F # distribute workforce across firms
-
         # ADJUST NUMBER OF FIRMS
-        # TODO make a parameter animal_spirits or enthusiasim = 1-10
-        # self.F_target = self.F * 1.0 * self.wage_target/self.wage  # this is completely arbitrary but harmless Use p_dot - 
-        self.F_target = self.F * 1.0 * self.p_dot # this is completely arbitrary but harmless Use p_dot - 
+        # self.F_target = self.F * 1.0 * self.wage_target/self.wage
+        self.F_target = self.F * 1.0 * self.p_dot # TODO add back in some kind of wage adjustment mechanism
         self.F = (1 - self.adjF) * self.F + self.adjF * self.F_target
  
         # ADJUST CAPITAL STOCK 
@@ -594,60 +571,7 @@ class Firm(Agent):
     
         # CALCULATE P_DOT
         self.wage_delta = (self.wage_premium - self.old_wage_premium ) #  -1 ???
-        #self.F_target = self.F * self.n_target/self.n  #this is completely argbitrary but harmless
-        # self.F_target = self.F*(self.n_target/self.n)**.5 # TODO name the .5
-        ####self.F_target = (1-self.adjF)*self.F + self.adjF*self.F*(self.n_target/self.n) 
-        #self.N_target = self.F_target * self.n_target
-        #self.N = (1 - self.adjN) * self.N + self.adjN * self.N_target
-        #####self.N = self.N*1.02
-        #self.F = (1 - self.adjF) * self.F + self.adjF * self.F_target
-        #self.k = (1 - self.adjk) * self.k + self.adjk * self.k_target
-        # n = N/F 
-        #self.wage_premium = self.c * math.sqrt(self.mult * self.N / (2 * self.density)) # TODO check role of multiplier
-        #self.wage = self.wage_premium + self.subsistence_wage
-
-        # # TODO Old firm implementation. Cut.
-        # # Calculate wage, capital, and firm count given number of urban workers
-        # self.n = self.N/self.F
-        # self.y = self.output(self.N, self.k, self.n)
-
-        # self.n_target = self.beta_F * self.y / self.wage
-        # self.y_target = self.output(self.N, self.k, self.n_target)
-        # self.k_target = self.alpha_F * self.y_target / self.r
-
-        # # N_target_exist = n_target/self.n * self.N
-        # adj_f = self.firm_adjustment_parameter # TODO repeats
-        # self.F_target = self.n_target/self.n * self.F
-        # self.F_next = (1 - adj_f) * self.F + adj_f * self.F_target
-        # self.N_target_total = self.F_next * self.n_target
-        # self.F_next_total = self.N_target_total / self.n_target
-
-        # # adj_l = 1.25 # TODO self.labor_adjustment_parameter
-        # # N_target_total = adj_l * n_target/self.n * self.N
-        # # N_target_new = n_target * self.Z * (MPL - self.wage)/self.wage * self.F # TODO - CHECK IS THIS F-NEXT?
-
-        # c = self.model.transport_cost_per_dist
-        # self.wage_premium_target = c * math.sqrt(self.N_target_total/(2*self.density))        
-
-        # k_next = self.k_target # TODO fix
-
-        # adj_w = self.wage_adjustment_parameter
-        # # self.wage_premium = self.wage_premium_target # TODO add back in wage adjusment process
-        # # self.wage_premium = (1-adj_w) * self.wage_premium + adj_w * self.wage_premium_target
-        # if self.model.time_step < 3:
-        #     self.wage_premium = (1-adj_w)*self.wage_premium + adj_w * self.wage_premium_target
-        # else:
-        #     self.wage_premium += 100
-        # self.k = k_next
-        # self.F = self.F_next_total # OR use F_total
-
-    # def output(self, N, k, n):
-    #     A_F     = self.A_F
-    #     alpha_F = self.alpha_F
-    #     beta_F  = self.beta_F
-    #     gamma   = self.model.gamma
-    #     return A_F * N**gamma * k**alpha_F * n**beta_F
-
+ 
     def get_N(self):
         # If the city is in the bottom corner center_city is false, and effective population must be multiplied by 4
         # TODO think about whether this multiplier needs to come in elsewhere
