@@ -556,13 +556,13 @@ class Firm(Agent):
     def step(self):
         # GET POPULATION AND OUTPUT TODO replace N with agent count
         # self.N = self.get_N()
-        self.n =  self.N / self.F # distribute workforce across firms
+        # self.n =  self.N / self.F # Use n from last step, distribute workforce across firms
         self.y = self.A * self.N**self.gamma *  self.k**self.alpha * self.n**self.beta
 
         # SET TARGET WAGE EQUAL VALUE OF MARGINAL PRODUCT OF LABOUR
         self.MPL = self.beta  * self.y / self.n  # marginal value product of labour known to firms
-        # self.wage_target = self.price_of_output * self.MPL / (1 + self.overhead) # 
-        self.wage_target = self.subsistence_wage + (self.MPL - self.subsistence_wage) / (1 + self.overhead)       #self.wage_target = self.MPL / (1 + self.overhead) # (1+self.overhead) # economic rationality implies intention
+        self.wage_target = self.MPL / (1 + self.overhead) # self.price_of_output * self.MPL / (1 + self.overhead)
+        # self.wage_target = self.subsistence_wage + (self.MPL - self.subsistence_wage) / (1 + self.overhead)       #self.wage_target = self.MPL / (1 + self.overhead) # (1+self.overhead) # economic rationality implies intention
         # ADJUST WAGE: 
         self.wage = (1 - self.adjw) * self.wage + self.adjw * self.wage_target # partial adjustment process
         
@@ -654,13 +654,13 @@ class Firm(Agent):
         if N == 0:
             N = 1
         # TODO make sure all relevant populations are tracked - n, N, N adjusted x 4/not, agent count, N
-        agglomeration_population = self.mult * N + self.seed_population
+        agglomeration_population = self.mult * (N + self.seed_population)
         return agglomeration_population
 
     def get_N_from_city_extent(self, city_extent):
         # agent_count = math.pi * (city_extent ** 2) #  Euclidian radius of the circular city
         agent_count = 2 * (city_extent ** 2)         #  Block metric radius of the circular city
-        agglomeration_population = self.mult * self.density * agent_count + self.seed_population
+        agglomeration_population = self.mult * (self.density * agent_count + self.seed_population)
         return agglomeration_population
 
 class Bank(Agent):
