@@ -10,7 +10,11 @@ default_parameters = {
     # 'random_init_age': False,  # Flag for randomizing initial age. If False, all workers begin at age 0
     'random_init_age': True,  # Flag for randomizing initial age. If False, all workers begin at age 0
 
-    # Only used in model fast
+    # DATA STORAGE
+    'store_agent_data': True,
+    'no_decimals':      5,
+
+    # STORAGE VALUES, JUST FOR MODEL FAST
     'distances': None,
     'newcomer_savings': None,
 

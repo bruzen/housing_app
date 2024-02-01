@@ -58,9 +58,6 @@ class City(Model):
         self.num_steps = num_steps
         self.time_step = 0
 
-        # TODO make a parameter
-        self.store_agent_data = False
-
         # Interventions
         if 'intervention' in self.params and self.params['intervention'] is True:
             self.intervention = True
@@ -349,8 +346,9 @@ class City(Model):
         self.model_filepath    = os.path.join(self.data_folder, f"data-{self.run_id}-model.csv")
 
     def setup_mesa_data_collection(self):
-        self.no_decimals = 1
-        model_reporters = {
+        self.store_agent_data = self.params['store_agent_data']
+        self.no_decimals      = self.params['no_decimals']
+        model_reporters       = {
             "model_name":                lambda m: m.model_name,
             "run_id":                    lambda m: m.run_id,
             "time_step":                 lambda m: m.schedule.time,
