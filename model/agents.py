@@ -556,11 +556,12 @@ class Firm(Agent):
     def step(self):
         # GET POPULATION AND OUTPUT TODO replace N with agent count
         # self.N = self.get_N()
-        # self.n =  self.N / self.F # Use n from last step, distribute workforce across firms
         self.y = self.A * self.N**self.gamma *  self.k**self.alpha * self.n**self.beta
 
         # SET TARGET WAGE EQUAL VALUE OF MARGINAL PRODUCT OF LABOUR
         self.MPL = self.beta  * self.y / self.n  # marginal value product of labour known to firms
+        # self.n =  self.N / self.F # Use n from last step, distribute workforce across firms
+
         self.wage_target = self.price_of_output * self.MPL / (1 + self.overhead)
         # self.wage_target = self.subsistence_wage + (self.MPL - self.subsistence_wage) / (1 + self.overhead)       #self.wage_target = self.MPL / (1 + self.overhead) # (1+self.overhead) # economic rationality implies intention
         # ADJUST WAGE: 
@@ -580,7 +581,8 @@ class Firm(Agent):
 
         # ADJUST NUMBER OF FIRMS
         # TODO make a parameter animal_spirits or enthusiasim = 1-10
-        self.F_target = self.F * 1.0 * self.wage_target/self.wage  # this is completely arbitrary but harmless
+        # self.F_target = self.F * 1.0 * self.wage_target/self.wage  # this is completely arbitrary but harmless Use p_dot - 
+        self.F_target = self.F * 1.0 * self.p_dot # this is completely arbitrary but harmless Use p_dot - 
         self.F = (1 - self.adjF) * self.F + self.adjF * self.F_target
  
         # ADJUST CAPITAL STOCK 
