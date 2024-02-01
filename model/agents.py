@@ -561,16 +561,17 @@ class Firm(Agent):
 
         # SET TARGET WAGE EQUAL VALUE OF MARGINAL PRODUCT OF LABOUR
         self.MPL = self.beta  * self.y / self.n  # marginal value product of labour known to firms
-        self.wage_target = self.MPL / (1 + self.overhead) # self.price_of_output * self.MPL / (1 + self.overhead)
+        self.wage_target = self.price_of_output * self.MPL / (1 + self.overhead)
         # self.wage_target = self.subsistence_wage + (self.MPL - self.subsistence_wage) / (1 + self.overhead)       #self.wage_target = self.MPL / (1 + self.overhead) # (1+self.overhead) # economic rationality implies intention
         # ADJUST WAGE: 
         self.wage = (1 - self.adjw) * self.wage + self.adjw * self.wage_target # partial adjustment process
         
         # FIND NEW WAGE PREMIUM
-        self.old_wage_premium  = self.wage_premium
+        self.old_wage_premium = self.wage_premium
         # self.wage_premium = self.wage /(1+self.overhead) - self.subsistence_wage # find wage available for transportation
         self.wage_premium = self.wage - self.subsistence_wage # find wage available for transportation
 
+        # TODO end firm step - get new poplulation and n, then do a new step with the population
 
         # FIND POPULATION AT NEW WAGE
         #self.dist = self.wage_premium / self.c  # find calculated extent of city at wage
@@ -578,7 +579,8 @@ class Firm(Agent):
         #self.n =  self.N / self.F # distribute workforce across firms
 
         # ADJUST NUMBER OF FIRMS
-        self.F_target = self.F * self.wage_target/self.wage  # this is completely arbitrary but harmless
+        # TODO make a parameter animal_spirits or enthusiasim = 1-10
+        self.F_target = self.F * 1.0 * self.wage_target/self.wage  # this is completely arbitrary but harmless
         self.F = (1 - self.adjF) * self.F + self.adjF * self.F_target
  
         # ADJUST CAPITAL STOCK 
