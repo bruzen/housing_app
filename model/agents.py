@@ -538,16 +538,15 @@ class Firm(Agent):
         self.wage_premium = init_wage_premium_ratio * self.subsistence_wage 
         self.wage         = self.wage_premium + self.subsistence_wage
         self.MPL          = self.beta  * self.y / self.n  # marginal value product of labour known to firms
-        self.wage_delta   = 0.0
         self.old_wage_premium = -1 # init_wage_premium_ratio * self.subsistence_wage   ### REVISED should remove inital problems
         self.worker_demand    = self.F * self.n
         self.worker_supply    = self.F * self.n
         self.agglom_pop       = self.F * self.n
         
-            # TODO get rid of these variables
+        # TODO if we are using p_dot here, we may need a get_p_dot calculation
+        # TODO get rid of these variables
         self.N = 1
         self.wage_target = 1
-        #self.wage_delta
 
     def step(self):
         # GET POPULATION AND OUTPUT
