@@ -243,10 +243,9 @@ class City(Model):
 
         self.logger.info(f'\n \n \n Step {self.schedule.steps}. \n')
 
-        # Firms update wages
-        self.firm.worker_supply = self.firm.get_worker_supply()        
+        # Firms update wages based on how many people choose to work in the city
+        self.firm.worker_supply = self.firm.get_worker_supply()
         self.firm.agglom_pop    = self.firm.get_agglomeration_population(self.firm.worker_supply)
-    
         self.schedule.step_breed(Firm)
 
         # Land records locational rents and calculates price forecast

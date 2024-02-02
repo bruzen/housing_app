@@ -464,24 +464,6 @@ class Firm(Agent):
     #     """total_no_workers"""
     #     total_no_workers = self.model.workforce.get_agent_count(self.model.workforce.workers)
     #     return total_no_workers * self.density + self.seed_population
-   
-    def get_p_dot(self):
-        try:
-            p_dot = ((self.model.firm.wage_premium / self.model.firm.old_wage_premium) + 1)**self.model.mortgage_period - 1
-
-            # # Handle the case where the result is negative
-            # if p_dot < 0:
-            #     p_dot = 0.
-
-        except ZeroDivisionError:
-            # Handle division by zero
-            p_dot = None
-            logging.error(f"ZeroDivisionError at time_step {self.model.schedule.time} for Land ID {self.unique_id}, old_wage_premium {self.model.firm.old_wage_premium}")
-        except Exception as e:
-            # Handle other exceptions
-            self.model.logger.error(f"An error occurred: {str(e)}")
-            p_dot = None
-        return p_dot
 
     def __init__(self, unique_id, model, pos, 
                  subsistence_wage,
@@ -537,12 +519,17 @@ class Firm(Agent):
         self.F_target = init_F
         self.wage_premium = init_wage_premium_ratio * self.subsistence_wage 
         self.wage         = self.wage_premium + self.subsistence_wage
-        # self.MPL          = self.beta  * self.y / self.n  # marginal value product of labour known to firms
+        self.MPL          = self.beta  * self.y / self.n  # marginal value product of labour known to firms
         self.old_wage_premium = -1 # init_wage_premium_ratio * self.subsistence_wage   ### REVISED should remove inital problems
         self.worker_demand    = self.F * self.n
         self.worker_supply    = self.F * self.n
         self.agglom_pop       = self.F * self.n
-        self.p_dot            = self.get_p_dot()
+        self.p_dot            = 0 # TODO fix init p_dot
+        
+        # TODO if we are using p_dot here, we may need a get_p_dot calculation
+        # TODO get rid of these variables
+        self.N = 1
+        self.wage_target = 1
 
     def step(self):
         # GET POPULATION AND OUTPUT
@@ -552,32 +539,31 @@ class Firm(Agent):
         # SET TARGET VALUES USING VALUES FROM LAST TIME STEP
         self.n_target = (self.price_of_output * self.y - self.r * self.k) / self.wage # self.beta * self.y / ((1 + self.overhead) * (self.wage)) # Use n from last step, distribute workforce across firms
         self.k_target = self.alpha * self.y/self.r # TODO could need to use y_target here
-        self.F_target = self.n_target * self.F /self.n *  1.5 # 1.0 * self.p_dot # TODO add back in some kind of wage adjustment mechanism
+        self.F_target = self.n_target * self.F /self.n *  1.5 * self.p_dot # TODO add back in some kind of wage adjustment mechanism
+        # self.F_target = self.F * 1.0 * self.wage_target/self.wage
         # self.y_target = self.price_of_output * self.A * self.agglom_pop**self.gamma *  self.k**self.alpha * self.n**self.beta
 
         # INCREMENT STATE VARIABLES TOWARDS TARGET
         self.n        = (1 - self.adjn) * self.n + self.adjn * self.n_target
         self.k        = (1 - self.adjk) * self.k + self.adjk * self.k_target
         self.F        = (1 - self.adjF) * self.F + self.adjF * self.F_target
-        # self.F_target = self.F * 1.0 * self.wage_target/self.wage
- 
+
         # SET DEMAND FOR LABOUR
         self.worker_demand    = self.F * self.n
 
-        # ADJUST WAGE BASED ON LABOUR SUPPLY AND DEMAND
-        self.wage = self.worker_demand / self.worker_supply * self.wage # TODO check this line
-        
+        # ADJUST WAGE BASED ON LABOUR SUPPLY AND DEMAND 
+        # TODO the new calculation is commented out because it causes an error
+        # self.wage = self.worker_demand / self.worker_supply * self.wage # TODO check this line
+        # TODO fix this. We are using the old calculation.
+        self.wage_target = self.price_of_output * self.MPL / (1 + self.overhead)
+        self.wage = (1 - self.adjw) * self.wage + self.adjw * self.wage_target # partial adjustment process
+        # # self.wage_target = self.subsistence_wage + (self.MPL - self.subsistence_wage) / (1 + self.overhead) # economic rationality implies intention
+        # self.wage_premium = self.wage /(1 + self.overhead) - self.subsistence_wage # find wage available for transportation
+
         # FIND NEW WAGE PREMIUM
         self.old_wage_premium = self.wage_premium
         self.wage_premium     = self.wage - self.subsistence_wage # find wage available for transportation
         self.p_dot            = self.get_p_dot()
-
-
-        # self.wage_target = self.price_of_output * self.MPL / (1 + self.overhead)
-        # self.wage_target = self.subsistence_wage + (self.MPL - self.subsistence_wage) / (1 + self.overhead) # economic rationality implies intention
-        # (1 - self.adjw) * self.wage + self.adjw * self.wage_target # partial adjustment process
-        # self.wage_premium = self.wage /(1 + self.overhead) - self.subsistence_wage # find wage available for transportation
-
 
     def get_worker_supply(self, city_extent = None):
         if city_extent:
@@ -598,6 +584,24 @@ class Firm(Agent):
 
     def get_agglomeration_population(self, worker_supply):
         return self.mult * (worker_supply + self.seed_population)
+
+    def get_p_dot(self):
+        try:
+            p_dot = ((self.model.firm.wage_premium / self.model.firm.old_wage_premium)**self.model.mortgage_period - 1)/self.r
+
+            # # Handle the case where the result is negative
+            # if p_dot < 0:
+            #     p_dot = 0.
+
+        except ZeroDivisionError:
+            # Handle division by zero
+            p_dot = None
+            logging.error(f"ZeroDivisionError at time_step {self.model.schedule.time} for Land ID {self.unique_id}, old_wage_premium {self.model.firm.old_wage_premium}")
+        except Exception as e:
+            # Handle other exceptions
+            self.model.logger.error(f"An error occurred: {str(e)}")
+            p_dot = None
+        return p_dot
 
 class Bank(Agent):
     def __init__(self, unique_id, model, pos):
