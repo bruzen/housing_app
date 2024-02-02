@@ -464,25 +464,6 @@ class Firm(Agent):
     #     total_no_workers = self.model.workforce.get_agent_count(self.model.workforce.workers)
     #     return total_no_workers * self.density + self.seed_population
 
-    @property
-    def p_dot(self):
-        try:
-            p_dot = ((self.model.firm.wage_premium / self.model.firm.old_wage_premium)**self.model.mortgage_period - 1)/self.r
-
-            # # Handle the case where the result is negative
-            # if p_dot < 0:
-            #     p_dot = 0.
-
-        except ZeroDivisionError:
-            # Handle division by zero
-            p_dot = None
-            logging.error(f"ZeroDivisionError at time_step {self.model.schedule.time} for Land ID {self.unique_id}, old_wage_premium {self.model.firm.old_wage_premium}")
-        except Exception as e:
-            # Handle other exceptions
-            self.model.logger.error(f"An error occurred: {str(e)}")
-            p_dot = None
-        return p_dot
-
     def __init__(self, unique_id, model, pos, 
                  subsistence_wage,
                  init_wage_premium_ratio,
@@ -542,6 +523,7 @@ class Firm(Agent):
         self.worker_demand    = self.F * self.n
         self.worker_supply    = self.F * self.n
         self.agglom_pop       = self.F * self.n
+        self.p_dot            = 0 # TODO fix init p_dot
         
         # TODO if we are using p_dot here, we may need a get_p_dot calculation
         # TODO get rid of these variables
@@ -579,7 +561,8 @@ class Firm(Agent):
 
         # FIND NEW WAGE PREMIUM
         self.old_wage_premium = self.wage_premium
-        self.wage_premium = self.wage - self.subsistence_wage # find wage available for transportation
+        self.wage_premium     = self.wage - self.subsistence_wage # find wage available for transportation
+        self.p_dot            = self.get_p_dot()
 
     def get_worker_supply(self, city_extent = None):
         if city_extent:
@@ -600,6 +583,24 @@ class Firm(Agent):
 
     def get_agglomeration_population(self, worker_supply):
         return self.mult * (worker_supply + self.seed_population)
+
+    def get_p_dot(self):
+        try:
+            p_dot = ((self.model.firm.wage_premium / self.model.firm.old_wage_premium)**self.model.mortgage_period - 1)/self.r
+
+            # # Handle the case where the result is negative
+            # if p_dot < 0:
+            #     p_dot = 0.
+
+        except ZeroDivisionError:
+            # Handle division by zero
+            p_dot = None
+            logging.error(f"ZeroDivisionError at time_step {self.model.schedule.time} for Land ID {self.unique_id}, old_wage_premium {self.model.firm.old_wage_premium}")
+        except Exception as e:
+            # Handle other exceptions
+            self.model.logger.error(f"An error occurred: {str(e)}")
+            p_dot = None
+        return p_dot
 
 class Bank(Agent):
     def __init__(self, unique_id, model, pos):
