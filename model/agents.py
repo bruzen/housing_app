@@ -544,7 +544,10 @@ class Firm(Agent):
         self.worker_supply    = self.F * self.n
         self.agglom_pop       = self.F * self.n
         
+            # TODO get rid of these variables
         self.N = 1
+        self.wage_target = 1
+        #self.wage_delta
 
     def step(self):
         # GET POPULATION AND OUTPUT
@@ -552,30 +555,33 @@ class Firm(Agent):
         self.MPL = self.beta  * self.y / self.n  # marginal value product of labour known to firms
 
         # SET TARGET VALUES USING VALUES FROM LAST TIME STEP
-        self.MPL = self.beta  * self.y / self.n  # marginal value product of labour known to firms
+        self.n_target = (self.price_of_output * self.y - self.r * self.k) / self.wage # self.beta * self.y / ((1 + self.overhead) * (self.wage)) # Use n from last step, distribute workforce across firms
+        self.k_target = self.alpha * self.y/self.r # TODO could need to use y_target here
+        self.F_target = self.n_target * self.F /self.n *  1.5 * self.p_dot # TODO add back in some kind of wage adjustment mechanism
+        # self.F_target = self.F * 1.0 * self.wage_target/self.wage
+        # self.y_target = self.price_of_output * self.A * self.agglom_pop**self.gamma *  self.k**self.alpha * self.n**self.beta
+
+        # INCREMENT STATE VARIABLES TOWARDS TARGET
+        self.n        = (1 - self.adjn) * self.n + self.adjn * self.n_target
+        self.k        = (1 - self.adjk) * self.k + self.adjk * self.k_target
+        self.F        = (1 - self.adjF) * self.F + self.adjF * self.F_target
+
+        # SET DEMAND FOR LABOUR
+        self.worker_demand    = self.F * self.n
+
+        # ADJUST WAGE BASED ON LABOUR SUPPLY AND DEMAND 
+        # TODO the new calculation is commented out because it causes an error
+        # self.wage = self.worker_demand / self.worker_supply * self.wage # TODO check this line
+        # TODO fix this. We are using the old calculation.
         self.wage_target = self.price_of_output * self.MPL / (1 + self.overhead)
-        # self.wage_target = self.subsistence_wage + (self.MPL - self.subsistence_wage) / (1 + self.overhead) # economic rationality implies intention
-        # ADJUST WAGE: 
         self.wage = (1 - self.adjw) * self.wage + self.adjw * self.wage_target # partial adjustment process
-        
+        # # self.wage_target = self.subsistence_wage + (self.MPL - self.subsistence_wage) / (1 + self.overhead) # economic rationality implies intention
+        # self.wage_premium = self.wage /(1 + self.overhead) - self.subsistence_wage # find wage available for transportation
+
         # FIND NEW WAGE PREMIUM
         self.old_wage_premium = self.wage_premium
-        # self.wage_premium = self.wage /(1 + self.overhead) - self.subsistence_wage # find wage available for transportation
         self.wage_premium = self.wage - self.subsistence_wage # find wage available for transportation
 
-        # ADJUST NUMBER OF FIRMS
-        # self.F_target = self.F * 1.0 * self.wage_target/self.wage
-        self.F_target = self.F * 1.0 * self.p_dot # TODO add back in some kind of wage adjustment mechanism
-        self.F = (1 - self.adjF) * self.F + self.adjF * self.F_target
- 
-        # ADJUST CAPITAL STOCK 
-        self.y_target = self.price_of_output * self.A * self.agglom_pop**self.gamma *  self.k**self.alpha * self.n**self.beta
-        self.k_target = self.alpha * self.y_target/self.r
-        self.k = (1 - self.adjk) * self.k + self.adjk * self.k_target
-    
-        # CALCULATE P_DOT
-        self.wage_delta = (self.wage_premium - self.old_wage_premium ) #  -1 ???
- 
     def get_worker_supply(self, city_extent = None):
         if city_extent:
             # agent_count = math.pi * (city_extent ** 2)  #  Euclidian radius of the circular city
