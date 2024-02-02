@@ -243,8 +243,9 @@ class City(Model):
 
         self.logger.info(f'\n \n \n Step {self.schedule.steps}. \n')
 
-        # Firms update wages
-        self.firm.N = self.firm.get_N()  # self.N = self.get_N()
+        # Firms update wages based on how many people choose to work in the city
+        self.firm.worker_supply = self.firm.get_worker_supply()
+        self.firm.agglom_pop    = self.firm.get_agglomeration_population(self.firm.worker_supply)
         self.schedule.step_breed(Firm)
 
         # Land records locational rents and calculates price forecast
@@ -350,16 +351,19 @@ class City(Model):
             "model_name":                lambda m: m.model_name,
             "run_id":                    lambda m: m.run_id,
             "time_step":                 lambda m: m.schedule.time,
-            "MPL":                       lambda m: round(m.firm.MPL),
+            "MPL":                       lambda m: round(m.firm.MPL, self.no_decimals),
             "city_extent_calc":          lambda m: round(m.city_extent_calc, self.no_decimals),
             "n":                         lambda m: round(m.firm.n, self.no_decimals),
             "y":                         lambda m: round(m.firm.y, self.no_decimals),
             "F_target":                  lambda m: round(m.firm.F_target, self.no_decimals),
             "F":                         lambda m: round(m.firm.F, self.no_decimals),
             "k":                         lambda m: round(m.firm.k, self.no_decimals),
-            "N":                         lambda m: round(m.firm.N, self.no_decimals),
-            "N/F":                       lambda m: round(m.firm.N/m.firm.F, self.no_decimals),
-            "wage_target":               lambda m: round(m.firm.wage_target),
+            # "N":                       lambda m: round(m.firm.N, self.no_decimals),
+            # "N/F":                     lambda m: round(m.firm.N/m.firm.F, self.no_decimals),
+            "wage_target":               lambda m: round(m.firm.wage_target, self.no_decimals),
+            "worker_supply":             lambda m: round(m.firm.worker_supply, self.no_decimals),
+            "worker_demand":             lambda m: round(m.firm.worker_demand, self.no_decimals),
+            "agglomeration_population":  lambda m: round(m.firm.agglom_pop, self.no_decimals),
         }
         # # Define what data the model will collect in each time step
         # model_reporters = {

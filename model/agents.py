@@ -535,20 +535,23 @@ class Firm(Agent):
         self.k        = init_k #1.360878e+09 #100
         self.n        = init_n
         self.F_target = init_F
-        self.N = self.F * self.n
         self.wage_premium = init_wage_premium_ratio * self.subsistence_wage 
         self.wage         = self.wage_premium + self.subsistence_wage
         self.MPL          = self.beta  * self.y / self.n  # marginal value product of labour known to firms
         self.wage_delta   = 0.0
         self.old_wage_premium = -1 # init_wage_premium_ratio * self.subsistence_wage   ### REVISED should remove inital problems
+        self.worker_demand    = self.F * self.n
+        self.worker_supply    = self.F * self.n
+        self.agglom_pop       = self.F * self.n
+        
+        self.N = 1
 
     def step(self):
         # GET POPULATION AND OUTPUT
-        self.y = self.A * self.N**self.gamma *  self.k**self.alpha * self.n**self.beta
+        self.y = self.A * self.agglom_pop**self.gamma *  self.k**self.alpha * self.n**self.beta
 
         # SET TARGET WAGE EQUAL VALUE OF MARGINAL PRODUCT OF LABOUR
         self.MPL = self.beta  * self.y / self.n  # marginal value product of labour known to firms
-        # self.n =  self.N / self.F # Use n from last step, distribute workforce across firms
         self.wage_target = self.price_of_output * self.MPL / (1 + self.overhead)
         # self.wage_target = self.subsistence_wage + (self.MPL - self.subsistence_wage) / (1 + self.overhead) # economic rationality implies intention
         # ADJUST WAGE: 
@@ -565,33 +568,32 @@ class Firm(Agent):
         self.F = (1 - self.adjF) * self.F + self.adjF * self.F_target
  
         # ADJUST CAPITAL STOCK 
-        self.y_target = self.price_of_output * self.A * self.N**self.gamma *  self.k**self.alpha * self.n**self.beta
+        self.y_target = self.price_of_output * self.A * self.agglom_pop**self.gamma *  self.k**self.alpha * self.n**self.beta
         self.k_target = self.alpha * self.y_target/self.r
         self.k = (1 - self.adjk) * self.k + self.adjk * self.k_target
     
         # CALCULATE P_DOT
         self.wage_delta = (self.wage_premium - self.old_wage_premium ) #  -1 ???
  
-    def get_N(self):
-        # If the city is in the bottom corner center_city is false, and effective population must be multiplied by 4
-        # TODO think about whether this multiplier needs to come in elsewhere
-        worker_agent_count = self.model.workforce.get_agent_count(self.model.workforce.workers)
-        if self.model.center_city:
-            N = self.density * worker_agent_count
+    def get_worker_supply(self, city_extent = None):
+        if city_extent:
+            # agent_count = math.pi * (city_extent ** 2)  #  Euclidian radius of the circular city
+            agent_count   = 2 * (city_extent ** 2)        #  Block metric radius of the circular city
+            worker_supply = self.density * agent_count
         else:
-            N = 4 * self.density * worker_agent_count
-        # TODO handle divide by zero errors
-        if N == 0:
-            N = 1
-        # TODO make sure all relevant populations are tracked - n, N, N adjusted x 4/not, agent count, N
-        agglomeration_population = self.mult * (N + self.seed_population)
-        return agglomeration_population
+            agent_count = self.model.workforce.get_agent_count(self.model.workforce.workers)
+            # If the city is in the bottom corner center_city is false, and effective population must be multiplied by 4
+            if self.model.center_city:
+                worker_supply = self.density * agent_count
+            else:
+                worker_supply = 4 * self.density * agent_count
+        # Avoid divide by zero errors
+        if worker_supply == 0:
+            worker_supply = 1
+        return worker_supply
 
-    def get_N_from_city_extent(self, city_extent):
-        # agent_count = math.pi * (city_extent ** 2) #  Euclidian radius of the circular city
-        agent_count = 2 * (city_extent ** 2)         #  Block metric radius of the circular city
-        agglomeration_population = self.mult * (self.density * agent_count + self.seed_population)
-        return agglomeration_population
+    def get_agglomeration_population(self, worker_supply):
+        return self.mult * (worker_supply + self.seed_population)
 
 class Bank(Agent):
     def __init__(self, unique_id, model, pos):
