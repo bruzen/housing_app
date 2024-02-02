@@ -285,8 +285,9 @@ class Fast(Model):
         self.schedule.step_breed(Firm)
 
         # Firm updates agglomeration population based on calculated city extent
-        extent = self.city_extent_calc
-        self.firm.N = self.firm.get_N_from_city_extent(extent)
+        extent                  = self.city_extent_calc
+        self.firm.worker_supply = self.firm.get_worker_supply(extent)        
+        self.firm.agglom_pop    = self.firm.get_agglomeration_population(self.firm.worker_supply)
 
         self.schedule.step_breed(Bid_Storage)
 
@@ -384,16 +385,19 @@ class Fast(Model):
             "model_name":                lambda m: m.model_name,
             "run_id":                    lambda m: m.run_id,
             "time_step":                 lambda m: m.schedule.time,
-            "MPL":                       lambda m: round(m.firm.MPL),
+            "MPL":                       lambda m: round(m.firm.MPL, self.no_decimals),
             "city_extent_calc":          lambda m: round(m.city_extent_calc, self.no_decimals),
             "n":                         lambda m: round(m.firm.n, self.no_decimals),
             "y":                         lambda m: round(m.firm.y, self.no_decimals),
             "F_target":                  lambda m: round(m.firm.F_target, self.no_decimals),
             "F":                         lambda m: round(m.firm.F, self.no_decimals),
             "k":                         lambda m: round(m.firm.k, self.no_decimals),
-            "N":                         lambda m: round(m.firm.N, self.no_decimals),
-            "N/F":                       lambda m: round(m.firm.N/m.firm.F, self.no_decimals),
-            "wage_target":               lambda m: round(m.firm.wage_target),
+            # "N":                         lambda m: round(m.firm.N, self.no_decimals),
+            # "N/F":                       lambda m: round(m.firm.N/m.firm.F, self.no_decimals),
+            # "wage_target":               lambda m: round(m.firm.wage_target, self.no_decimals),
+            "worker_supply":             lambda m: round(m.firm.worker_supply, self.no_decimals),
+            "worker_demand":             lambda m: round(m.firm.worker_demand, self.no_decimals),
+            "agglomeration_population":  lambda m: round(m.firm.agglom_pop, self.no_decimals),
         }
         if self.store_agent_data:
             # Variables for data collection
@@ -425,7 +429,6 @@ class Fast(Model):
                 # "is_working":        lambda a: None if not isinstance(a, Person) else 1 if a.unique_id in a.model.workforce.workers else 0,  # TODO does this need to be in model? e.g. a.model.workforce
                 # "is_working_check":  lambda a: None if not isinstance(a, Person) else a.is_working_check,
                 # "working_period":    lambda a: getattr(a, "working_period", None)  if isinstance(a, Person)       else None,
-                # "wage_delta":        lambda a: getattr(a, "wage_delta", None)      if isinstance(a, Firm)         else None,
                 # "p_dot":             lambda a: getattr(a, "p_dot", None)           if isinstance(a, Land)         else None,
                 # "net_rent":          lambda a: getattr(a, "net_rent", None)        if isinstance(a, Land)         else None,
                 # "warranted_rent":    lambda a: getattr(a, "warranted_rent", None)  if isinstance(a, Land)         else None,
