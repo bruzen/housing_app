@@ -467,7 +467,7 @@ class Firm(Agent):
     @property
     def p_dot(self):
         try:
-            p_dot = (self.model.firm.wage_premium / self.model.firm.old_wage_premium)**self.model.mortgage_period - 1
+            p_dot = ((self.model.firm.wage_premium / self.model.firm.old_wage_premium)**self.model.mortgage_period - 1)/self.r
 
             # # Handle the case where the result is negative
             # if p_dot < 0:
@@ -549,8 +549,9 @@ class Firm(Agent):
     def step(self):
         # GET POPULATION AND OUTPUT
         self.y = self.A * self.agglom_pop**self.gamma *  self.k**self.alpha * self.n**self.beta
+        self.MPL = self.beta  * self.y / self.n  # marginal value product of labour known to firms
 
-        # SET TARGET WAGE EQUAL VALUE OF MARGINAL PRODUCT OF LABOUR
+        # SET TARGET VALUES USING VALUES FROM LAST TIME STEP
         self.MPL = self.beta  * self.y / self.n  # marginal value product of labour known to firms
         self.wage_target = self.price_of_output * self.MPL / (1 + self.overhead)
         # self.wage_target = self.subsistence_wage + (self.MPL - self.subsistence_wage) / (1 + self.overhead) # economic rationality implies intention
