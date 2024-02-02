@@ -126,7 +126,6 @@ class Land(Agent):
         # Note, this is the locational_rent. It is the warranted level of extraction. It is the economic_rent when its extracted.
         # We set the rural land value to zero to study the urban land market, with the agricultural price, warranted rent would be:
         warranted_rent = wage_premium - self.transport_cost + a * subsistence_wage
-        print(f' Odly warranted_rent is complex, wage premium {wage_premium}, wr {warranted_rent}')
         return max(warranted_rent, 0)
         # TODO add amenity + A
         # TODO should it be positive outside the city? How to handle markets outside the city if it is?
@@ -465,11 +464,10 @@ class Firm(Agent):
     #     """total_no_workers"""
     #     total_no_workers = self.model.workforce.get_agent_count(self.model.workforce.workers)
     #     return total_no_workers * self.density + self.seed_population
-
-    @property
-    def p_dot(self):
+   
+    def get_p_dot(self):
         try:
-            p_dot = (self.model.firm.wage_premium / self.model.firm.old_wage_premium)**self.model.mortgage_period - 1
+            p_dot = ((self.model.firm.wage_premium / self.model.firm.old_wage_premium) + 1)**self.model.mortgage_period - 1
 
             # # Handle the case where the result is negative
             # if p_dot < 0:
@@ -544,6 +542,7 @@ class Firm(Agent):
         self.worker_demand    = self.F * self.n
         self.worker_supply    = self.F * self.n
         self.agglom_pop       = self.F * self.n
+        self.p_dot            = self.get_p_dot()
 
     def step(self):
         # GET POPULATION AND OUTPUT
@@ -556,7 +555,7 @@ class Firm(Agent):
 
         # ADJUST NUMBER OF FIRMS
         # self.F_target = self.F * 1.0 * self.wage_target/self.wage
-        self.F_target = self.F *  1.0 * self.p_dot # TODO add back in some kind of wage adjustment mechanism
+        self.F_target = self.F *  1.5 # 1.0 * self.p_dot # TODO add back in some kind of wage adjustment mechanism
         self.F = (1 - self.adjF) * self.F + self.adjF * self.F_target
  
         # SET DESIRED NUMBER OF WORKERS
@@ -577,6 +576,8 @@ class Firm(Agent):
         self.old_wage_premium = self.wage_premium
         # self.wage_premium = self.wage /(1 + self.overhead) - self.subsistence_wage # find wage available for transportation
         self.wage_premium = self.wage - self.subsistence_wage # find wage available for transportation
+
+        self.p_dot            = self.get_p_dot()
 
     def get_worker_supply(self, city_extent = None):
         if city_extent:

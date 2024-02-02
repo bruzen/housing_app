@@ -128,7 +128,9 @@ def variables_vs_time(df, variable_parameters = None):
         axes[1, 0].yaxis.set_major_locator(MaxNLocator(nbins=nbins))
 
         # Plot N
-        axes[1, 1].plot(subset_df['time_step'], subset_df['N'], label=label, color=color, alpha=alpha, linestyle=linestyle, linewidth=linewidth)
+        axes[1, 1].plot(subset_df['time_step'], subset_df['agglomeration_population'], label=label, color=color, alpha=alpha, linestyle=linestyle, linewidth=linewidth)
+        # axes[1, 1].plot(subset_df['time_step'], subset_df['worker_supply'], label=label, color=color, alpha=alpha, linestyle=linestyle, linewidth=linewidth)
+        # axes[1, 1].plot(subset_df['time_step'], subset_df['worker_demand'], label=label, color=color, alpha=alpha, linestyle=linestyle, linewidth=linewidth)
         # axes[1, 0].set_xlabel('Time Step')
         axes[1, 1].set_ylabel('N')
         # axes[1, 0].set_title(f'Total workforce') # (N)')
