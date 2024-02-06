@@ -482,6 +482,9 @@ class Firm(Agent):
                  adjn,
                  adjF,
                  adjw,
+                 adjs,
+                 adjd,
+                 adjp,
                  dist,
                  init_F,
                  init_k,
@@ -506,6 +509,9 @@ class Firm(Agent):
         self.adjn     = adjn
         self.adjF     = adjF
         self.adjw     = adjw
+        self.adjs     = adjs
+        self.adjd     = adjd
+        self.adjp     = adjp
         self.dist     = dist
         self.r        = r_prime # Firm cost of capital
         self.animal_spirits = animal_spirits # Or enthusiasm
@@ -530,33 +536,99 @@ class Firm(Agent):
         # TODO get rid of these variables
         self.N = 1
         self.wage_target = 1
+        self.A_time = self.model.schedule.time
 
     def step(self):
-        # GET POPULATION AND OUTPUT
-        self.y = self.A * self.agglom_pop**self.gamma *  self.k**self.alpha * self.n**self.beta
-        self.MPL = self.beta  * self.y / self.n  # marginal value product of labour known to firms
+        # STORE INITIAL VALUES FOR CALCULATING CHANGES
+        n_old         = self.n
+        wage_old         = self.wage
 
-        # SET TARGET VALUES USING VALUES FROM LAST TIME STEP
-        self.n_target = (self.price_of_output * self.y - self.r * self.k) / self.wage # self.beta * self.y / ((1 + self.overhead) * (self.wage)) # Use n from last step, distribute workforce across firms
+        self.A_time = self.model.schedule.time
+
+        # GET OUTPUT BASDED ON LAST PERIOD AND 'ACHIEVED' MPL 
+        self.y = self.A * self.agglom_pop**self.gamma *  self.k**self.alpha * self.n**self.beta
+        self.MPL = self.price_of_output * (self.beta + self.adjn*self.gamma)  * self.y / self.n  # (notice the adjustment for the agglomeeration effect)
+
+        # SET TARGET VALUES FOR k, n, F, N USING VALUES FROM LAST TIME STEP
+        # k target ___________________________________
+        # 1)
         self.k_target = self.alpha * self.y/self.r # TODO could need to use y_target here
-        self.F_target = self.n_target * self.F /self.n *  1.5 * self.p_dot # TODO add back in some kind of wage adjustment mechanism
+        # 2) 
+        #self.k_target = self.alpha * self.y/self.r # TODO could need to use y_target here
+        
+        # n target ___________________________________
+        #1) Consider using all profit for new labour. Both updated to end of previous period   
+        change_n = (self.price_of_output * self.y - self.r * self.k) /  ((1 + self.overhead) * (self.wage)) # self.beta * self.y / ((1 + self.overhead) * (self.wage)) # Use n from last step, distribute workforce across firms
+        self.n_target        = self.n + change_n 
+        self.n_target        = (1 - self.adjn) * self.n + self.adjn * self.n_target # Firm plans a partial adjustment and posts employment target
+        #  2) (???)invert MPL using cost of labour. Both updated to end of previous period  
+        #self.n_target = self.N/self.F   #  distribute newest workforce across firms
+        
+        # F target ___________________________________
+        # 1) Entreprenur uses profit signal measured as new labour for entry/exit decisions
+        self.F_target = self.F * (1 + change_n / self.n)
+        self.F_target = (1 - self.adjF) * self.F + self.adjF * self.F_target # Engtrepreneur  plans a partial adjustment and posts employment target
+
+        
+        # IDENTIFY INDUSTRY DEMAND FOR LABOUR 
+        self.worker_demand = self.n_target * self.F_target
+
+        # APPLY SHORT-SIDE RULE  (to find out how many CAN be employed)
+        self.N = min(self.worker_demand, self.worker_supply)
+
+        # DEFINE THE EXCESS DEMAND RATIO
+        edr = (self.worker_demand - self.worker_supply) / max(abs(self.worker_demand), abs(self.worker_supply)) #positive or negative
+
+        # ALLOCATE LABOUR TO FIRMS
+        self.n = self.N/self.F
+        #if edr > 0 
+
+        # ADJUST WAGE OFFER BASED ON EXCESS DEMAND
+        self.wage = (1 + self.adjw *edr)*self.wage
+
+
+        #self.F_target = self.n_target * self.F /self.n  
+        
+        # TODO add back in some kind of wage adjustment mechanism
+        # 2)
         # self.F_target = self.F * 1.0 * self.wage_target/self.wage
+
+        # wage target ___________________________________
+        # 1)
+        # self.wage_target = self.price_of_output * self.MPL / (1 + self.overhead)
+
+        # y target ___________________________________
         # self.y_target = self.price_of_output * self.A * self.agglom_pop**self.gamma *  self.k**self.alpha * self.n**self.beta
 
-        # INCREMENT STATE VARIABLES TOWARDS TARGET
-        self.n        = (1 - self.adjn) * self.n + self.adjn * self.n_target
+
+        
+        # INCREMENT STATE VARIABLES TOWARDS TARGETS
+        #self.n        = (1 - self.adjn) * self.n + self.adjn * self.n_target
         self.k        = (1 - self.adjk) * self.k + self.adjk * self.k_target
         self.F        = (1 - self.adjF) * self.F + self.adjF * self.F_target
+        self.wage     = (1 - self.adjw) * self.wage + self.adjw * self.wage_target
+        #self.y        = (1 - self.adjy) * self.y + self.adjy * self.y*F_target  
 
-        # SET DEMAND FOR LABOUR
-        self.worker_demand    = self.F * self.n
+        # SET DEMAND FOR LABOUR NS WAGE USING EXCXESS DEMAND APPOROACH
+        # self.worker_demand    = self.F * self.n
 
-        # ADJUST WAGE BASED ON LABOUR SUPPLY AND DEMAND 
+        # # DEFINE THE EXCESS DEMAND RATIO
+        # edr = (self.worker_demand - self.worker_supply) / max(abs(self.worker_demand), abs(self.worker_supply))
+
+        # self.n  = (1 + self.adjn*edr) * n_old
+        # # ADJUST WAGE OFFER BASED ON EXCESS DEMAND
+
+        # self.wage = (1 + self.adjw *edr)*self.wage
+        # OR
         # TODO the new calculation is commented out because it causes an error
-        # self.wage = self.worker_demand / self.worker_supply * self.wage # TODO check this line
+        #self.wage = (self.worker_demand - self.worker_supply)/((self.worker_demand + self.worker_supply)/2) * self.wage 
+        
+     
+        # if self.wage < self.subsistence_wage:
+        #     # self.wage == self.subsistence_wage
+        
         # TODO fix this. We are using the old calculation.
-        self.wage_target = self.price_of_output * self.MPL / (1 + self.overhead)
-        self.wage = (1 - self.adjw) * self.wage + self.adjw * self.wage_target # partial adjustment process
+       
         # # self.wage_target = self.subsistence_wage + (self.MPL - self.subsistence_wage) / (1 + self.overhead) # economic rationality implies intention
         # self.wage_premium = self.wage /(1 + self.overhead) - self.subsistence_wage # find wage available for transportation
 
@@ -569,21 +641,21 @@ class Firm(Agent):
         if city_extent:
             # agent_count = math.pi * (city_extent ** 2)  #  Euclidian radius of the circular city
             agent_count   = 2 * (city_extent ** 2)        #  Block metric radius of the circular city
-            worker_supply = self.density * agent_count
+            worker_supply = self.density * agent_count + self.seed_population
         else:
             agent_count = self.model.workforce.get_agent_count(self.model.workforce.workers)
             # If the city is in the bottom corner center_city is false, and effective population must be multiplied by 4
             if self.model.center_city:
-                worker_supply = self.density * agent_count
+                worker_supply = self.density * agent_count + self.seed_population
             else:
-                worker_supply = 4 * self.density * agent_count
+                worker_supply = 4 * self.density * agent_count + self.seed_population
         # Avoid divide by zero errors
         if worker_supply == 0:
             worker_supply = 1
         return worker_supply
 
     def get_agglomeration_population(self, worker_supply):
-        return self.mult * (worker_supply + self.seed_population)
+        return self.mult * (worker_supply)
 
     def get_p_dot(self):
         try:
