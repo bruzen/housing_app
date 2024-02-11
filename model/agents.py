@@ -539,98 +539,73 @@ class Firm(Agent):
         self.A_time = self.model.schedule.time
 
     def step(self):
-        # STORE INITIAL VALUES FOR CALCULATING CHANGES
-        n_old         = self.n
-        wage_old         = self.wage
-
         self.A_time = self.model.schedule.time
 
-        # GET OUTPUT BASDED ON LAST PERIOD AND 'ACHIEVED' MPL 
-        self.y = self.A * self.agglom_pop**self.gamma *  self.k**self.alpha * self.n**self.beta
-        self.MPL = self.price_of_output * (self.beta + self.adjn*self.gamma)  * self.y / self.n  # (notice the adjustment for the agglomeeration effect)
+        # STORE INITIAL VALUES FOR CALCULATING CHANGES
+        n_old        = self.n
+        wage_old     = self.wage 
+        self.y          = self.A * self.agglom_pop**self.gamma *  self.k**self.alpha * self.n**self.beta
+        self.MPL        =  (self.beta + self.adjn*self.gamma)  * self.y / self.n  # (ValueMPL)
+        ov = 1 + self.overhead  # overhead ratio
+        VMPL       = self.price_of_output * self.MPL
+        revenue    = self.price_of_output * self.y 
+        cost       = self.r * self.k + self.wage * self.n
+        profit     = revenue - cost
+        profit_ratio     = revenue / cost
+      
+        #      ALTERNATIVE TARGET VALUES FOR k, n, F, N USING VALUES FROM LAST TIME STEP 
+        self.model.model_name = "kopt, n2opt, F1, w1 "
 
-        # SET TARGET VALUES FOR k, n, F, N USING VALUES FROM LAST TIME STEP
-        # k target ___________________________________
-        # 1)
-        self.k_target = self.alpha * self.y/self.r # TODO could need to use y_target here
-        # 2) 
-        #self.k_target = self.alpha * self.y/self.r # TODO could need to use y_target here
+        ##      k target _____________________________________________________________
+        #      kopt) --- Optimal k calculation (two versions)
+        #self.k_target = self.price_of_output * self.alpha * self.y/self.r     #(old optimal version)
+        self.k_target = (self.r/(self.price_of_output * self.alpha * self.A * self.agglom_pop**self.gamma *  self.n**self.beta) )**(1-self.alpha)        
+        #     k1) --- Profit-based adjustment
+        #self.k_target =  profit_ratio * self.k
+
+        ##     n_target _________ 3 versions_________________________________________
+        #     nopt) --- setting  the optimal number of workers using wage=vMPL 
+        self.n_target   =  (wage_old /(ov * (self.price_of_output * self.beta* self.A * self.agglom_pop**self.gamma *  self.k**self.alpha) ))**(1-self.beta)  
+        #     n1) --- Profit-ratio-based adjustment
+        # self.n_target =  self.profit_ratio * self.n        
+        #     n2) --- Profit-based adjustment provisionaly using all profit for new labour. Both updated to end of previous period   
+        change_n = profit/ (self.wage) # 
+        # self.n_target        = self.n + change_n
+        # _________  # same adjustment for all 3 versions of n_target ______
+        self.n_target      = (1 - self.adjn) * self.n + self.adjn * self.n_target # Firm plans a partial adjustment and posts employment target
         
-        # n target ___________________________________
-        #1) Consider using all profit for new labour. Both updated to end of previous period   
-        change_n = (self.price_of_output * self.y - self.r * self.k) /  ((1 + self.overhead) * (self.wage)) # self.beta * self.y / ((1 + self.overhead) * (self.wage)) # Use n from last step, distribute workforce across firms
-        self.n_target        = self.n + change_n 
-        self.n_target        = (1 - self.adjn) * self.n + self.adjn * self.n_target # Firm plans a partial adjustment and posts employment target
-        #  2) (???)invert MPL using cost of labour. Both updated to end of previous period  
-        #self.n_target = self.N/self.F   #  distribute newest workforce across firms
-        
-        # F target ___________________________________
-        # 1) Entreprenur uses profit signal measured as new labour for entry/exit decisions
+        ##     F target ___________ 3 versions________________________________________
+        ##     F1) --- Entreprenur uses profit signal measured as new labour  in n1 for entry/exit decisions. 
         self.F_target = self.F * (1 + change_n / self.n)
-        self.F_target = (1 - self.adjF) * self.F + self.adjF * self.F_target # Engtrepreneur  plans a partial adjustment and posts employment target
-
+        self.F_target = (1 - self.adjF) * self.F + self.adjF * self.F_target # Entrepreneur  plans a partial adjustment and posts employment target 
+        ##     F2) --- Entreprenur grows firm to set P*MPL = wage. This means that all firms are of size n_target
+        #self.F_target=self.N/self.n_target   # "NOT COMPATABLE" WITH  ALLOCATE LABOUR TO FIRMS (below)  CHECK 
         
-        # IDENTIFY INDUSTRY DEMAND FOR LABOUR 
+        # IDENTIFY AGGREGATE INDUSTRY DEMAND FOR LABOUR 
         self.worker_demand = self.n_target * self.F_target
-
-        # APPLY SHORT-SIDE RULE  (to find out how many CAN be employed)
-        self.N = min(self.worker_demand, self.worker_supply)
 
         # DEFINE THE EXCESS DEMAND RATIO
         edr = (self.worker_demand - self.worker_supply) / max(abs(self.worker_demand), abs(self.worker_supply)) #positive or negative
+        
+        # APPLY SHORT-SIDE RULE  (to find out how many CAN be employed) ___
+        self.N = min(self.worker_demand, self.worker_supply)
 
-        # ALLOCATE LABOUR TO FIRMS
-        self.n = self.N/self.F
-        #if edr > 0 
+        # ALLOCATE LABOUR TO FIRMS (All firms get equal labour, have equal MPL)
+        self.n = self.N/self.F     # "NOT COMPATABLE" WITH  F2  CHECK  
 
-        # ADJUST WAGE OFFER BASED ON EXCESS DEMAND
+        #     WAGE OFFER ________ 2 versions______________
+        ##     w1) --- BASED ON EXCESS DEMAND
         self.wage = (1 + self.adjw *edr)*self.wage
-
-
-        #self.F_target = self.n_target * self.F /self.n  
+        ##     w2) --- BASED ON MPL  (respond directly to flaw in behavour??)
+        # self.wage_target =  VMPL / ov
+        self.wage        = (1 - self.adjw) * self.wage_target + self.adjw * self.wage_target
         
-        # TODO add back in some kind of wage adjustment mechanism
-        # 2)
-        # self.F_target = self.F * 1.0 * self.wage_target/self.wage
-
-        # wage target ___________________________________
-        # 1)
-        # self.wage_target = self.price_of_output * self.MPL / (1 + self.overhead)
-
-        # y target ___________________________________
-        # self.y_target = self.price_of_output * self.A * self.agglom_pop**self.gamma *  self.k**self.alpha * self.n**self.beta
-
-
-        
-        # INCREMENT STATE VARIABLES TOWARDS TARGETS
+        #TODO INCREMENT STATE VARIABLES TOWARDS TARGETS     NOT USED  REMOVE?
         #self.n        = (1 - self.adjn) * self.n + self.adjn * self.n_target
-        self.k        = (1 - self.adjk) * self.k + self.adjk * self.k_target
-        self.F        = (1 - self.adjF) * self.F + self.adjF * self.F_target
-        self.wage     = (1 - self.adjw) * self.wage + self.adjw * self.wage_target
+        # self.k        = (1 - self.adjk) * self.k + self.adjk * self.k_target 
+        # self.F        = (1 - self.adjF) * self.F + self.adjF * self.F_target
+        # self.wage     = (1 - self.adjw) * self.wage + self.adjw * self.wage_target
         #self.y        = (1 - self.adjy) * self.y + self.adjy * self.y*F_target  
-
-        # SET DEMAND FOR LABOUR NS WAGE USING EXCXESS DEMAND APPOROACH
-        # self.worker_demand    = self.F * self.n
-
-        # # DEFINE THE EXCESS DEMAND RATIO
-        # edr = (self.worker_demand - self.worker_supply) / max(abs(self.worker_demand), abs(self.worker_supply))
-
-        # self.n  = (1 + self.adjn*edr) * n_old
-        # # ADJUST WAGE OFFER BASED ON EXCESS DEMAND
-
-        # self.wage = (1 + self.adjw *edr)*self.wage
-        # OR
-        # TODO the new calculation is commented out because it causes an error
-        #self.wage = (self.worker_demand - self.worker_supply)/((self.worker_demand + self.worker_supply)/2) * self.wage 
-        
-     
-        # if self.wage < self.subsistence_wage:
-        #     # self.wage == self.subsistence_wage
-        
-        # TODO fix this. We are using the old calculation.
-       
-        # # self.wage_target = self.subsistence_wage + (self.MPL - self.subsistence_wage) / (1 + self.overhead) # economic rationality implies intention
-        # self.wage_premium = self.wage /(1 + self.overhead) - self.subsistence_wage # find wage available for transportation
 
         # FIND NEW WAGE PREMIUM
         self.old_wage_premium = self.wage_premium
