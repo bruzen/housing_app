@@ -278,6 +278,7 @@ def load_last_fast_batch_run_df():
     
     return pd.read_csv(most_recent_file_path)
 
+# TODO fix - can't run alone since can't import utils
 if __name__ == "__main__":
 
     # Generate example dataframe

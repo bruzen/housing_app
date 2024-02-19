@@ -1,4 +1,12 @@
 # TODO List
+
+## Next
+- [ ] Perturb mid run - a discrete shift in number - drive it down, then drop it back down.. increase tax- property tax.. (maybe look at effect of driving p_dot)
+- [ ] Investors can sell
+- [ ] Record housing wealth gap
+- [*] Record/plot total rents
+- [ ] Track mortgages
+
 ## Experiments and plan (results experiments diagram measures figures)
 -  [ ] Results: 
    -  [ ] Ownership pattern: under what circumstances do we see institutions take out ownership
@@ -25,19 +33,9 @@
 - [ ] FIX N vs aglom_pop = mult * N  + seed (where N is density*agent_count) # makes clear its equalt to a count of lots
 - [ ] Note Changes in self.model.bank.max_mortgage_share - were not used until correction
 
-## Next
-- [*] Perturb mid run - a discrete shift in number - drive it down, then drop it back down.. increase tax- property tax.. (maybe look at effect of driving p_dot)
-- [ ] Investors can sell
-- [ ] Move more plots to plotting.py (single, heatmap, check analysis and analysis_new)
-- [ ] Record/plot total rents
-- [ ] Dataframe Var names to caps like RunID
-- [ ] Load data for multiple replicate runs
-- [ ] Single plot
-- [ ] Load data to plot 
-
 ## Plotting and runs
 - [ ] Do scenario analysis - hypercube spacing
-- [ ] Record housing wealth gap
+- [ ] Move more plots to plotting.py (single, heatmap, check analysis and analysis_new)
 - [ ] Show housing prices for batch run
 - [ ] Record Workforce objects count of workers, newcomers, retiring as a sanity check - plot
 - [ ] Trace lines for a given land item as it folds over
@@ -47,6 +45,8 @@
 - [ ] Track savings. Plots prices and saving. -  mean savings - distribution of savings. - 
 - [ ] Implement mortgages
 - [ ] Check init_F
+- [ ] Load data for multiple replicate runs
+- [ ] Dataframe Var names to caps like RunID
 
 ## Performance and Workflow
 - [ ] Multiple replicate runs
