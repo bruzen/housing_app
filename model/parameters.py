@@ -20,32 +20,32 @@ default_parameters = {
 
     # LABOUR MARKET AND FIRM PARAMETERS
     'subsistence_wage': 40000., # psi
-    'init_city_extent': 1.,    # CUT OR CHANGE?
+    'init_city_extent': 10.,    # CUT OR CHANGE?
     'seed_population': 400,
     'init_wage_premium_ratio': 0.2, # 1.2, ###
 
     # PARAMETERS MOST LIKELY TO AFFECT SCALE
-    'c': 300.0,                            ### transportation costs
-    'price_of_output': 5,                 ######
-    'density': 5,                        #####
+    'c': 500.0,                            ### transportation costs
+    'price_of_output': 10,                 ######
+    'density': 400,                        #####
     'A': 1800,                             ### 
     'alpha': 0.18,
     'beta':  0.75,
-    'gamma': 0.12, ### reduced from .14
+    'gamma': 0.003, ### reduced from .14
     'overhead': .5,
     'mult': 1.0,
-    'adjN': 0.15,
-    'adjk': 0.10,
+    'adjN': 0.015,
+    'adjk': 0.010,
     'adjn': 0.15,
-    'adjF': 0.02,
-    'adjw': 0.02,
-    'adjs': 0.01,
-    'adjd': 0.01,
-    'adjp': 0.01,
+    'adjF': 0.002,
+    'adjw': 0.002, 
+    'adjs': 0.2,  #Adjust worker Supply 
+    'adjd': 0.2,  #Adjust worker Demand 
+    'adjp': 0.2,  #Adjust agglom_pop -Population
     'dist': 1, 
     'init_F': 100.0,
     'init_k': 500.0,
-    'init_n': 100.0,
+    'init_n': 10,
     'animal_spirits': 1.,
 
     # HOUSING AND MORTGAGE MARKET PARAMETERS

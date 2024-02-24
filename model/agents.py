@@ -509,8 +509,8 @@ class Firm(Agent):
         self.adjn     = adjn
         self.adjF     = adjF
         self.adjw     = adjw
-        self.adjs     = adjs
         self.adjd     = adjd
+        self.adjs     = adjs
         self.adjp     = adjp
         self.dist     = dist
         self.r        = r_prime # Firm cost of capital
@@ -523,89 +523,110 @@ class Firm(Agent):
         self.k        = init_k #1.360878e+09 #100
         self.n        = init_n
         self.F_target = init_F
+        self.n_target = init_n
         self.wage_premium = init_wage_premium_ratio * self.subsistence_wage 
-        self.wage         = self.wage_premium + self.subsistence_wage
-        self.MPL          = self.beta  * self.y / self.n  # marginal value product of labour known to firms
-        self.old_wage_premium = -1 # init_wage_premium_ratio * self.subsistence_wage   ### REVISED should remove inital problems
+        self.old_wage_premium = 8000 # -1 # init_wage_premium_ratio * self.subsistence_wage   ### REVISED should remove inital problems
+        self.wage         = (1 + init_wage_premium_ratio) * self.subsistence_wage
+        self.wage_target  = self.wage
+        self.MPL          = 7200# self.beta  * self.y / self.n  # marginal value product of labour known to firms
         self.worker_demand    = self.F * self.n
         self.worker_supply    = self.F * self.n
-        self.agglom_pop       = self.F * self.n
+        self.agglom_pop       = self.F * self.n 
         self.p_dot            = 0 # TODO fix init p_dot
         
         # TODO if we are using p_dot here, we may need a get_p_dot calculation
         # TODO get rid of these variables
-        self.N = 1
-        self.wage_target = 1
+        self.N = self.F * self.n
         self.A_time = self.model.schedule.time
 
     def step(self):
-        self.A_time = self.model.schedule.time
+       
 
         # STORE INITIAL VALUES FOR CALCULATING CHANGES
-        n_old        = self.n
-        wage_old     = self.wage 
+        self.A_time = self.model.schedule.time
         self.y          = self.A * self.agglom_pop**self.gamma *  self.k**self.alpha * self.n**self.beta
-        self.MPL        =  (self.beta + self.adjn*self.gamma)  * self.y / self.n  # (ValueMPL)
-        ov = 1 + self.overhead  # overhead ratio
+        self.MPL        =  self.beta + self.y /self.n 
+        # N_target   = self.N #        NEW    *****
+        # self.N        = (1 - self.adjN) * self.N + self.adjN * N_target   #
+        n_old        = self.n
+        wage_old     = self.wage
+        ov         = 1 + self.overhead  # overhead ratio
         VMPL       = self.price_of_output * self.MPL
         revenue    = self.price_of_output * self.y 
         cost       = self.r * self.k + self.wage * self.n
         profit     = revenue - cost
         profit_ratio     = revenue / cost
-      
-        #      ALTERNATIVE TARGET VALUES FOR k, n, F, N USING VALUES FROM LAST TIME STEP 
-        self.model.model_name = "kopt, n2opt, F1, w1 "
+     
+        #      ALTERNATIVE TARGET VALUES FOR k, n, F, N USING VALUES FROM LAST TIME STEP
+        #  WHICH MODEL ARE WE RUNNING?
+        self.model.model_name = "Feb 23. Vary A"
 
         ##      k target _____________________________________________________________
         #      kopt) --- Optimal k calculation (two versions)
-        #self.k_target = self.price_of_output * self.alpha * self.y/self.r     #(old optimal version)
-        self.k_target = (self.r/(self.price_of_output * self.alpha * self.A * self.agglom_pop**self.gamma *  self.n**self.beta) )**(1-self.alpha)        
-        #     k1) --- Profit-based adjustment
-        #self.k_target =  profit_ratio * self.k
+        self.k_target = self.price_of_output * self.alpha * self.y/self.r     #(old optimal version)
+        # self.k_target = (self.r/(self.price_of_output * self.alpha * self.A * self.agglom_pop**self.gamma *  self.n**self.beta) )**(1-self.alpha)        
+        
+        #     kprofit) --- Profit-based adjustment
+        # self.k_target =  profit_ratio * self.k 
+        
+        #     kold) --- Profit-based adjustment
+        # self.k_target = (self.alpha * self.y) /self.r
+
 
         ##     n_target _________ 3 versions_________________________________________
-        #     nopt) --- setting  the optimal number of workers using wage=vMPL 
-        self.n_target   =  (wage_old /(ov * (self.price_of_output * self.beta* self.A * self.agglom_pop**self.gamma *  self.k**self.alpha) ))**(1-self.beta)  
-        #     n1) --- Profit-ratio-based adjustment
-        # self.n_target =  self.profit_ratio * self.n        
+
+        #     nopt 1) --- setting  the optimal number of worker(s using wage=vMPL 
+        # self.n_target   = self.beta*
+        # self.n_target   =  (self.beta * revenue)/(1+ self.overhead)*self.wage  # This explodes
+        #     nopt 2) --- setting  the optimal number of worker(s using wage=vMPL 
+        self.n_target   =  (self.beta* self.A * self.agglom_pop**self.gamma *  self.k**self.alpha )**(1-self.beta)  
+        
+
+        #     n1) --- Profit-ratio-based adjustment     
+        # self.n_target = profit_ratio * self.n #  THIS gives us F crashing  try longer run - may work out
+        # change_n = n_target - self.n
+        # self.n_target      = (1 - self.adjn) * self.n + self.adjn * self.n_target # Firm plans a partial adjustment and posts employment target
+        
         #     n2) --- Profit-based adjustment provisionaly using all profit for new labour. Both updated to end of previous period   
-        change_n = profit/ (self.wage) # 
+     
         # self.n_target        = self.n + change_n
         # _________  # same adjustment for all 3 versions of n_target ______
-        self.n_target      = (1 - self.adjn) * self.n + self.adjn * self.n_target # Firm plans a partial adjustment and posts employment target
+       
         
+
         ##     F target ___________ 3 versions________________________________________
         ##     F1) --- Entreprenur uses profit signal measured as new labour  in n1 for entry/exit decisions. 
-        self.F_target = self.F * (1 + change_n / self.n)
-        self.F_target = (1 - self.adjF) * self.F + self.adjF * self.F_target # Entrepreneur  plans a partial adjustment and posts employment target 
+        # self.F_target = self.F * (1 + change_n / self.n)
+        # self.F_target = (1 - self.adjF) * self.F + self.adjF * self.F_target # Entrepreneur  plans a partial adjustment and posts employment target 
         ##     F2) --- Entreprenur grows firm to set P*MPL = wage. This means that all firms are of size n_target
         #self.F_target=self.N/self.n_target   # "NOT COMPATABLE" WITH  ALLOCATE LABOUR TO FIRMS (below)  CHECK 
         
         # IDENTIFY AGGREGATE INDUSTRY DEMAND FOR LABOUR 
-        self.worker_demand = self.n_target * self.F_target
+        self.worker_demand = self.n_target * self.F # self.n_target * self.F_target
 
         # DEFINE THE EXCESS DEMAND RATIO
         edr = (self.worker_demand - self.worker_supply) / max(abs(self.worker_demand), abs(self.worker_supply)) #positive or negative
         
         # APPLY SHORT-SIDE RULE  (to find out how many CAN be employed) ___
-        self.N = min(self.worker_demand, self.worker_supply)
+        # self.N =   # selfmin(self.worker_demand, self.worker_supply)
 
         # ALLOCATE LABOUR TO FIRMS (All firms get equal labour, have equal MPL)
-        self.n = self.N/self.F     # "NOT COMPATABLE" WITH  F2  CHECK  
+        # N = self.n * self.F     # "NOT COMPATABLE" WITH  F2  CHECK 
+        self.F = self.worker_supply / self.n     
 
         #     WAGE OFFER ________ 2 versions______________
         ##     w1) --- BASED ON EXCESS DEMAND
-        self.wage = (1 + self.adjw *edr)*self.wage
+        # self.wage = (1 + self.adjw *edr)*self.wage
         ##     w2) --- BASED ON MPL  (respond directly to flaw in behavour??)
-        # self.wage_target =  VMPL / ov
+        self.wage_target =  VMPL / ov
         self.wage        = (1 - self.adjw) * self.wage_target + self.adjw * self.wage_target
         
         #TODO INCREMENT STATE VARIABLES TOWARDS TARGETS     NOT USED  REMOVE?
-        #self.n        = (1 - self.adjn) * self.n + self.adjn * self.n_target
-        # self.k        = (1 - self.adjk) * self.k + self.adjk * self.k_target 
+        self.n        = (1 - self.adjn) * self.n + self.adjn * self.n_target
+        self.k        = (1 - self.adjk) * self.k + self.adjk * self.k_target 
         # self.F        = (1 - self.adjF) * self.F + self.adjF * self.F_target
-        # self.wage     = (1 - self.adjw) * self.wage + self.adjw * self.wage_target
-        #self.y        = (1 - self.adjy) * self.y + self.adjy * self.y*F_target  
+        self.wage     = (1 - self.adjw) * self.wage + self.adjw * self.wage_target
+        #self.y        = (1 - self.adjy) * self.y + self.adjy * self.y*F_target 
 
         # FIND NEW WAGE PREMIUM
         self.old_wage_premium = self.wage_premium
