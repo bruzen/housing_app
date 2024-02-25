@@ -102,8 +102,9 @@ def variables_vs_time(df, variable_parameters = None):
 
         # Plot MPL
         axes[0, 0].plot(subset_df['time_step'], subset_df['MPL'], label=label, color=color, alpha=alpha, linestyle=linestyle, linewidth=linewidth)
-        # axes[0, 0].set_xlabel('Time Step')
-        axes[0, 0].set_ylabel('MPL ($)')
+        axes[0, 0].plot(subset_df['time_step'], subset_df['wage'], label=label, color='red', alpha=alpha, linestyle=linestyle, linewidth=linewidth)
+        axes[0, 0].set_xlabel('Time Step')
+        axes[0, 0].set_ylabel('VMPL, w red')
         # axes[0, 0].set_title(f'MPL')
         axes[0, 0].grid(True)
         axes[0, 0].legend().set_visible(False)
@@ -128,9 +129,12 @@ def variables_vs_time(df, variable_parameters = None):
         axes[1, 0].yaxis.set_major_locator(MaxNLocator(nbins=nbins))
 
         # Plot N
-        axes[1, 1].plot(subset_df['time_step'], subset_df['agglomeration_population'], label=label, color=color, alpha=alpha, linestyle=linestyle, linewidth=linewidth)
+        # axes[1, 1].plot(subset_df['time_step'], subset_df['agglomeration_population'], label=label, color=color, alpha=alpha, linestyle=linestyle, linewidth=linewidth)
+        axes[1, 1].plot(subset_df['time_step'], subset_df['worker_demand'], label=label, color='red', alpha=alpha, linestyle=linestyle, linewidth=linewidth)
+        axes[1, 1].plot(subset_df['time_step'], subset_df['worker_supply'], label=label, color='green', alpha=alpha, linestyle = linestyle, linewidth=linewidth)     
+        #axes[1, 1].plot(subset_df['time_step'], subset_df['worker_supply}'], label=label, color=red, alpha=alpha, linestyle=linestyle, linewidth=linewidth)
         # axes[1, 0].set_xlabel('Time Step')
-        axes[1, 1].set_ylabel('N')
+        axes[1, 1].set_ylabel('NDred NSGr')
         # axes[1, 0].set_title(f'Total workforce') # (N)')
         axes[1, 1].grid(True)
         axes[1, 1].legend().set_visible(False)
@@ -206,7 +210,7 @@ def mpl_vs_time(model_out):
     plt.rcParams['font.size'] = 10
     
     # Create a subplot
-    fig, ax = plt.subplots(figsize=(8, 6))
+    fig, ax = plt.subplots(figsize=(4, 3))
 
     # Plot MPL
     ax.plot(df['time_step'], df['MPL'], linestyle = 'solid', label=f'MPL')
@@ -217,6 +221,29 @@ def mpl_vs_time(model_out):
     ax.set_xlabel('Time Step')
     ax.set_ylabel('MPL ($)')
     ax.set_title('MPL Over Time')
+
+    # Add legend
+    ax.legend()
+
+    # Display the plot
+    plt.show()
+
+def pop_vs_time(model_out):
+    df = pd.DataFrame(model_out)
+    set_style()
+    plt.rcParams['font.size'] = 10
+    
+    # Create a subplot
+    fig, ax = plt.subplots(figsize=(4, 3))
+
+    # Plot MPL
+    ax.plot(df['time_step'], df['agglomeration_population'], linestyle = 'dotted', label=f'Agglomeration population')
+    ax.plot(df['time_step'], df['worker_supply'], linestyle = 'dotted', label=f'Worker supply')
+    ax.plot(df['time_step'], df['worker_demand'], linestyle = 'dashed', label=f'Worker demand')
+    # Set labels and title wage_premium subsistence_wage wage
+    ax.set_xlabel('Time Step')
+    ax.set_ylabel('Population')
+    ax.set_title('Workforce Over Time')
 
     # Add legend
     ax.legend()
@@ -278,7 +305,6 @@ def load_last_fast_batch_run_df():
     
     return pd.read_csv(most_recent_file_path)
 
-# TODO fix - can't run alone since can't import utils
 if __name__ == "__main__":
 
     # Generate example dataframe
