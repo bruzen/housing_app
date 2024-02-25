@@ -4,6 +4,13 @@ default_parameters = {
     'width':     50, #30,
     'height':    50, #30,
 
+    # INTERVENTIONS
+    'interventions':  {
+        'Output price down': {'var': 'firm.price_of_output', 'val': 0.9, 'time': 25},
+        'Output price up':   {'var': 'firm.price_of_output', 'val': 15, 'time': 45},
+        # Add more interventions...
+    },
+
     # FLAGS
     'demographics_on': True,  # Set flag to False for debugging to check firm behaviour without demographics or housing market
     'center_city':     False, # Flag for city center in center if True, or bottom corner if False

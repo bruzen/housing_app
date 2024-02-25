@@ -36,28 +36,6 @@ class Fast(Model):
         self.model_description = 'Model of urban agglomeration, excluding the land market, to inform the main agent-based housing market model.'
         self.num_steps = num_steps
 
-        # Interventions
-        if 'intervention' in self.params and self.params['intervention'] is True:
-            self.intervention = True
-            perturb_at_time = {'var': 'cg_tax_invest', 'val': .9, 'time': 5},
-            # if 'perturb_at_time' in self.params:
-            try:
-                # perturb_at_time_data = self.params['perturb_at_time']
-
-                # if not isinstance(perturb_at_time_data, dict):
-                #     raise TypeError("'perturb_at_time' should be a dictionary.")
-
-                self.perturb_var  = perturb_at_time.get('var', None)
-                self.perturb_val  = perturb_at_time.get('val', None)
-                self.perturb_time = perturb_at_time.get('time', None)
-
-                if any(var is None for var in (self.perturb_var, self.perturb_val, self.perturb_time)):
-                    raise ValueError("Invalid or missing data in 'perturb_at_time'.")
-            except Exception as e:
-                print(f"An error occurred with processing perturb_at_time: {e}")
-        else:
-            self.intervention = False # TODO Can use to control the logic for any intervention
-
         self.setup_run_data_collection()
 
         # Record metadata
@@ -71,8 +49,15 @@ class Fast(Model):
 
         logging.getLogger('matplotlib').setLevel(logging.ERROR)
 
-        self.height = self.params['height']
-        self.width  = self.params['width']
+        # Initialize interventions
+        if 'interventions' in self.params:
+            self.interventions = self.params['interventions']
+            if not self.interventions:  # Check if interventions is an empty dictionary
+                self.interventions = None
+                logging.warning("Empty interventions provided.")
+        else:
+            self.interventions = None
+            logging.warning("No interventions provided.")
 
         # Initialize counters
         self.urban_investor_owners_count = 0
@@ -82,10 +67,12 @@ class Fast(Model):
         # # Set the random seed for reproducibility
         # self.random_seed = 42
         # self.random.seed(self.random_seed)
-
         # current_time_seed = int(time.time())
         # random.seed(current_time_seed)
 
+        # Setup grid
+        self.height = self.params['height']
+        self.width  = self.params['width']
         # # If self.center_city is True, it places the city in the center; otherwise, it places it in the bottom corner.
         self.center_city   = self.params['center_city'] # put city in the bottom corner TODO check flag's logic
         # if self.center_city:
@@ -283,7 +270,11 @@ class Fast(Model):
         #     self.schedule.step_breed(Firm)   
 
     def step(self):
-       
+
+        # Apply interventions if there are any
+        if self.interventions:
+            self.apply_interventions(self.schedule.time)
+
         # Firm updates wages based on agglomeration population
         self.schedule.step_breed(Firm)
 
@@ -474,3 +465,20 @@ class Fast(Model):
         # Reset all lists within step_data
         for key in self.step_data:
             self.step_data[key] = []
+
+    def apply_interventions(self, current_time_step):
+        # Check if any interventions match the current time step
+        for intervention_name, intervention_details in self.interventions.items():
+            if current_time_step == intervention_details['time']:
+
+                # Split the attribute path into its components
+                attr_components = intervention_details['var'].split('.')
+                target_obj = self
+                for attr_name in attr_components[:-1]:
+                    target_obj = getattr(target_obj, attr_name)
+
+                # Set the value of the final attribute, print before and after
+                print(f"{intervention_name} at time {current_time_step}:")
+                print(f"   Before change, value is {getattr(target_obj, attr_components[-1])}")
+                setattr(target_obj, attr_components[-1], intervention_details['val'])
+                print(f"   After change, value is  {getattr(target_obj, attr_components[-1])}, at time {current_time_step} \n")
