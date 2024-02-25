@@ -5,7 +5,7 @@ import model.parameters as params
 import utils.plotting as plotting
 import utils.file_utils as file_utils
 
-num_steps  = 150   
+num_steps  = 50   
 timestamp  = file_utils.generate_timestamp()
 
 parameters = {
@@ -16,6 +16,7 @@ parameters = {
 }
 
 variable_parameters = {
+    'distances': [None]
     #   'c': [500, 300, 200], 
     #    'price_of_output': [6.6, 10, 15]
     #   'density': [1200, 600, 100],#[600, 100, 1],
@@ -41,7 +42,7 @@ variable_parameters = {
     #    'property_tax_rate': [0.08, 0.04, .02]
     #    'r_prime': [0.12, 0.05, .02], 
     #    'r_investor': [0.1, 0.05, .01]
-    'r_investor': [0.025] #, 0.05, .1] 
+    # 'r_investor': [0.025] #, 0.05, .1] 
     #    'gamma': [0.001, 0.02, 0.7]
     # 'subsistence_wage': [10000, 30000],
     # 'gamma': [0.02]  
