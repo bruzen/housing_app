@@ -34,7 +34,7 @@ default_parameters = {
     # PARAMETERS MOST LIKELY TO AFFECT SCALE
     'c': 500.0,                            ### transportation costs
     'price_of_output': 10,                 ######
-    'density': 400,                        #####
+    'density': 100,                        #####
     'A': 1800,                             ### 
     'alpha': 0.18,
     'beta':  0.75,
@@ -43,7 +43,7 @@ default_parameters = {
     'mult': 1.0,
     'adjN': 0.015,
     'adjk': 0.010,
-    'adjn': 0.15,
+    'adjn': 0.075,
     'adjF': 0.002,
     'adjw': 0.002, 
     'adjs': 0.2,  #Adjust worker Supply 
@@ -51,7 +51,7 @@ default_parameters = {
     'adjp': 0.2,  #Adjust agglom_pop -Population
     'dist': 1, 
     'init_F': 100.0,
-    'init_k': 500.0,
+    'init_k': 50000.0,
     'init_n': 10,
     'animal_spirits': 1.,
 

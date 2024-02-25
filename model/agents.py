@@ -559,7 +559,7 @@ class Firm(Agent):
      
         #      ALTERNATIVE TARGET VALUES FOR k, n, F, N USING VALUES FROM LAST TIME STEP
         #  WHICH MODEL ARE WE RUNNING?
-        self.model.model_name = "Feb 23. Vary A"
+        self.model.model_name = "Feb 24, mulipliers"
 
         ##      k target _____________________________________________________________
         #      kopt) --- Optimal k calculation (two versions)
@@ -579,7 +579,7 @@ class Firm(Agent):
         # self.n_target   = self.beta*
         # self.n_target   =  (self.beta * revenue)/(1+ self.overhead)*self.wage  # This explodes
         #     nopt 2) --- setting  the optimal number of worker(s using wage=vMPL 
-        self.n_target   =  (self.beta* self.A * self.agglom_pop**self.gamma *  self.k**self.alpha )**(1-self.beta)  
+        self.n_target   = 5 * (self.beta* self.A * self.agglom_pop**self.gamma *  self.k**self.alpha )**(1-self.beta)  
         
 
         #     n1) --- Profit-ratio-based adjustment     
