@@ -49,8 +49,8 @@ class Fast(Model):
 
         logging.getLogger('matplotlib').setLevel(logging.ERROR)
 
-        # Initialize interventions
-        if 'interventions' in self.params:
+        # Initialize interventions if interventions_on is True, and interventsions is a non empty dict
+        if 'interventions' in self.params and self.params.get('interventions_on', False):
             self.interventions = self.params['interventions']
             if not self.interventions:  # Check if interventions is an empty dictionary
                 self.interventions = None

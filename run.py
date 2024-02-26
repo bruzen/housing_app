@@ -16,7 +16,8 @@ parameters = {
 }
 
 variable_parameters = {
-    'distances': [None]
+    'interventions_on': [True, False],
+    # 'distances': [None]
     #   'c': [500, 300, 200], 
     #    'price_of_output': [6.6, 10, 15]
     #   'density': [1200, 600, 100],#[600, 100, 1],
