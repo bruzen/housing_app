@@ -91,8 +91,15 @@ class City(Model):
 
         logging.getLogger('matplotlib').setLevel(logging.ERROR) 
 
-        self.height = self.params['height']
-        self.width  = self.params['width']
+        # Initialize interventions if interventions_on is True, and interventsions is a non empty dict
+        if 'interventions' in self.params and self.params.get('interventions_on', False):
+            self.interventions = self.params['interventions']
+            if not self.interventions:  # Check if interventions is an empty dictionary
+                self.interventions = None
+                logging.warning("Empty interventions provided.")
+        else:
+            self.interventions = None
+            logging.warning("No interventions provided.")
 
         # Initialize counters
         self.urban_investor_owners_count = 0
@@ -102,10 +109,12 @@ class City(Model):
         # # Set the random seed for reproducibility
         # self.random_seed = 42
         # self.random.seed(self.random_seed)
-
         # current_time_seed = int(time.time())
         # random.seed(current_time_seed)
 
+        # Setup grid
+        self.height = self.params['height']
+        self.width  = self.params['width']
         # If self.center_city is True, it places the city in the center; otherwise, it places it in the bottom corner.
         self.center_city   = self.params['center_city'] # put city in the bottom corner TODO check flag's logic
         if self.center_city:
@@ -238,6 +247,10 @@ class City(Model):
         is executed. It calls the agent functions, then records results
         for analysis.
         """
+
+        # Apply interventions if there are any
+        if self.interventions:
+            self.apply_interventions(self.schedule.time)
 
         # Reset counters
         self.urban_investor_owners_count = 0
@@ -559,6 +572,23 @@ class City(Model):
 
     def get_distance_to_center(self, pos):
         return distance.euclidean(pos, self.center)
+
+    def apply_interventions(self, current_time_step):
+        # Check if any interventions match the current time step
+        for intervention_name, intervention_details in self.interventions.items():
+            if current_time_step == intervention_details['time']:
+
+                # Split the attribute path into its components
+                attr_components = intervention_details['var'].split('.')
+                target_obj = self
+                for attr_name in attr_components[:-1]:
+                    target_obj = getattr(target_obj, attr_name)
+
+                # Set the value of the final attribute, print before and after
+                print(f"{intervention_name} at time {current_time_step}:")
+                print(f"   Before change, value is {getattr(target_obj, attr_components[-1])}")
+                setattr(target_obj, attr_components[-1], intervention_details['val'])
+                print(f"   After change, value is  {getattr(target_obj, attr_components[-1])}, at time {current_time_step} \n")
 
 class Workforce:
     """Manages a dictionary of working agents."""
