@@ -634,10 +634,12 @@ class Firm(Agent):
         self.p_dot            = self.get_p_dot()
 
     def get_worker_supply(self, city_extent = None):
+        # Fast model calculates worker supply based on city_extent
         if city_extent:
             # agent_count = math.pi * (city_extent ** 2)  #  Euclidian radius of the circular city
             agent_count   = 2 * (city_extent ** 2)        #  Block metric radius of the circular city
             worker_supply = self.density * agent_count + self.seed_population
+        # Main model counts the workers who choose to work
         else:
             agent_count = self.model.workforce.get_agent_count(self.model.workforce.workers)
             # If the city is in the bottom corner center_city is false, and effective population must be multiplied by 4
@@ -737,6 +739,26 @@ class Investor(Agent):
             self.model.logger.warning(f'No capital gains tax for investor {self.unique_id}.')
         self.capital_gains_tax     = capital_gains_tax
         self.expectations          = investor_expectations
+
+    def list_properties(self):
+        no_props = len(self.properties_owned)
+        # print(f'Time {self.model.schedule.time}, no_props {no_props}')
+        for prop in self.properties_owned:
+            if self.model.random.random() < 0.05:  # 5% chance
+                # print(f'Time {self.model.schedule.time}, List investor property {prop.unique_id}, no_props {no_props}')
+                # print(f'List investor property {prop.unique_id}')
+                reservation_price = self.model.bank.get_reservation_price(
+                    R_N = prop.net_rent, 
+                    r = self.model.r_prime, 
+                    r_target = self.model.r_target, 
+                    m =  0.8, 
+                    p_dot =  prop.p_dot, 
+                    capital_gains_tax = self.capital_gains_tax,
+                    transport_cost = prop.transport_cost,
+                    expectations   = self.expectations)
+
+                # List the property for sale
+                self.model.realtor.list_property_for_sale(self, prop, reservation_price)
 
     def bid_on_properties(self):
         # """Investors bid on investment properties."""
@@ -848,15 +870,22 @@ class Realtor(Agent):
 
             else:
                 # If no allocation rent homes TODO they could keep the home on the market
-                # self.model.logger.debug('No allocation')
-                self.model.logger.debug(f'Property {listing.sale_property.unique_id}, {listing.sale_property.pos} NOT sold by seller {listing.seller}')
-                # List property  to rent it to a newcomer
-                self.rental_listings.append(listing.sale_property)
-                # Track ownership with retired_agents
-                self.model.retired_agents.add_property(listing.seller.unique_id, listing.sale_property)
-                listing.sale_property.owner = self.model.retired_agents
-                # Remove retiring agent from the model
-                listing.seller.remove()
+                if isinstance(listing.seller, Person):
+                    # self.model.logger.debug('No allocation')
+                    self.model.logger.debug(f'Property {listing.sale_property.unique_id}, {listing.sale_property.pos} NOT sold by seller {listing.seller}')
+                    # List property  to rent it to a newcomer
+                    self.rental_listings.append(listing.sale_property)
+                    # Track ownership with retired_agents
+                    self.model.retired_agents.add_property(listing.seller.unique_id, listing.sale_property)
+                    listing.sale_property.owner = self.model.retired_agents
+                    # Remove retiring agent from the model
+                    listing.seller.remove()
+                if isinstance(listing.seller, Investor):
+                    # TODO check handling of investor sale when no purchase is made
+                    self.model.logger.debug(f'Investor seller lists homes that do not sell. Investor {listing.seller.unique_id} keeps property {listing.property.unique_id}.')
+                else:
+                    print('Error. Seller is not an investor or a person')
+
 
         # Complete transactions for all listings and clear bids
         self.complete_transactions(allocations)
@@ -967,7 +996,6 @@ class Realtor(Agent):
             self.model.logger.debug(f'Newly created renter {renter.unique_id} lives at '
                          f'property {renter.residence.unique_id} which has '
                          f'resident {rental.resident.unique_id}, owner {rental.owner.unique_id}, pos {renter.pos}.')
-            
             renter.work_if_worthwhile_to_work()
         self.rental_listings.clear()
 

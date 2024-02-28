@@ -266,8 +266,11 @@ class City(Model):
         # Land records locational rents and calculates price forecast
         self.schedule.step_breed(Land)
     
-        # People work, retire, and list homes to sell
+        # People work, retire, and list properties to sell
         self.schedule.step_breed(Person)
+
+        # Investors list properties to sell
+        self.schedule.step_breed(Investor, step_name='list_properties')
 
         # Add agents to replace retiring_urban_owner workers
         # Draw 50 values from the distribution of initial savings
