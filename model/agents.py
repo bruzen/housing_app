@@ -262,7 +262,8 @@ class Person(Agent):
                         m =  0.8, 
                         p_dot =  self.residence.p_dot, 
                         capital_gains_tax = self.capital_gains_tax,
-                        transport_cost = self.residence.transport_cost)
+                        transport_cost = self.residence.transport_cost,
+                        expectations   = self.expectations)
                     self.model.realtor.list_property_for_sale(self, self.residence, reservation_price)
                     # TODO Contact bank. Decide: sell, rent or keep empty
                     self.model.logger.debug(f'Agent is retiring: {self.unique_id}, period {self.working_period}')
@@ -379,7 +380,7 @@ class Person(Agent):
         # First Calculate value of purchase (max bid)
         
         bid_type = 'value_limited'
-        P_bid    = self.model.bank.get_max_desired_bid(R_N, r, r_target, m, p_dot, self.capital_gains_tax, transport_cost)
+        P_bid    = self.model.bank.get_max_desired_bid(R_N, r, r_target, m, p_dot, self.capital_gains_tax, transport_cost, self.expectations)
         # self.model.logger.warning(f'Max bid: {self.unique_id}, bid {P_bid}, R_N {R_N}, r {r}, r {r_target}, m {m}, transport_cost {transport_cost}')
 
         if S/(1-m) <= P_bid:
@@ -675,11 +676,11 @@ class Bank(Agent):
         super().__init__(unique_id, model)
         self.pos = pos
 
-    def get_reservation_price(self, R_N, r, r_target, m, p_dot, capital_gains_tax, transport_cost):
+    def get_reservation_price(self, R_N, r, r_target, m, p_dot, capital_gains_tax, transport_cost, expectations):
         # TODO is it the same as max bid?
-        return self.get_max_desired_bid(R_N, r, r_target, m, p_dot, capital_gains_tax, transport_cost)
+        return self.get_max_desired_bid(R_N, r, r_target, m, p_dot, capital_gains_tax, transport_cost, expectations)
 
-    def get_max_desired_bid(self, R_N, r, r_target, m, p_dot, capital_gains_tax, transport_cost):
+    def get_max_desired_bid(self, R_N, r, r_target, m, p_dot, capital_gains_tax, transport_cost, expectations):
         T      = self.model.mortgage_period
         delta  = self.model.delta
         # capital_gains_tax = self.model.capital_gains_tax # person and investor send.
@@ -687,7 +688,7 @@ class Bank(Agent):
         if R_N is not None and r is not None and r_target is not None and m is not None and p_dot is not None:
             R_NT   = ((1 + r)**T - 1) / r * R_N
             # return R_NT / ((1 - m) * r_target/(delta**T) - p_dot) 
-            return (1 - capital_gains_tax) * R_NT / ((1 - m) * r_target/(delta**T) - p_dot +(1+r)**T*m) # Revised denominator from eqn 6:20
+            return (1 - capital_gains_tax) * R_NT / ((1 - m) * r_target/(delta**T) - expectations * p_dot +(1+r)**T*m) # Revised denominator from eqn 6:20
 
         else:
             self.model.logger.error(f'Get_max_desired_bid None error Rn {R_N}, r {r}, r_target {r_target}, m {m}, p_dot {p_dot}')
@@ -760,7 +761,7 @@ class Investor(Agent):
     def get_max_bid(self, m, R_N, p_dot, transport_cost):
         r = self.borrowing_rate
         r_target = self.model.r_target
-        P_bid    = self.model.bank.get_max_desired_bid(R_N, r, r_target, m, p_dot, self.capital_gains_tax, transport_cost)
+        P_bid    = self.model.bank.get_max_desired_bid(R_N, r, r_target, m, p_dot, self.capital_gains_tax, transport_cost, self.expectations)
         bid_type = 'investor'
         return P_bid, bid_type
 
