@@ -221,6 +221,7 @@ class Person(Agent):
         # Count time step and track whether agent is working
         self.count               = 0 # TODO check if we still use this
         self.is_working_check    = 0 # TODO delete?
+        self.expectations        = 1.0 # Set parameter for investor_expectations, constant for person
 
         # else:
         #     self.model.workforce.remove(self, self.model.workforce.workers)
@@ -489,7 +490,6 @@ class Firm(Agent):
                  init_F,
                  init_k,
                  init_n,
-                 animal_spirits,
                  ):
         super().__init__(unique_id, model)
         self.pos             = pos
@@ -514,7 +514,6 @@ class Firm(Agent):
         self.adjp     = adjp
         self.dist     = dist
         self.r        = r_prime # Firm cost of capital
-        self.animal_spirits = animal_spirits # Or enthusiasm
 
         # Initial values # TODO do we need all these initial values?
         self.y        = 100000
@@ -725,7 +724,7 @@ class Investor(Agent):
     # def borrowing_rate(self):
     #     self.model.r_target
     
-    def __init__(self, unique_id, model, pos, r_investor, capital_gains_tax, properties_owned = []):
+    def __init__(self, unique_id, model, pos, r_investor, capital_gains_tax, investor_expectations, properties_owned = []):
         super().__init__(unique_id, model)
         self.pos = pos
         self.borrowing_rate = r_investor # self.model.r_target
@@ -736,6 +735,7 @@ class Investor(Agent):
         if not capital_gains_tax:
             self.model.logger.warning(f'No capital gains tax for investor {self.unique_id}.')
         self.capital_gains_tax     = capital_gains_tax
+        self.expectations          = investor_expectations
 
     def bid_on_properties(self):
         # """Investors bid on investment properties."""

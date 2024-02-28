@@ -187,13 +187,12 @@ class City(Model):
                                     init_F=self.params['init_F'],
                                     init_k=self.params['init_k'],
                                     init_n=self.params['init_n'],
-                                    animal_spirits=self.params['animal_spirits'],
                                     )
         self.grid.place_agent(self.firm, self.center)
         self.schedule.add(self.firm)
 
         self.unique_id      += 1
-        self.investor        = Investor(self.unique_id, self, self.center, self.params['r_investor'], self.params['cg_tax_invest'])
+        self.investor        = Investor(self.unique_id, self, self.center, self.params['r_investor'], self.params['cg_tax_invest'], self.params['investor_expectations'])
         self.grid.place_agent(self.investor, self.center)
         self.schedule.add(self.investor)
 
