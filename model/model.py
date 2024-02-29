@@ -89,18 +89,21 @@ class City(Model):
                     format='%(asctime)s %(name)s %(levelname)s:%(message)s')
         self.logger = logging.getLogger(__name__)
 
-        logging.getLogger('matplotlib').setLevel(logging.ERROR) 
+        # Set logger level for the matplotlib logger, to reduce outside log messages
+        logging.getLogger('matplotlib').setLevel(logging.ERROR)
 
         # Initialize interventions if interventions_on is True, and interventsions is a non empty dict
         if 'interventions' in self.params and self.params.get('interventions_on', False):
             self.interventions = self.params['interventions']
             if not self.interventions:  # Check if interventions is an empty dictionary
                 self.interventions = None
-                logging.warning("Empty interventions provided.")
+                self.logger.warning("Empty interventions provided.")
         else:
             self.interventions = None
-            logging.warning("No interventions provided.")
+            self.logger.warning("No interventions provided.")
 
+
+        self.logger.error('Test logging')
         # Initialize counters
         self.urban_investor_owners_count = 0
         self.urban_resident_owners_count = 0
@@ -238,8 +241,7 @@ class City(Model):
             self.schedule.step_breed(Person, step_name='work_if_worthwhile_to_work')
 
             # Firms update wages
-            self.schedule.step_breed(Firm)   
-
+            self.schedule.step_breed(Firm)
 
     def step(self):
         """ The model step function runs in each time step when the model
@@ -315,20 +317,20 @@ class City(Model):
                     # Extra non-newcomers
                     unique_ids = [str(agent.unique_id) for agent in num_not_in_newcomers]
                     comma_separated_unique_ids = ', '.join(unique_ids)
-                    logging.warning(f'More than one Person agent in self.workforce.newcomers at location {pos}, agents are {comma_separated_unique_ids}')
+                    self.logger.warning(f'More than one Person agent in self.workforce.newcomers at location {pos}, agents are {comma_separated_unique_ids}')
                 elif len(num_not_in_newcomers == 0):
                     # Only newcomers
-                    logging.warning(f'Only newcomers at location {pos}, agents are {comma_separated_unique_ids}')
+                    self.logger.warning(f'Only newcomers at location {pos}, agents are {comma_separated_unique_ids}')
                 # else:
                 #     # Newcomers
                 #     unique_ids = [str(agent.unique_id) for agent in persons_at_position]
                 #     comma_separated_unique_ids = ', '.join(unique_ids)
-                #     logging.debug(f'More than one Person agent at location {pos}, agents are {comma_separated_unique_ids}')
+                #     self.logger.debug(f'More than one Person agent at location {pos}, agents are {comma_separated_unique_ids}')
                 # TODO Could check that non-newcomer is resident etc.
 
             elif len(persons_at_position) == 0:
                 # There are no people
-                logging.warning(f'No Person agents at location {pos}')
+                self.logger.warning(f'No Person agents at location {pos}')
 
         self.record_step_data()
 
@@ -503,14 +505,14 @@ class City(Model):
             try:
                 agent_out.to_csv(self.agent_filepath, index=False)
             except Exception as e:
-                logging.error("Error saving agent data: %s", str(e))
+                self.logger.error("Error saving agent data: %s", str(e))
 
         # Save model data
         if model_out is not None:
             try:
                 model_out.to_csv(self.model_filepath, index=False)
             except Exception as e:
-                logging.error("Error saving model data: %s", str(e))
+                self.logger.error("Error saving model data: %s", str(e))
 
 
     def create_newcomer(self, savings=0, pos=None):
@@ -610,14 +612,14 @@ class Workforce:
 
     # def add(self, agent: Person, agent_dict: dict) -> None:
     #     if agent.unique_id in agent_dict:
-    #         logging.warning(f"Person with unique id {agent.unique_id!r} is already in the manager.")
+    #         self.logger.warning(f"Person with unique id {agent.unique_id!r} is already in the manager.")
     #         return  # If agent is already present, simply return without adding it again.
 
     #     agent_dict[agent.unique_id] = agent
 
     # def remove(self, agent: Person, agents_dict: Dict[int, Person]) -> None:
     #     if agent.unique_id not in agents_dict:
-    #         logging.warning(f"Person with unique id {agent.unique_id!r} not found in the manager")
+    #         self.logger.warning(f"Person with unique id {agent.unique_id!r} not found in the manager")
     #         return  # If agent is not found, simply return without attempting to remove.
 
     #     del agents_dict[agent.unique_id]

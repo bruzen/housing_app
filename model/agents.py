@@ -666,7 +666,7 @@ class Firm(Agent):
         except ZeroDivisionError:
             # Handle division by zero
             p_dot = None
-            logging.error(f"ZeroDivisionError at time_step {self.model.schedule.time} for Land ID {self.unique_id}, old_wage_premium {self.model.firm.old_wage_premium}")
+            self.model.logger.error(f"ZeroDivisionError at time_step {self.model.schedule.time} for Land ID {self.unique_id}, old_wage_premium {self.model.firm.old_wage_premium}")
         except Exception as e:
             # Handle other exceptions
             self.model.logger.error(f"An error occurred: {str(e)}")

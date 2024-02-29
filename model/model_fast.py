@@ -47,6 +47,7 @@ class Fast(Model):
                     format='%(asctime)s %(name)s %(levelname)s:%(message)s')
         self.logger = logging.getLogger(__name__)
 
+        # Set logger level for the matplotlib logger, to reduce outside log messages
         logging.getLogger('matplotlib').setLevel(logging.ERROR)
 
         # Initialize interventions if interventions_on is True, and interventsions is a non empty dict
@@ -54,10 +55,10 @@ class Fast(Model):
             self.interventions = self.params['interventions']
             if not self.interventions:  # Check if interventions is an empty dictionary
                 self.interventions = None
-                logging.warning("Empty interventions provided.")
+                self.logger.warning("Empty interventions provided.")
         else:
             self.interventions = None
-            logging.warning("No interventions provided.")
+            self.logger.warning("No interventions provided.")
 
         # Initialize counters
         self.urban_investor_owners_count = 0
@@ -451,14 +452,14 @@ class Fast(Model):
             try:
                 agent_out.to_csv(self.agent_filepath, index=False)
             except Exception as e:
-                logging.error("Error saving agent data: %s", str(e))
+                self.logger.error("Error saving agent data: %s", str(e))
 
         # Save model data
         if model_out is not None:
             try:
                 model_out.to_csv(self.model_filepath, index=False)
             except Exception as e:
-                logging.error("Error saving model data: %s", str(e))
+                self.logger.error("Error saving model data: %s", str(e))
 
     def reset_step_data_lists(self):
         # Reset all lists within step_data
