@@ -7,8 +7,8 @@ default_parameters = {
     # INTERVENTIONS
     'interventions_on': True,
     'interventions':  {
-        'Output price down': {'var': 'firm.price_of_output', 'val': 0.9, 'time': 25},
-        'Output price up':   {'var': 'firm.price_of_output', 'val': 15,  'time': 45},
+        'Output price down': {'var': 'firm.price_of_output', 'val':  8, 'time': 25},
+        'Output price up':   {'var': 'firm.price_of_output', 'val': 10, 'time': 45},
         # Add more interventions...
     },
 
