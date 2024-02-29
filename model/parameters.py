@@ -7,8 +7,12 @@ default_parameters = {
     # INTERVENTIONS
     'interventions_on': True,
     'interventions':  {
-        'Output price down': {'var': 'firm.price_of_output', 'val':  8, 'time': 25},
-        'Output price up':   {'var': 'firm.price_of_output', 'val': 10, 'time': 45},
+        # 'Output price down': {'var': 'firm.price_of_output', 'val':  8, 'time': 25},
+        # 'Output price up':   {'var': 'firm.price_of_output', 'val': 10, 'time': 45},
+        # 'Person capital gains tax down': {'var': 'person.capital_gains_tax', 'val':  .1, 'time': 25},
+        # 'Person capital gains tax up':   {'var': 'person.capital_gains_tax', 'val': .2, 'time': 45},
+        'Investor capital gains tax down': {'var': 'investor.capital_gains_tax', 'val':  .1, 'time': 25},
+        'Investor capital gains tax up':   {'var': 'investor.capital_gains_tax', 'val': .2, 'time': 45},
         # Add more interventions...
     },
 
