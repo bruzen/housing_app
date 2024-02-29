@@ -72,4 +72,5 @@ default_parameters = {
     'wealth_sensitivity': 0.1,
     'cg_tax_per':   0.01, # share 0-1
     'cg_tax_invest': 0.15, # share 0-1
+    'investor_turnover': 0.05,
 }

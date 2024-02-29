@@ -150,7 +150,7 @@ class Fast(Model):
         self.schedule.add(self.firm)
 
         self.unique_id      += 1
-        self.investor        = Investor(self.unique_id, self, self.center, self.params['r_investor'], self.params['cg_tax_invest'], self.params['investor_expectations'])
+        self.investor        = Investor(self.unique_id, self, self.center, self.params['r_investor'], self.params['cg_tax_invest'], self.params['investor_expectations'], self.params['investor_turnover'])
         self.grid.place_agent(self.investor, self.center)
         self.schedule.add(self.investor)
 

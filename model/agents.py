@@ -727,10 +727,11 @@ class Investor(Agent):
     # def borrowing_rate(self):
     #     self.model.r_target
     
-    def __init__(self, unique_id, model, pos, r_investor, capital_gains_tax, investor_expectations, properties_owned = []):
+    def __init__(self, unique_id, model, pos, r_investor, capital_gains_tax, investor_expectations, investor_turnover, properties_owned = []):
         super().__init__(unique_id, model)
         self.pos = pos
-        self.borrowing_rate = r_investor # self.model.r_target
+        self.borrowing_rate    = r_investor # self.model.r_target
+        self.investor_turnover = investor_turnover
 
         # Properties for bank as an asset holder
         # self.property_management_costs = property_management_costs # TODO 
@@ -744,7 +745,7 @@ class Investor(Agent):
         no_props = len(self.properties_owned)
         # print(f'Time {self.model.schedule.time}, no_props {no_props}')
         for prop in self.properties_owned:
-            if self.model.random.random() < 0.05:  # 5% chance
+            if self.model.random.random() < self.investor_turnover: # 5% chance
                 # print(f'Time {self.model.schedule.time}, List investor property {prop.unique_id}, no_props {no_props}')
                 # print(f'List investor property {prop.unique_id}')
                 reservation_price = self.model.bank.get_reservation_price(
