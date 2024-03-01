@@ -141,7 +141,8 @@ class Land(Agent):
         return False
  
     def change_dist(self, dist):
-        self.model.logger.warning(f'Note land has set rather than calculated distance. Could introduce errors. {self.unique_id}.')
+        self.model.logger.warning(f'Change distance from center for land {self.unique_id}') # Used in model_fast
+        # self.model.logger.warning(f'Note land has set rather than calculated distance. Used in model_fast. Could introduce errors. {self.unique_id}.')
         self.distance_from_center     = dist # self.calculate_distance_from_center()
         self.transport_cost           = self.calculate_transport_cost()
         self.warranted_rent           = self.get_warranted_rent()
@@ -266,7 +267,7 @@ class Person(Agent):
                         expectations   = self.expectations)
                     self.model.realtor.list_property_for_sale(self, self.residence, reservation_price)
                     # TODO Contact bank. Decide: sell, rent or keep empty
-                    self.model.logger.debug(f'Agent is retiring: {self.unique_id}, period {self.working_period}')
+                    self.model.logger.debug(f'Person retiring: {self.unique_id}, {self.residence.unique_id}-{self.residence.pos}, reservation price {reservation_price}') # period {self.working_period}
 
             if self.working_period > self.model.working_periods:
                 if self.residence in self.properties_owned:

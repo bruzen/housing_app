@@ -97,13 +97,11 @@ class City(Model):
             self.interventions = self.params['interventions']
             if not self.interventions:  # Check if interventions is an empty dictionary
                 self.interventions = None
-                self.logger.warning("Empty interventions provided.")
+                # self.logger.warning("Empty interventions provided.")
         else:
             self.interventions = None
-            self.logger.warning("No interventions provided.")
+            # self.logger.warning("No interventions provided.")
 
-
-        self.logger.error('Test logging')
         # Initialize counters
         self.urban_investor_owners_count = 0
         self.urban_resident_owners_count = 0
@@ -132,7 +130,7 @@ class City(Model):
         # If demographics_on, there is a housing market when agents retire # self.demographics_on = self.params['demographics_on']
         if self.params['demographics_on']:
             self.working_periods  = self.params['working_periods']
-            self.logger.debug(f'Demographics on, working periods {self.working_periods}, 2x time steps {self.num_steps}') #, params working periods {self.params['working_periods']}')
+            self.logger.debug(f'Demographics on, working periods {self.working_periods}, time steps {self.num_steps}') #, params working periods {self.params['working_periods']}')
         else:
             self.working_periods = 10 * self.num_steps
             self.logger.debug(f'Demographics off, working periods {self.working_periods}')
@@ -258,7 +256,8 @@ class City(Model):
         self.urban_resident_owners_count = 0
         self.urban_other_owners_count    = 0
 
-        self.logger.info(f'\n \n \n Step {self.schedule.steps}. \n')
+        # self.logger.info(f'\n \n \n Step {self.schedule.steps}. \n')
+        self.logger.info(f'\n \n \n Step {self.schedule.time}. \n')
 
         # Firms update wages based on how many people choose to work in the city
         self.firm.worker_supply = self.firm.get_worker_supply()
@@ -280,7 +279,7 @@ class City(Model):
 
         # Sort the list in descending order
         savings_values.sort(reverse=True)
-        self.logger.debug(f'Savings value distribution {savings_values}')
+        # self.logger.debug(f'Savings value distribution {savings_values}')
 
         for i in self.workforce.retiring_urban_owner:
             if savings_values:

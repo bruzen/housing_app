@@ -55,10 +55,10 @@ class Fast(Model):
             self.interventions = self.params['interventions']
             if not self.interventions:  # Check if interventions is an empty dictionary
                 self.interventions = None
-                self.logger.warning("Empty interventions provided.")
+                # self.logger.warning("Empty interventions provided.")
         else:
             self.interventions = None
-            self.logger.warning("No interventions provided.")
+            # self.logger.warning("No interventions provided.")
 
         # Initialize counters
         self.urban_investor_owners_count = 0
@@ -85,10 +85,10 @@ class Fast(Model):
         self.transport_cost_per_dist = self.params['c'] # self.params['init_wage_premium_ratio'] * self.params['subsistence_wage'] / self.params['init_city_extent'] # c
 
         # People
-        # If demographics_on, there is a housing market when agents retire # self.demographics_on = self.params['demographics_on']
+        # demographics_on does not matter in model_fast because there is no housing market
         if self.params['demographics_on']:
             self.working_periods  = self.params['working_periods']
-            # self.logger.debug(f'Demographics on, working periods {self.working_periods}, 2x time steps {self.num_steps}') #, params working periods {self.params['working_periods']}')
+            # self.logger.debug(f'Demographics on, working periods {self.working_periods}, time steps {self.num_steps}') #, params working periods {self.params['working_periods']}')
         else:
             self.working_periods = 10 * self.num_steps
             # self.logger.debug(f'Demographics off, working periods {self.working_periods}')
@@ -270,6 +270,8 @@ class Fast(Model):
         #     self.schedule.step_breed(Firm)   
 
     def step(self):
+
+        self.logger.info(f'\n \n \n Step {self.schedule.time}. \n')
 
         # Apply interventions if there are any
         if self.interventions:
