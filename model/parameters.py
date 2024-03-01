@@ -5,14 +5,17 @@ default_parameters = {
     'height':    50, #30,
 
     # INTERVENTIONS
-    'interventions_on': True,
+    'interventions_on': False,
+    # 'interventions_on': True,
     'interventions':  {
-        # 'Output price down': {'var': 'firm.price_of_output', 'val':  8, 'time': 25},
+        'Output price down': {'var': 'firm.price_of_output', 'val':  8, 'time': 25},
         # 'Output price up':   {'var': 'firm.price_of_output', 'val': 10, 'time': 45},
         # 'Person capital gains tax down': {'var': 'person.capital_gains_tax', 'val':  .1, 'time': 25},
         # 'Person capital gains tax up':   {'var': 'person.capital_gains_tax', 'val': .2, 'time': 45},
-        'Investor capital gains tax down': {'var': 'investor.capital_gains_tax', 'val':  .1, 'time': 25},
-        'Investor capital gains tax up':   {'var': 'investor.capital_gains_tax', 'val': .2, 'time': 45},
+        # 'Investor capital gains tax down': {'var': 'investor.capital_gains_tax', 'val':  .1, 'time': 25},
+        # 'Investor capital gains tax up':   {'var': 'investor.capital_gains_tax', 'val': .2, 'time': 45},
+        # 'investor_turnover up': {'var': 'investor.investor_turnover', 'val':  .5, 'time': 10},
+        # 'investor_turnover down':   {'var': 'investor.investor_turnover', 'val': .05, 'time': 20},
         # Add more interventions...
     },
 
