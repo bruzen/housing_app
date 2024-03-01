@@ -568,7 +568,6 @@ class Firm(Agent):
 
     def step(self):
        
-
         # STORE INITIAL VALUES FOR CALCULATING CHANGES
         self.A_time = self.model.schedule.time
         self.y          = self.A * self.agglom_pop**self.gamma *  self.k**self.alpha * self.n**self.beta
@@ -582,15 +581,33 @@ class Firm(Agent):
         revenue    = self.price_of_output * self.y 
         cost       = self.r * self.k + self.wage * self.n
         profit     = revenue - cost
-        profit_ratio     = revenue / cost
-     
-        #      ALTERNATIVE TARGET VALUES FOR k, n, F, N USING VALUES FROM LAST TIME STEP
-        #  WHICH MODEL ARE WE RUNNING?
-        self.model.model_name = "Feb 24, mulipliers"
+        profit_ratio          = revenue / cost
+        self.old_wage_premium = self.wage_premium
+        # N_target   = self.N #        NEW    *****
+        # self.N        = (1 - self.adjN) * self.N + self.adjN * N_target   #
+        self.model.model_name = "March 1 trying to recover desired behaviour of N"
 
-        ##      k target _____________________________________________________________
-        #      kopt) --- Optimal k calculation (two versions)
         self.k_target = self.price_of_output * self.alpha * self.y/self.r     #(old optimal version)
+        self.n_target   = 5 * (self.beta* self.A * self.agglom_pop**self.gamma *  self.k**self.alpha )**(1-self.beta) 
+        self.worker_demand = self.n_target * self.F # self.n_target * self.F_target
+        edr = (self.worker_demand - self.worker_supply) / max(abs(self.worker_demand), abs(self.worker_supply)) #positive or negative 
+        self.F = self.worker_supply / self.n  #moved this up two lines
+        self.wage_target =  VMPL / ov
+        self.wage        = self.wage_target  #(1 - self.adjw) * self.wage_target + self.adjw * self.wage_target
+        
+        #TODO INCREMENT STATE VARIABLES TOWARDS TARGETS     NOT USED  REMOVE?
+        self.n        = (1 - self.adjn) * self.n + self.adjn * self.n_target
+        self.k        = (1 - self.adjk) * self.k + self.adjk * self.k_target 
+        # self.F        = (1 - self.adjF) * self.F + self.adjF * self.F_target
+        self.wage     = (1 - self.adjw) * self.wage + self.adjw * self.wage_target  #reintroduced  - didn't help
+        #self.y        = (1 - self.adjy) * self.y + self.adjy * self.y*F_target 
+
+        self.wage_premium     = self.wage - self.subsistence_wage # find wage available for transportation
+        self.p_dot            = self.get_p_dot()
+      
+        ##      k target _____________________________________________________________#  -> #* in model 1
+        #      kopt) --- Optimal k calculation (two versions)
+        #* self.k_target = self.price_of_output * self.alpha * self.y/self.r     #(old optimal version)
         # self.k_target = (self.r/(self.price_of_output * self.alpha * self.A * self.agglom_pop**self.gamma *  self.n**self.beta) )**(1-self.alpha)        
         
         #     kprofit) --- Profit-based adjustment
@@ -599,6 +616,13 @@ class Firm(Agent):
         #     kold) --- Profit-based adjustment
         # self.k_target = (self.alpha * self.y) /self.r
 
+        # #     WAGE OFFER ________ 2 versions______________moving this up makes demand respond instantly
+        # ##     w1) --- BASED ON EXCESS DEMAND
+        # # self.wage = (1 + self.adjw *edr)*self.wage
+        # ##     w2) --- BASED ON MPL  (respond directly to flaw in behavour??)
+        # self.wage_target =  VMPL / ov
+        #* self.wage        = (1 - self.adjw) * self.wage_target + self.adjw * self.wage_target
+        
 
         ##     n_target _________ 3 versions_________________________________________
 
@@ -606,8 +630,7 @@ class Firm(Agent):
         # self.n_target   = self.beta*
         # self.n_target   =  (self.beta * revenue)/(1+ self.overhead)*self.wage  # This explodes
         #     nopt 2) --- setting  the optimal number of worker(s using wage=vMPL 
-        self.n_target   = 5 * (self.beta* self.A * self.agglom_pop**self.gamma *  self.k**self.alpha )**(1-self.beta)  
-        
+        #* self.n_target   = 5 * (self.beta* self.A * self.agglom_pop**self.gamma *  self.k**self.alpha )**(1-self.beta)         
 
         #     n1) --- Profit-ratio-based adjustment     
         # self.n_target = profit_ratio * self.n #  THIS gives us F crashing  try longer run - may work out
@@ -619,8 +642,6 @@ class Firm(Agent):
         # self.n_target        = self.n + change_n
         # _________  # same adjustment for all 3 versions of n_target ______
        
-        
-
         ##     F target ___________ 3 versions________________________________________
         ##     F1) --- Entreprenur uses profit signal measured as new labour  in n1 for entry/exit decisions. 
         # self.F_target = self.F * (1 + change_n / self.n)
@@ -629,36 +650,34 @@ class Firm(Agent):
         #self.F_target=self.N/self.n_target   # "NOT COMPATABLE" WITH  ALLOCATE LABOUR TO FIRMS (below)  CHECK 
         
         # IDENTIFY AGGREGATE INDUSTRY DEMAND FOR LABOUR 
-        self.worker_demand = self.n_target * self.F # self.n_target * self.F_target
+        #self.worker_demand = self.n_target * self.F # self.n_target * self.F_target
 
         # DEFINE THE EXCESS DEMAND RATIO
-        edr = (self.worker_demand - self.worker_supply) / max(abs(self.worker_demand), abs(self.worker_supply)) #positive or negative
+        #edr = (self.worker_demand - self.worker_supply) / max(abs(self.worker_demand), abs(self.worker_supply)) #positive or negative
         
         # APPLY SHORT-SIDE RULE  (to find out how many CAN be employed) ___
         # self.N =   # selfmin(self.worker_demand, self.worker_supply)
 
         # ALLOCATE LABOUR TO FIRMS (All firms get equal labour, have equal MPL)
         # N = self.n * self.F     # "NOT COMPATABLE" WITH  F2  CHECK 
-        self.F = self.worker_supply / self.n     
+        #self.F = self.worker_supply / self.n     
+        
+        # #TODO INCREMENT STATE VARIABLES TOWARDS TARGETS     NOT USED  REMOVE?
+        # self.n        = (1 - self.adjn) * self.n + self.adjn * self.n_target
+        # self.k        = (1 - self.adjk) * self.k + self.adjk * self.k_target 
+        # self.F        = (1 - self.adjF) * self.F + self.adjF * self.F_target
+        # self.wage     = (1 - self.adjw) * self.wage + self.adjw * self.wage_target
+        # #self.y        = (1 - self.adjy) * self.y + self.adjy * self.y*F_target 
 
-        #     WAGE OFFER ________ 2 versions______________
+
+        #     WAGE OFFER ________ 2 versions______________moving this up makes demand respond instantly
         ##     w1) --- BASED ON EXCESS DEMAND
         # self.wage = (1 + self.adjw *edr)*self.wage
-        ##     w2) --- BASED ON MPL  (respond directly to flaw in behavour??)
-        self.wage_target =  VMPL / ov
-        self.wage        = (1 - self.adjw) * self.wage_target + self.adjw * self.wage_target
-        
-        #TODO INCREMENT STATE VARIABLES TOWARDS TARGETS     NOT USED  REMOVE?
-        self.n        = (1 - self.adjn) * self.n + self.adjn * self.n_target
-        self.k        = (1 - self.adjk) * self.k + self.adjk * self.k_target 
-        # self.F        = (1 - self.adjF) * self.F + self.adjF * self.F_target
-        self.wage     = (1 - self.adjw) * self.wage + self.adjw * self.wage_target
-        #self.y        = (1 - self.adjy) * self.y + self.adjy * self.y*F_target 
+        # ##     w2) --- BASED ON MPL  (respond directly to flaw in behavour??)
+        # self.wage_target =  VMPL / ov
+        # self.wage        = (1 - self.adjw) * self.wage_target + self.adjw * self.wage_target
 
-        # FIND NEW WAGE PREMIUM
-        self.old_wage_premium = self.wage_premium
-        self.wage_premium     = self.wage - self.subsistence_wage # find wage available for transportation
-        self.p_dot            = self.get_p_dot()
+
 
     def get_worker_supply(self, city_extent = None):
         # Fast model calculates worker supply based on city_extent

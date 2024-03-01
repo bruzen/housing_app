@@ -74,7 +74,7 @@ default_parameters = {
     'property_tax_rate': 0.04,     # tau, annual rate, was c
     'housing_services_share': 0.3, # a
     'maintenance_share': 0.2,      # b
-    'max_mortgage_share': 0.9,
+    'max_mortgage_share': 0.9,     # m
     'ability_to_carry_mortgage': 0.28,
     'wealth_sensitivity': 0.1,
     'cg_tax_per':   0.01, # share 0-1
