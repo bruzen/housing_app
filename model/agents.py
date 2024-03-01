@@ -378,30 +378,56 @@ class Person(Agent):
         # average_wealth = # TODO? put in calculation
 
         # First Calculate value of purchase (max bid)
-        
-        bid_type = 'value_limited'
-        P_bid    = self.model.bank.get_max_desired_bid(R_N, r, r_target, m, p_dot, self.capital_gains_tax, transport_cost, self.expectations)
-        # self.model.logger.warning(f'Max bid: {self.unique_id}, bid {P_bid}, R_N {R_N}, r {r}, r {r_target}, m {m}, transport_cost {transport_cost}')
 
-        if S/(1-m) <= P_bid:
+        # Calculate bid value under each constraint        
+        value_bid = self.model.bank.get_max_desired_bid(R_N, r, r_target, m, p_dot, self.capital_gains_tax, transport_cost, self.expectations)
+        equity_bid = S/(1-m)
+        income_bid = 0.28 * (wage + r * S) / r_prime
+
+        # Determine bid type
+        P_bid = value_bid
+        if equity_bid <= P_bid:
+            bid_type = 'value_limited'
+            P_bid    = value_bid
+
+        if income_bid  <= P_bid:
             bid_type = 'equity_limited'
-            P_bid = S/(1-m)
-            self.model.logger.warning(f'Newcomer bid EQUITY LIMITED: {self.unique_id}, bid {P_bid}') #, S {S}, m {m}, .. ')
-
-        if (0.28 * (wage + r * S) / r_prime)  <= P_bid:
-            bid_type = 'income_limited'
-            P_bid = 0.28 * (wage + r * S) / r_prime
-            self.model.logger.warning(f'Newcomer bid INCOME LIMITED: {self.unique_id}, bid {P_bid}')
-
-        if P_bid < 0:
-            bid_type = 'negative'
-            # P_bid = 0
-            self.model.logger.warning(f'Newcomer bid is NEGATIVE: {self.unique_id}, bid {P_bid}')
+            P_bid    = income_bid
 
         else:
-            bid_type = 'none'
-            self.model.logger.warning(f'Newcomer doesnt bid: {self.unique_id}, bid {P_bid}') #, sale_property {listing.sale_property.unique_id}')
+            bid_type = 'value_limited' # and bid remains value_limited
+
+        bid_list = (value_bid, equity_bid, income_bid)
+        self.model.logger.debug(f'get_max_bid returns: {bid_type} {P_bid} bid, for agent {self.unique_id}, R_N {R_N}, bid list {bid_list}, savings {S}, R_N {R_N} transport_cost {transport_cost} \n')
         return P_bid, bid_type
+
+        # Old
+        # bid_type = 'value_limited'
+        # P_bid    = self.model.bank.get_max_desired_bid(R_N, r, r_target, m, p_dot, self.capital_gains_tax, transport_cost, self.expectations)
+        # # self.model.logger.warning(f'Max bid: {self.unique_id}, bid {P_bid}, R_N {R_N}, r {r}, r {r_target}, m {m}, transport_cost {transport_cost}')
+
+        # if S/(1-m) <= P_bid:
+        #     bid_type = 'equity_limited'
+        #     P_bid = S/(1-m)
+        #     self.model.logger.warning(f'Newcomer bid EQUITY LIMITED: {self.unique_id}, bid {P_bid}') #, S {S}, m {m}, .. ')
+
+        # if (0.28 * (wage + r * S) / r_prime)  <= P_bid:
+        #     bid_type = 'income_limited'
+        #     P_bid = 0.28 * (wage + r * S) / r_prime
+        #     self.model.logger.warning(f'Newcomer bid INCOME LIMITED: {self.unique_id}, bid {P_bid}')
+
+        # # TODO do we want to not bid if value is negative?
+        # # if P_bid < 0:
+        # #     bid_type = 'negative'
+        # #     # P_bid = 0
+        # #     self.model.logger.warning(f'Newcomer bid is NEGATIVE: {self.unique_id}, bid {P_bid}')
+
+        # else:
+        #     # bid_type = 'none'
+        #     self.model.logger.warning(f'Newcomer bid is VALUE LIMITED: {self.unique_id}, bid {P_bid}') #, sale_property {listing.sale_property.unique_id}')
+        # return P_bid, bid_type
+    
+
 
         # # Old logic, replaced by version above
         # # Max desired bid
