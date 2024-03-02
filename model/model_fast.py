@@ -7,7 +7,8 @@ from mesa.datacollection import DataCollector
 import model.parameters as params
 import utils.file_utils as file_utils
 from model.agents import Land, Person, Firm, Investor, Bank, Realtor, Bid_Storage
-from model.schedule import RandomActivationByBreed
+# from model.schedule import RandomActivationByBreed
+from model.time import RandomActivationByType
 
 class Fast(Model):
     @property
@@ -81,7 +82,7 @@ class Fast(Model):
         # else:
         self.center    = (0, 0)
         self.grid = MultiGrid(self.params['width'], self.params['height'], torus=False)
-        self.schedule = RandomActivationByBreed(self)
+        self.schedule = RandomActivationByType(self) # RandomActivationByBreed(self)
         self.transport_cost_per_dist = self.params['c'] # self.params['init_wage_premium_ratio'] * self.params['subsistence_wage'] / self.params['init_city_extent'] # c
 
         # People
@@ -267,7 +268,7 @@ class Fast(Model):
         #     self.schedule.step_breed(Person, step_name='work_if_worthwhile_to_work')
 
         #     # Firms update wages
-        #     self.schedule.step_breed(Firm)   
+        #     self.schedule.step_breed(Firm)
 
     def step(self):
 
@@ -278,17 +279,19 @@ class Fast(Model):
             self.apply_interventions(self.schedule.time)
 
         # Firm updates wages based on agglomeration population
-        self.schedule.step_breed(Firm)
+        # self.schedule.step_breed(Firm)
+        self.schedule.step_type(Firm, shuffle_agents = False)
 
         # Firm updates agglomeration population based on calculated city extent
         extent                  = self.city_extent_calc
-        self.firm.worker_supply = self.firm.get_worker_supply(extent)        
+        self.firm.worker_supply = self.firm.get_worker_supply(extent)
         self.firm.agglom_pop    = self.firm.get_agglomeration_population(self.firm.worker_supply)
 
-        self.schedule.step_breed(Bid_Storage)
+        # self.schedule.step_breed(Bid_Storage)
+        self.schedule.step_type(Bid_Storage, shuffle_agents = False)
 
         self.datacollector.collect(self)
-        self.schedule.step_time()        
+        self.schedule.step_time()
  
         # print('Step')
         # while self.schedule.time < 10:
@@ -345,10 +348,10 @@ class Fast(Model):
             #         newcomer_bid,  newcomer_bid_type = self.person.get_max_bid(m, M, R_N, p_dot, transport_cost, savings_value)
             #         self.step_data["newcomer_bid"].append((round(newcomer_bid, self.no_decimals), round(dist, self.no_decimals), round(savings_value, self.no_decimals)))
             #     # dist += 1
+
     def run_model(self):
         for t in range(self.num_steps):
             self.step()
-
         self.record_run_data_to_file()
 
     def setup_run_data_collection(self):
