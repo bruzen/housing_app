@@ -398,8 +398,8 @@ class Person(Agent):
         else:
             bid_type = 'value_limited' # and bid remains value_limited
 
-        bid_list = (value_bid, equity_bid, income_bid)
-        self.model.logger.debug(f'get_max_bid returns: {bid_type} {P_bid} bid, for agent {self.unique_id}, R_N {R_N}, bid list {bid_list}, savings {S}, R_N {R_N} transport_cost {transport_cost} \n')
+        bid_dict = {'value': value_bid, 'equity': equity_bid, 'income': income_bid}
+        self.model.logger.debug(f'get_max_bid returns: {bid_type} {P_bid} bid, for agent {self.unique_id}, \nbids: {bid_dict} \n')
         return P_bid, bid_type
 
         # Old
@@ -598,9 +598,9 @@ class Firm(Agent):
         #TODO INCREMENT STATE VARIABLES TOWARDS TARGETS     NOT USED  REMOVE?
         self.n        = (1 - self.adjn) * self.n + self.adjn * self.n_target
         self.k        = (1 - self.adjk) * self.k + self.adjk * self.k_target 
-        # self.F        = (1 - self.adjF) * self.F + self.adjF * self.F_target
+        # self.F      = (1 - self.adjF) * self.F + self.adjF * self.F_target
         self.wage     = (1 - self.adjw) * self.wage + self.adjw * self.wage_target  #reintroduced  - didn't help
-        #self.y        = (1 - self.adjy) * self.y + self.adjy * self.y*F_target 
+        #self.y       = (1 - self.adjy) * self.y + self.adjy * self.y*F_target 
 
         self.wage_premium     = self.wage - self.subsistence_wage # find wage available for transportation
         self.p_dot            = self.get_p_dot()
@@ -832,6 +832,7 @@ class Investor(Agent):
         r_target = self.model.r_target
         P_bid    = self.model.bank.get_max_desired_bid(R_N, r, r_target, m, p_dot, self.capital_gains_tax, transport_cost, self.expectations)
         bid_type = 'investor'
+        self.model.logger.debug(f'get_max_bid returns: {bid_type} {P_bid} bid, for agent {self.unique_id}\n')
         return P_bid, bid_type
 
     def __str__(self):
@@ -1060,35 +1061,38 @@ class Bid_Storage(Agent):
         self.distance_from_center = distance_from_center
         self.transport_cost = self.model.property.calculate_transport_cost(self.distance_from_center)
         
-        self.bid_type  = None # TODO this would stay constant
+        self.bid_type  = None
         self.bid_value = 0
         self.R_N       = 0
         self.density   = self.model.firm.density
          
-        # m
-        # M
-        # p_dot
-        # transport_cost, savings_value
     def step(self):
-        # TODO this part could be done just once for each dist in each time step to speed up..
         self.model.property.change_dist(self.distance_from_center)
         self.R_N             = self.model.property.net_rent
         self.p_dot           = self.model.property.p_dot
-        transport_cost  = self.model.property.transport_cost
-        m  = self.model.max_mortgage_share
-        if self.bidder_name == 'Investor':
-            self.bid_value,  self.bid_type = self.model.investor.get_max_bid(m = m,
-                            R_N   = self.R_N,
-                            p_dot = self.p_dot,
-                            transport_cost = transport_cost)
-        else: # TODO CHECK THIS IS actually person type and catch errors
-            M     = self.model.person.get_max_mortgage(self.bidder_savings)
-            self.bid_value,  self.bid_type = self.model.person.get_max_bid(m, M, self.R_N, self.p_dot, transport_cost, self.bidder_savings)
-            # self.step_data["newcomer_bid"].append((round(newcomer_bid, self.no_decimals), round(dist, self.no_decimals), round(savings_value, self.no_decimals)))
-            # dist += 1
+        self.transport_cost  = self.model.property.transport_cost
+        m                    = self.model.max_mortgage_share
 
-        # TODO dynamically generate for all the savings bids
-        # savings_1_bid = 
+        if self.bidder_name == 'Investor':
+            self.model.logger.debug(f'Investor: dist {self.distance_from_center}, savings {self.bidder_savings}, R_N {self.R_N}') # transport_cost {self.transport_cost}')
+            self.bid_value,  self.bid_type = self.model.investor.get_max_bid(m = m,
+                            R_N            = self.R_N,
+                            p_dot          = self.p_dot,
+                            transport_cost = self.transport_cost)
+
+        elif self.bidder_name.split()[0]  == 'Savings': # TODO CHECK THIS IS actually person type and catch errors
+            self.model.logger.debug(f'Savings: dist {self.distance_from_center}, savings {self.bidder_savings}, R_N {self.R_N}') #  transport_cost {self.transport_cost}')
+            M     = self.model.person.get_max_mortgage(self.bidder_savings)
+            self.bid_value,  self.bid_type = self.model.person.get_max_bid(
+                                         m = m, 
+                                         M = M, 
+                                         R_N = self.R_N, 
+                                         p_dot = self.p_dot, 
+                                         transport_cost = self.transport_cost, 
+                                         savings = self.bidder_savings)
+
+        else:
+            self.model.logger.warning("Unexpected 'bidder_name': dist {self.distance_from_center}, savings {self.bidder_savings}")
 
 class Listing:
     def __init__(

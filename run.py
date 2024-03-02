@@ -49,8 +49,6 @@ variable_parameters = {
     # 'gamma': [0.02]  
 }
 
-
-  
 batch_parameters = {
     'data_collection_period': 2,
     'iterations': 1,

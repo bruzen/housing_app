@@ -197,15 +197,16 @@ class Fast(Model):
 
         # Add Bid_Storage to store bids
         for x in range(distances):
-            self.unique_id      += 1
-            dist = x * sparseness
-            bidder_name = 'Investor'         
-            agent       = Bid_Storage(self.unique_id, self, self.center, 
-                                        bidder_name          = bidder_name,
-                                        distance_from_center = dist)
+            self.unique_id += 1
+            dist            = x * sparseness
+            bidder_name     = 'Investor'         
+            agent           = Bid_Storage(self.unique_id, self, self.center, 
+                                          bidder_name          = bidder_name,
+                                          distance_from_center = dist)
             self.grid.place_agent(agent, self.center)
             self.schedule.add(agent)      
             for y, savings_val in enumerate(newcomer_savings):
+                # print(f'dist {x}, savings {savings_val}')
                 self.unique_id      += 1
                 bidder_name = f'Savings {savings_val}'
                 agent   = Bid_Storage(self.unique_id, self, self.center, 
