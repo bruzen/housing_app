@@ -585,7 +585,7 @@ class Firm(Agent):
         self.old_wage_premium = self.wage_premium
         # N_target   = self.N #        NEW    *****
         # self.N        = (1 - self.adjN) * self.N + self.adjN * N_target   #
-        self.model.model_name = "March 1 trying to recover desired behaviour of N"
+        self.model.model_description = "March 1 trying to recover desired behaviour of N"
 
         self.k_target = self.price_of_output * self.alpha * self.y/self.r     #(old optimal version)
         self.n_target   = 5 * (self.beta* self.A * self.agglom_pop**self.gamma *  self.k**self.alpha )**(1-self.beta) 

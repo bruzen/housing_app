@@ -370,6 +370,7 @@ class City(Model):
         self.no_decimals      = self.params['no_decimals']
         model_reporters       = {
             "model_name":                lambda m: m.model_name,
+            "model_description":         lambda m: m.model_description,
             "run_id":                    lambda m: m.run_id,
             "time_step":                 lambda m: m.schedule.time,
             "MPL":                       lambda m: round(m.firm.MPL, self.no_decimals),
