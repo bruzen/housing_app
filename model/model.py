@@ -11,7 +11,9 @@ from mesa.datacollection import DataCollector
 import model.parameters as params
 import utils.file_utils as file_utils
 from model.agents import Land, Person, Firm, Investor, Bank, Realtor
-from model.schedule import RandomActivationByBreed
+from model.time import RandomActivationByType
+# from model.schedule import RandomActivationByBreed
+
 
 # def capture_rents(model):
 #     """Current rents for each location in the grid."""
@@ -123,7 +125,7 @@ class City(Model):
         else:
             self.center    = (0, 0)
         self.grid = MultiGrid(self.params['width'], self.params['height'], torus=False)
-        self.schedule = RandomActivationByBreed(self)
+        self.schedule = RandomActivationByType(self) # RandomActivationByBreed(self)
         self.transport_cost_per_dist = self.params['c'] # self.params['init_wage_premium_ratio'] * self.params['subsistence_wage'] / self.params['init_city_extent'] # c
 
         # People
@@ -236,10 +238,10 @@ class City(Model):
         # Run the firm for several steps to stabilize
         for i in range(2):
             # People check if it's worthwhile to work
-            self.schedule.step_breed(Person, step_name='work_if_worthwhile_to_work')
+            self.schedule.step_type(Person, step_name='work_if_worthwhile_to_work')
 
             # Firms update wages
-            self.schedule.step_breed(Firm)
+            self.schedule.step_type(Firm)
 
     def step(self):
         """ The model step function runs in each time step when the model
@@ -262,16 +264,16 @@ class City(Model):
         # Firms update wages based on how many people choose to work in the city
         self.firm.worker_supply = self.firm.get_worker_supply()
         self.firm.agglom_pop    = self.firm.get_agglomeration_population(self.firm.worker_supply)
-        self.schedule.step_breed(Firm)
+        self.schedule.step_type(Firm)
 
         # Land records locational rents and calculates price forecast
-        self.schedule.step_breed(Land)
+        self.schedule.step_type(Land)
     
         # People work, retire, and list properties to sell
-        self.schedule.step_breed(Person)
+        self.schedule.step_type(Person)
 
         # Investors list properties to sell
-        self.schedule.step_breed(Investor, step_name='list_properties')
+        self.schedule.step_type(Investor, step_name='list_properties')
 
         # Add agents to replace retiring_urban_owner workers
         # Draw 50 values from the distribution of initial savings
@@ -293,13 +295,13 @@ class City(Model):
                 self.logger.error(f'Did not create newcomer since not enough savings values.')
 
         # Investors bid on properties
-        self.schedule.step_breed(Investor, step_name='bid_on_properties')
+        self.schedule.step_type(Investor, step_name='bid_on_properties')
 
         # Realtors sell homes
-        self.schedule.step_breed(Realtor, step_name='sell_homes')
+        self.schedule.step_type(Realtor, step_name='sell_homes')
 
         # Realtors rent properties
-        self.schedule.step_breed(Realtor, step_name='rent_homes')
+        self.schedule.step_type(Realtor, step_name='rent_homes')
 
         # Advance model time
         self.schedule.step_time()
@@ -426,7 +428,7 @@ class City(Model):
         #     "urban_other_owners":        lambda m: m.urban_other_owners_count,
         #     "investor_ownership_share":  lambda m: m.urban_investor_owners_count / (m.urban_resident_owners_count + m.urban_investor_owners_count) if (m.urban_resident_owners_count + m.urban_investor_owners_count) != 0 else 1,
         #     # "workers":        lambda m: len(
-        #     #     [a for a in self.schedule.agents_by_breed[Person].values()
+        #     #     [a for a in self.schedule.agents_by_type[Person].values()
         #     #              if a.is_working == 1]
         #     # )
         # }
@@ -472,22 +474,22 @@ class City(Model):
     def record_step_data(self):
         # Calculations for data collection
         self.rent_production = sum(
-            agent.model.firm.wage_premium for agent in self.schedule.agents_by_breed[Person].values() 
+            agent.model.firm.wage_premium for agent in self.schedule.agents_by_type[Person].values() 
             if agent.unique_id in self.workforce.workers
         )
 
         self.rent_amenity    = sum(
-            agent.amenity for agent in self.schedule.agents_by_breed[Person].values() 
+            agent.amenity for agent in self.schedule.agents_by_type[Person].values() 
             if agent.unique_id in self.workforce.workers
         )
 
-        self.market_rent = sum(agent.market_rent    for agent in self.schedule.agents_by_breed[Land].values()
+        self.market_rent = sum(agent.market_rent    for agent in self.schedule.agents_by_type[Land].values()
                                if agent.resident and agent.resident.unique_id in self.workforce.workers)
-        self.net_rent    = sum(agent.net_rent       for agent in self.schedule.agents_by_breed[Land].values()
+        self.net_rent    = sum(agent.net_rent       for agent in self.schedule.agents_by_type[Land].values()
                                if agent.resident and agent.resident.unique_id in self.workforce.workers)
-        self.potential_dissipated_rent = sum(agent.transport_cost for agent in self.schedule.agents_by_breed[Land].values())
+        self.potential_dissipated_rent = sum(agent.transport_cost for agent in self.schedule.agents_by_type[Land].values())
         self.dissipated_rent = sum(
-            agent.transport_cost for agent in self.schedule.agents_by_breed[Land].values() 
+            agent.transport_cost for agent in self.schedule.agents_by_type[Land].values() 
             if agent.resident and agent.resident.unique_id in self.workforce.workers
         )
         self.available_rent  = self.rent_production + self.rent_amenity - self.dissipated_rent # w - cd + A - total_dissipated # total-captured
