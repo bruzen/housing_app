@@ -307,7 +307,7 @@ class RandomActivationByType(BaseScheduler):
         self.steps += 1
         self.time += 1
 
-    def step_type(self, type_class: type[Agent], shuffle_agents: bool = True) -> None:
+    def step_type(self, type_class: type[Agent], step_name: str = 'step', shuffle_agents: bool = True) -> None:
         """
         Shuffle order and run all agents of a given type.
         This method is equivalent to the NetLogo 'ask [breed]...'.
@@ -320,7 +320,7 @@ class RandomActivationByType(BaseScheduler):
             self.model.random.shuffle(agent_keys)
         for agent_key in agent_keys:
             if agent_key in self.agents_by_type[type_class]:
-                self.agents_by_type[type_class][agent_key].step()
+                getattr(self.agents_by_type[type_class][agent_key], step_name)()
 
     def get_type_count(self, type_class: type[Agent]) -> int:
         """
