@@ -327,3 +327,8 @@ class RandomActivationByType(BaseScheduler):
         Returns the current number of agents of certain type in the queue.
         """
         return len(self.agents_by_type[type_class])
+
+    def step_time(self):
+        """If using step_breed, update time independently."""
+        self.steps += 1
+        self.time += 1
