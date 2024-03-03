@@ -23,7 +23,7 @@ class Land(Agent):
 
     @property
     def net_rent(self):
-        return self.warranted_rent - self.maintenance - self.property_tax # TODO check we don't use net rent for warranted_price
+        return self.warranted_rent - self.maintenance - self.property_tax
     
     @property
     def appraised_price(self):
@@ -57,15 +57,12 @@ class Land(Agent):
         self.warranted_rent  = self.get_warranted_rent()
         self.warranted_price = self.get_warranted_price()
 
-        # self.p_dot = None # Calculate when properties are listed for sale
         if (self.model.firm.wage_premium > self.transport_cost):
             self.p_dot       = self.model.firm.p_dot
         else:
             self.p_dot       = None 
 
-        # TODO Flip
-        self.realized_price         = - 1 # Reset to show realized price in just this time_step
-        # self.realized_all_steps_price = - 1 # 
+        self.realized_price  = - 1 # Reset to show realized price in just this time_step
 
         if self.resident is None:
             self.model.logger.warning(f'Land has no resident: {self.unique_id}, pos {self.pos}, resident {self.resident}, owner {self.owner}')
@@ -115,21 +112,17 @@ class Land(Agent):
     def get_maintenance(self):
         a                 = self.model.housing_services_share
         b                 = self.model.maintenance_share
-        subsistence_wage  = self.model.firm.subsistence_wage # subsistence_wage
+        subsistence_wage  = self.model.firm.subsistence_wage
         return a * b * subsistence_wage
 
-    def get_warranted_rent(self):  ####   ADD AMENITY HERE
+    def get_warranted_rent(self):
         wage_premium     = self.model.firm.wage_premium
         subsistence_wage = self.model.firm.subsistence_wage
         a                = self.model.housing_services_share
-        # return max(wage_premium - self.transport_cost, 0)
         # Note, this is the locational_rent. It is the warranted level of extraction. It is the economic_rent when its extracted.
         # We set the rural land value to zero to study the urban land market, with the agricultural price, warranted rent would be:
-        warranted_rent = wage_premium - self.transport_cost + a * subsistence_wage
+        warranted_rent = wage_premium - self.transport_cost + a * subsistence_wage #### TODO add amenity here + A
         return max(warranted_rent, 0)
-        # TODO add amenity + A
-        # TODO should it be positive outside the city? How to handle markets outside the city if it is?
-        # TODO but outside the city, any concern with transportation cost is only speculative - how to handle
 
     def get_warranted_price(self):
         return self.warranted_rent / self.model.r_prime
@@ -142,8 +135,7 @@ class Land(Agent):
  
     def change_dist(self, dist):
         self.model.logger.warning(f'Change distance from center for land {self.unique_id}') # Used in model_fast
-        # self.model.logger.warning(f'Note land has set rather than calculated distance. Used in model_fast. Could introduce errors. {self.unique_id}.')
-        self.distance_from_center     = dist # self.calculate_distance_from_center()
+        self.distance_from_center     = dist
         self.transport_cost           = self.calculate_transport_cost()
         self.warranted_rent           = self.get_warranted_rent()
         self.warranted_price          = self.get_warranted_price()
@@ -167,9 +159,8 @@ class Person(Agent):
     @property
     def individual_wealth_adjustment(self):
         """Individual wealth adjustment. Added on to the agent's mortgage 
-        borrowing rate. It depends on the agent's wealth.
-
-        # TODO: Fix
+        borrowing rate. It depends on the agent's wealth. A resonable value
+        might be around 0.002.
  
         Formula for interest rate they get: r_target + K/(W-W_min) - K/(W_avg-W_min)
         Formula for adjustment: K/(W-W_min) - K/(W_avg-W_min)
@@ -178,13 +169,11 @@ class Person(Agent):
         Returns:
         The individual wealth adjustment value.
         """
-        # r_target = self.model.r_target
         K        = self.model.wealth_sensitivity
         W        = self.get_wealth() 
-        W_min    = 10000. # TODO could be 0 or 20K
+        W_min    = 10000. # TODO could make a parameter be 0 or 20K
         W_avg    = self.model.bank.get_average_wealth()
         return K / (W - W_min) - K / (W_avg - W_min)
-        # return 0.002
 
     def __init__(self, unique_id, model, pos, init_working_period = 0,
                  savings = 0., debt = 0.,
@@ -192,7 +181,6 @@ class Person(Agent):
                  residence_owned = None,):
         super().__init__(unique_id, model)
         self.pos = pos
-        # self.model.workforce = self.model.workforce
 
         self.init_working_period = init_working_period
         self.working_period      = init_working_period
@@ -221,11 +209,9 @@ class Person(Agent):
 
         # Count time step and track whether agent is working
         self.count               = 0 # TODO check if we still use this
-        self.is_working_check    = 0 # TODO delete?
+        # self.is_working_check    = 0 # TODO delete?
         self.expectations        = 1.0 # Set parameter for investor_expectations, constant for person
 
-        # else:
-        #     self.model.workforce.remove(self, self.model.workforce.workers)
 
     def step(self):
         self.count              += 1
@@ -236,16 +222,15 @@ class Person(Agent):
         if not isinstance (self.residence, Land):
             # Newcomers who don't find a home leave the city
             if (self.unique_id in self.model.workforce.newcomers):
-                # if (self.residence == None):
                 if self.count > 0:
-                    self.model.logger.debug(f'Newcomer removed {self.unique_id}') #  removed, who owns {self.properties_owned}, count {self.count}')
+                    self.model.logger.debug(f'Newcomer removed {self.unique_id}')
                     self.remove()
-                    return  # Stop execution of the step function after removal
+                    return
             # Everyone who is not a newcomer leaves if they have no residence
             else:
                 self.model.logger.warning(f'Non-newcomer with no residence removed: {self.unique_id}, count {self.count}')
                 self.remove()
-                return  # Stop execution of the step function after removal
+                return
 
         # Urban workers
         elif premium > self.residence.transport_cost:
@@ -254,8 +239,6 @@ class Person(Agent):
             if self.working_period >= self.model.working_periods:
                 if self.residence in self.properties_owned:
                     self.model.workforce.add(self, self.model.workforce.retiring_urban_owner)
-
-                    # P_bid    = self.model.bank.get_max_desired_bid(R_N, r, r_target, m, listing.sale_property.p_dot, self.capital_gains_tax, listing.sale_property.transport_cost)            
                     reservation_price = self.model.bank.get_reservation_price(
                         R_N = self.residence.net_rent, 
                         r = self.model.r_prime, 
@@ -266,31 +249,29 @@ class Person(Agent):
                         transport_cost = self.residence.transport_cost,
                         expectations   = self.expectations)
                     self.model.realtor.list_property_for_sale(self, self.residence, reservation_price)
-                    # TODO Contact bank. Decide: sell, rent or keep empty
-                    self.model.logger.debug(f'Person retiring: {self.unique_id}, {self.residence.unique_id}-{self.residence.pos}, reservation price {reservation_price}') # period {self.working_period}
+                    # TODO Extend so agents can sell, rent or keep empty
+                    self.model.logger.debug(f'Person retiring: {self.unique_id}, {self.residence.unique_id}-{self.residence.pos}, reservation price {reservation_price}')
 
             if self.working_period > self.model.working_periods:
                 if self.residence in self.properties_owned:
                     self.model.workforce.remove(self, self.model.workforce.workers)
                     self.model.logger.warning(f'Urban homeowner still in model: {self.unique_id}, working_period {self.working_period}')
+                # Renters: This resets keeping the initial distribution of ages cycling for renters in the city, assuming savings built over the lifetime, no inheritance
                 else:
                     self.working_period = 1
                     self.savings        = 0
-                    # TODO what should reset savings/age be for new renters? This simply resets keeping the initial distribution of ages cycling outside the city
 
-        # Rural population
+        # Rural population: This resets keeping the initial distribution of ages cycling for renters in the city, assuming savings built over the lifetime, no inheritance
         else:
             self.model.workforce.remove(self, self.model.workforce.workers)
             if self.working_period > self.model.working_periods:
                 self.working_period = 1
                 self.savings        = 0
-                # TODO what should reset savings/age be? This simply resets keeping the initial distribution of ages cycling outside the city
                 
-        # Update savings and wealth
-        self.savings += self.model.savings_per_step # TODO debt, wealth
-        # self.wealth  = self.get_wealth()
+        # Update savings # TODO update wealth, mortgages, etc.
+        self.savings += self.model.savings_per_step
 
-        # TODo consider doing additional check for retiring agents who are still in model
+        # TODO consider doing additional check for retiring agents who are still in model
         # if self.unique_id in self.model.workforce.retiring_urban_owner:        
         #     if (self.residence):
         #         if premium > self.residence.transport_cost:
@@ -305,10 +286,10 @@ class Person(Agent):
 
         # TODO TEMP? use is_working_check to perform any checks
         if self.residence:
-            if premium > self.residence.transport_cost:
-                self.is_working_check = 1
-            else:
-                self.is_working_check = 0
+        #     if premium > self.residence.transport_cost:
+        #         self.is_working_check = 1
+        #     else:
+        #         self.is_working_check = 0
 
             # TODO Temp
             if isinstance(self.residence.owner, Person):
@@ -355,7 +336,7 @@ class Person(Agent):
             self.model.realtor.add_bid(self, listing, P_bid, bid_type)
 
     def get_max_mortgage(self, savings = None):
-        # W = self.savings # TODO fix self.get_wealth()
+        # TODO can use wealth in place of savings
         S = savings if savings is not None else self.savings
         r = self.borrowing_rate
         r_prime  = self.model.r_prime
@@ -460,7 +441,8 @@ class Person(Agent):
         #         bid_type = 'max_bid_limited'
 
     def get_wealth(self):
-        # TODO Wealth is properties owned, minus mortgages owed, plus savings.
+        # Wealth is properties owned, minus mortgages owed, plus savings.
+        # Assume newcomers arrive not owning property. TODO update if property owners bid
         # W = self.resident_savings + self.P_expected - self.M
         return self.savings
 
@@ -551,20 +533,17 @@ class Firm(Agent):
         self.n        = init_n
         self.F_target = init_F
         self.n_target = init_n
-        self.wage_premium = init_wage_premium_ratio * self.subsistence_wage 
+        self.wage_premium     = init_wage_premium_ratio * self.subsistence_wage 
         self.old_wage_premium = 8000 # -1 # init_wage_premium_ratio * self.subsistence_wage   ### REVISED should remove inital problems
-        self.wage         = (1 + init_wage_premium_ratio) * self.subsistence_wage
-        self.wage_target  = self.wage
-        self.MPL          = 7200# self.beta  * self.y / self.n  # marginal value product of labour known to firms
+        self.wage             = (1 + init_wage_premium_ratio) * self.subsistence_wage
+        self.wage_target      = self.wage
+        self.MPL              = 7200 # self.beta  * self.y / self.n  # marginal value product of labour known to firms
         self.worker_demand    = self.F * self.n
         self.worker_supply    = self.F * self.n
         self.agglom_pop       = self.F * self.n 
         self.p_dot            = 0 # TODO fix init p_dot
-        
-        # TODO if we are using p_dot here, we may need a get_p_dot calculation
-        # TODO get rid of these variables
-        self.N = self.F * self.n
-        self.A_time = self.model.schedule.time
+        self.N                = self.F * self.n
+        self.A_time           = self.model.schedule.time
 
     def step(self):
        
@@ -585,7 +564,7 @@ class Firm(Agent):
         self.old_wage_premium = self.wage_premium
         # N_target   = self.N #        NEW    *****
         # self.N        = (1 - self.adjN) * self.N + self.adjN * N_target   #
-        self.model.model_description = "March 1 trying to recover desired behaviour of N"
+        self.model.model_description = "Checking bidding behaviour"
 
         self.k_target = self.price_of_output * self.alpha * self.y/self.r     #(old optimal version)
         self.n_target   = 5 * (self.beta* self.A * self.agglom_pop**self.gamma *  self.k**self.alpha )**(1-self.beta) 
@@ -595,7 +574,7 @@ class Firm(Agent):
         self.wage_target =  VMPL / ov
         self.wage        = self.wage_target  #(1 - self.adjw) * self.wage_target + self.adjw * self.wage_target
         
-        #TODO INCREMENT STATE VARIABLES TOWARDS TARGETS     NOT USED  REMOVE?
+        # INCREMENT STATE VARIABLES TOWARDS TARGETS
         self.n        = (1 - self.adjn) * self.n + self.adjn * self.n_target
         self.k        = (1 - self.adjk) * self.k + self.adjk * self.k_target 
         # self.F      = (1 - self.adjF) * self.F + self.adjF * self.F_target
@@ -704,11 +683,6 @@ class Firm(Agent):
     def get_p_dot(self):
         try:
             p_dot = ((self.model.firm.wage_premium / self.model.firm.old_wage_premium)**self.model.mortgage_period - 1)/self.r
-
-            # # Handle the case where the result is negative
-            # if p_dot < 0:
-            #     p_dot = 0.
-
         except ZeroDivisionError:
             # Handle division by zero
             p_dot = None
@@ -725,7 +699,7 @@ class Bank(Agent):
         self.pos = pos
 
     def get_reservation_price(self, R_N, r, r_target, m, p_dot, capital_gains_tax, transport_cost, expectations):
-        # TODO is it the same as max bid?
+        # The reservation price follows the same equation as max_bid
         return self.get_max_desired_bid(R_N, r, r_target, m, p_dot, capital_gains_tax, transport_cost, expectations)
 
     def get_max_desired_bid(self, R_N, r, r_target, m, p_dot, capital_gains_tax, transport_cost, expectations):
@@ -740,7 +714,7 @@ class Bank(Agent):
 
         else:
             self.model.logger.error(f'Get_max_desired_bid None error Rn {R_N}, r {r}, r_target {r_target}, m {m}, p_dot {p_dot}')
-            return 0. # TODO Temp
+            return 0.
 
     def get_average_wealth(self):
         rural_home_value     = self.get_rural_home_value()
@@ -748,17 +722,12 @@ class Bank(Agent):
         if not self.model.center_city:
             avg_locational_value = avg_locational_value/4
         return rural_home_value + avg_locational_value
-    #   Should this be randomized? not everyone s at the same distance
-    
-        # AVERAGE_WEALTH_CALCULATION
-        # The value of average_wealth.
-        # # value of a home + savings half way through a lifespan.
-        # # Value of house on average in the city - know the area and volume of a cone. Cone has weight omega, the wage_premium
+
+        # The value of average_wealth is the value of a home + savings half way through a lifespan.
+        # Value of house on average in the city, since we know the area and volume of a cone.
         # avg_wealth = rural_home_value + avg_locational_value + modifier_for_other_cities_or_capital_derived_wealth
-        # where:
-        # avg_locational_value = omega / (3 * r_prime)
         # TODO consider adding modifier_for_other_cities_or_capital_derived_wealth
-        # TODO check if we need to adjust if not center_city
+
 
     def get_rural_home_value(self):
         # r is the bank rate ussed to capitalie the value of housing services. a is the housing share, and a * subsistence_wage is the value of the housing services since we've fixed the subsistence wage and all houses are the same.
@@ -832,7 +801,7 @@ class Investor(Agent):
         r_target = self.model.r_target
         P_bid    = self.model.bank.get_max_desired_bid(R_N, r, r_target, m, p_dot, self.capital_gains_tax, transport_cost, self.expectations)
         bid_type = 'investor'
-        self.model.logger.debug(f'get_max_bid returns: {bid_type} {P_bid} bid, for agent {self.unique_id}\n')
+        self.model.logger.debug(f'get_max_bid returns: {bid_type} {P_bid}\n')
         return P_bid, bid_type
 
     def __str__(self):

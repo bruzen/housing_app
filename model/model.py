@@ -428,7 +428,7 @@ class City(Model):
         #     "urban_resident_owners":     lambda m: m.urban_resident_owners_count,
         #     "urban_investor_owners":     lambda m: m.urban_investor_owners_count,
         #     "urban_other_owners":        lambda m: m.urban_other_owners_count,
-        #     "investor_ownership_share":  lambda m: m.urban_investor_owners_count / (m.urban_resident_owners_count + m.urban_investor_owners_count) if (m.urban_resident_owners_count + m.urban_investor_owners_count) != 0 else 1,
+        #     
         #     # "workers":        lambda m: len(
         #     #     [a for a in self.schedule.agents_by_type[Person].values()
         #     #              if a.is_working == 1]
@@ -456,7 +456,7 @@ class City(Model):
                 "x":                 lambda a: a.pos[0],
                 "y":                 lambda a: a.pos[1],
                 "is_working":        lambda a: None if not isinstance(a, Person) else 1 if a.unique_id in a.model.workforce.workers else 0,  # TODO does this need to be in model? e.g. a.model.workforce
-                "is_working_check":  lambda a: None if not isinstance(a, Person) else a.is_working_check,
+                # "is_working_check":  lambda a: None if not isinstance(a, Person) else a.is_working_check,
                 "working_period":    lambda a: getattr(a, "working_period", None)  if isinstance(a, Person)       else None,
                 "p_dot":             lambda a: getattr(a, "p_dot", None)           if isinstance(a, Land)         else None,
                 "net_rent":          lambda a: getattr(a, "net_rent", None)        if isinstance(a, Land)         else None,
