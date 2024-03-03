@@ -389,6 +389,7 @@ class City(Model):
             "worker_supply":             lambda m: round(m.firm.worker_supply, self.no_decimals),
             "worker_demand":             lambda m: round(m.firm.worker_demand, self.no_decimals),
             "agglomeration_population":  lambda m: round(m.firm.agglom_pop, self.no_decimals),
+            "investor_ownership_share":  lambda m: m.urban_investor_owners_count / (m.urban_resident_owners_count + m.urban_investor_owners_count) if (m.urban_resident_owners_count + m.urban_investor_owners_count) != 0 else 1,
         }
         # # Define what data the model will collect in each time step
         # model_reporters = {
