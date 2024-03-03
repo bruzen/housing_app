@@ -229,6 +229,32 @@ def mpl_vs_time(model_out):
     # Display the plot
     plt.show()
 
+# Note for model, not model_fast
+def ownership_vs_time(model_out):
+    df = pd.DataFrame(model_out)
+    set_style()
+    plt.rcParams['font.size'] = 10
+    
+    # Create a subplot
+    fig, ax = plt.subplots(figsize=(4, 3))
+
+    # Plot MPL
+    ax.plot(df['time_step'], df['investor_ownership_share'], linestyle = 'solid', label=f'Ownership')
+    # ax.plot(df['time_step'], df['subsistence_wage'], linestyle = 'solid', label=f'Subsistence wage')
+    # ax.plot(df['time_step'], df['wage'], linestyle = 'dashed', label=f'Wage')
+    # ax.plot(df['time_step'], df['wage_target'], linestyle = 'dotted', label=f'Wage target')
+    # Set labels and title wage_premium subsistence_wage wage
+    ax.set_xlabel('Time Step')
+    ax.set_ylabel('Ownership Share')
+    ax.set_title('Ownership Over Time')
+
+    # Add legend
+    ax.legend()
+
+    # Display the plot
+    plt.show()
+
+
 def pop_vs_time(model_out):
     df = pd.DataFrame(model_out)
     set_style()
