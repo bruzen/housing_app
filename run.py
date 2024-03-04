@@ -5,19 +5,20 @@ import model.parameters as params
 import utils.plotting as plotting
 import utils.file_utils as file_utils
 
-num_steps  = 50   
+num_steps  = 200
 timestamp  = file_utils.generate_timestamp()
 
 parameters = {
     'run_notes': 'Debugging model.',
     'timestamp': timestamp,
-    'width':     50,
-    'height':    50,
+    'width':     130,
+    'height':    130,
 }
 
 variable_parameters = {
-    'interventions_on': [True, False],
-    # 'distances': [None]
+    # 'interventions_on': [True, False],
+    # 'interventions_on': [False],
+    'distances': [None]
     #   'c': [500, 300, 200], 
     #    'price_of_output': [6.6, 10, 15]
     #   'density': [1200, 600, 100],#[600, 100, 1],
@@ -124,7 +125,7 @@ if __name__ == "__main__":
 
     # Set default value
     if not any(vars(args).get(key, False) for key in ['run', 'batch', 'fast_run', 'fast_batch']):
-        args.fast_batch = True
+        args.fast_batch = True # CHANGE THIS LINE TO CHANGE DEFAULT OPTION
 
     # Import and call the appropriate module based on the selected configuration
     if args.run:

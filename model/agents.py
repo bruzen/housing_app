@@ -866,7 +866,8 @@ class Realtor(Agent):
                     else:
                         self.model.logger.debug('Reservation price above bid for property {listing.sale_property.unique_id}')
                 else:
-                    final_price = highest_bid_price
+                    if listing.seller != highest_bid.bidder: 
+                        final_price = highest_bid_price
 
             if final_price:
                 allocation = Allocation(
@@ -897,9 +898,10 @@ class Realtor(Agent):
                     listing.sale_property.owner = self.model.retired_agents
                     # Remove retiring agent from the model
                     listing.seller.remove()
-                if isinstance(listing.seller, Investor):
-                    # TODO check handling of investor sale when no purchase is made
-                    self.model.logger.debug(f'Investor seller lists homes that do not sell. Investor {listing.seller.unique_id} keeps property {listing.property.unique_id}.')
+                #  TODO fix this
+                # if isinstance(listing.seller, Investor):
+                #     # TODO check handling of investor sale when no purchase is made
+                #     self.model.logger.debug(f'Investor seller lists homes that do not sell. Investor {listing.seller.unique_id} keeps property {listing.property.unique_id}.')
                 else:
                     print('Error. Seller is not an investor or a person')
 
