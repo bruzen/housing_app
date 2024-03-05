@@ -852,22 +852,39 @@ class Realtor(Agent):
             # self.model.logger.debug(f'Listed property: {listing.sale_property.unique_id} has bids: {len(property_bids)}, {", ".join(bid_info)}')
             final_price = None
             reservation_price = listing.reservation_price
+
+            # If there are bids, sort and calculate highest price from highest and second highest bids
             if property_bids:
                 property_bids.sort(key=lambda x: x.bid_price, reverse=True)
                 highest_bid              = property_bids[0]
                 highest_bid_price        = property_bids[0].bid_price
                 second_highest_bid_price = property_bids[1].bid_price if len(property_bids) > 1 else 0
 
-                using_reservation_price = False
-                if using_reservation_price:
-                    if highest_bid_price > reservation_price:
-                        final_price = reservation_price + 0.5 * (highest_bid_price - reservation_price)
-                        # TODO add more conditions: If 1 bid go half way between bid and reservation_price. If more bids go to 2nd highest bid
-                    else:
-                        self.model.logger.debug('Reservation price above bid for property {listing.sale_property.unique_id}')
+                # Only sell if the bidder is not the seller (e.g. an investor lists a property, but also bids, and only sells if someone out bids them)
+                if listing.seller == highest_bid.bidder: 
+                    final_price = None
+
                 else:
-                    if listing.seller != highest_bid.bidder: 
-                        final_price = highest_bid_price
+                    # TODO apply negotiation rules
+
+                    # If no other rules apply, the final price is just the highest bid price
+                    final_price = highest_bid_price
+
+                    # If using second highest bid price rule, take second highest, not highest bid (reservation price can overide this below)
+                    using_second_highest_bid_price_rule = False  # Consider using a parameter to control whether we apply this condition
+                    if using_second_highest_bid_price_rule:
+                        if len(property_bids) > 1:
+                            final_price = second_highest_bid_price
+
+                    # Only sell if it is worthwhile to sell, and using reservation price
+                    using_reservation_price = False # Consider using a parameter to control whether we apply this condition
+                    if using_reservation_price:
+                        if highest_bid_price > reservation_price:
+                            final_price = reservation_price + 0.5 * (highest_bid_price - reservation_price)
+                            # TODO add more conditions: If 1 bid go half way between bid and reservation_price. If more bids go to 2nd highest bid
+                        else:
+                            self.model.logger.debug('Reservation price above bid for property {listing.sale_property.unique_id}')
+                            final_price = None
 
             if final_price:
                 allocation = Allocation(
