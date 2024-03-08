@@ -546,15 +546,18 @@ class Firm(Agent):
         self.p_dot            = 0 # TODO fix init p_dot
         self.N                = self.F * self.n
         self.A_time           = self.model.schedule.time
+        # N_target   = self.N #  this is an initializaton it can't be in step or N_tarfget is meaningless 
 
+        
     def step(self):
        
         # STORE INITIAL VALUES FOR CALCULATING CHANGES
         self.A_time = self.model.schedule.time
         self.y          = self.A * self.agglom_pop**self.gamma *  self.k**self.alpha * self.n**self.beta
         self.MPL        =  self.beta + self.y /self.n 
-        # N_target   = self.N #        NEW    *****
-        # self.N        = (1 - self.adjN) * self.N + self.adjN * N_target   #
+        N_target   = self.N #  this is an initializaton it can't be in step or N_tarfget is meaningless 
+
+        self.N        = (1 - self.adjN) * self.N + self.adjN * N_target   #
         n_old        = self.n
         wage_old     = self.wage
         ov         = 1 + self.overhead  # overhead ratio
@@ -564,10 +567,13 @@ class Firm(Agent):
         profit     = revenue - cost
         profit_ratio          = revenue / cost
         self.old_wage_premium = self.wage_premium
-        # N_target   = self.N #        NEW    *****
+        #N_target   = self.N #        NEW    *****
         # self.N        = (1 - self.adjN) * self.N + self.adjN * N_target   #
         self.model.model_description = "Checking bidding behaviour"
 
+ ############   MODEL 1  --- MARCH 1   ############ Use this version
+        self.model.model_description = "March 2 ensure we still have the model working"
+    
         self.k_target = self.price_of_output * self.alpha * self.y/self.r     #(old optimal version)
         self.n_target   = 5 * (self.beta* self.A * self.agglom_pop**self.gamma *  self.k**self.alpha )**(1-self.beta) 
         self.worker_demand = self.n_target * self.F # self.n_target * self.F_target
@@ -576,7 +582,7 @@ class Firm(Agent):
         self.wage_target =  VMPL / ov
         self.wage        = self.wage_target  #(1 - self.adjw) * self.wage_target + self.adjw * self.wage_target
         
-        # INCREMENT STATE VARIABLES TOWARDS TARGETS
+        #INCREMENT STATE VARIABLES TOWARDS TARGETS
         self.n        = (1 - self.adjn) * self.n + self.adjn * self.n_target
         self.k        = (1 - self.adjk) * self.k + self.adjk * self.k_target 
         # self.F      = (1 - self.adjF) * self.F + self.adjF * self.F_target
@@ -585,7 +591,55 @@ class Firm(Agent):
 
         self.wage_premium     = self.wage - self.subsistence_wage # find wage available for transportation
         self.p_dot            = self.get_p_dot()
+        # COMMENT: wage goes to 100,000 with 5 in n_target  Mult=1, but n=12
       
+     ############   MODEL 2  --- MARCH 3   ############ 
+        # self.model.model_description = "March 4 experimensts wit wage"
+        # self.k_target = self.price_of_output * self.alpha * self.y/self.r     #(old optimal version)
+        # self.n_target   = 5 * (self.beta* self.A * self.agglom_pop**self.gamma *  self.k**self.alpha )**(1-self.beta) 
+        # self.worker_demand = self.n_target * self.F # self.n_target * self.F_target
+        # edr = (self.worker_demand - self.worker_supply) / max(abs(self.worker_demand), abs(self.worker_supply)) #positive or negative 
+        # self.F = self.worker_supply / self.n  #moved this up two lines
+        # # self.wage_target = (1+ edr) * VMPL / ov  # this is INNOVATION 1:  March 3 It pushes demand and supply up and extent
+        # self.wage_target =  VMPL / ov
+        # # self.wage        = self.wage_target  #(1 - self.adjw) * self.wage_target + self.adjw * self.wage_target
+        # self.wage        = (1 - self.adjw) * self.wage + self.adjw * self.wage_target 
+        # #                                       this is the INNOVATION 2 seems to have no effect
+        # # I thought adjw -> 1-adjw makes this the standard case when adjw is 0.002. 
+        
+        # # INCREMENT STATE VARIABLES TOWARDS TARGETS 
+        # self.n        = (1 - self.adjn) * self.n + self.adjn * self.n_target
+        # self.k        = (1 - self.adjk) * self.k + self.adjk * self.k_target 
+        # # self.F        = (1 - self.adjF) * self.F + self.adjF * self.F_target
+        # #self.wage     = (1 - self.adjw) * self.wage + self.adjw * self.wage_target  #reintroduced  - didn't help
+        # #self.y        = (1 - self.adjy) * self.y + self.adjy * self.y*F_target 
+
+        # self.wage_premium     = self.wage - self.subsistence_wage # find wage available for transportation
+        # self.p_dot            = self.get_p_dot()
+        # # COMMENT: mult=1 1-> 1.2 no dif? density increases F, beta[0.73, .78]increases wneFN low alpha very inhibiting
+        # # COMMENT:adjN no effect if adj k high, overshoot adjn no effect
+
+
+     ############   MODEL 3  --- MARCH 2   ############ 
+        #  self.model.model_description = "March 2 ensure we still have the modle working"        self.k_target = self.price_of_output * self.alpha * self.y/self.r     #(old optimal version)
+        # self.n_target   = 1 * (self.beta* self.A * self.agglom_pop**self.gamma *  self.k**self.alpha )**(1-self.beta) 
+        # self.worker_demand = self.n_target * self.F # self.n_target * self.F_target
+        # edr = (self.worker_demand - self.worker_supply) / max(abs(self.worker_demand), abs(self.worker_supply)) #positive or negative 
+        # self.F = self.worker_supply / self.n  #moved this up two lines
+        # self.wage_target =  VMPL / ov
+        # self.wage        = self.wage_target  #(1 - self.adjw) * self.wage_target + self.adjw * self.wage_target
+        
+        # #TODO INCREMENT STATE VARIABLES TOWARDS TARGETS     NOT USED  REMOVE?
+        # self.n        = (1 - self.adjn) * self.n + self.adjn * self.n_target
+        # self.k        = (1 - self.adjk) * self.k + self.adjk * self.k_target 
+        # # self.F        = (1 - self.adjF) * self.F + self.adjF * self.F_target
+        # self.wage     = (1 - self.adjw) * self.wage + self.adjw * self.wage_target  #reintroduced  - didn't help
+        # #self.y        = (1 - self.adjy) * self.y + self.adjy * self.y*F_target 
+
+        # self.wage_premium     = self.wage - self.subsistence_wage # find wage available for transportation
+        # self.p_dot            = self.get_p_dot()
+
+
         ##      k target _____________________________________________________________#  -> #* in model 1
         #      kopt) --- Optimal k calculation (two versions)
         #* self.k_target = self.price_of_output * self.alpha * self.y/self.r     #(old optimal version)
@@ -679,7 +733,7 @@ class Firm(Agent):
             worker_supply = 1
         return worker_supply
 
-    def get_agglomeration_population(self, worker_supply):
+    def get_agglomeration_population(self, worker_supply):  # INCLUDE NON WORKER POOPULATION
         return self.mult * (worker_supply)
 
     def get_p_dot(self):
@@ -925,7 +979,7 @@ class Realtor(Agent):
                     self.model.logger.debug(f'Property {listing.sale_property.unique_id}, {listing.sale_property.pos} NOT sold by seller {listing.seller}')
                     self.rental_listings.append(listing.sale_property)
                 else:
-                    print('Error. Seller is not an investor or a person')
+                    # self.model.logger.debug('Error. Seller is not an investor or a person')
                     self.model.logger.error('Seller is not an investor or a person')
 
 
