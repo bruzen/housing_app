@@ -65,6 +65,7 @@ class Fast(Model):
         self.urban_investor_owners_count = 0
         self.urban_resident_owners_count = 0
         self.urban_other_owners_count    = 0
+        self.investor_ownership_share    = 0. # Always 0 in model_fast since land market removed, only bids in model
 
         # # Set the random seed for reproducibility
         # self.random_seed = 42
