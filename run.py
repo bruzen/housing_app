@@ -5,18 +5,18 @@ import model.parameters as params
 import utils.plotting as plotting
 import utils.file_utils as file_utils
 
-num_steps  = 100   
+num_steps  = 80   
 timestamp  = file_utils.generate_timestamp()
 
 parameters = {
     'run_notes': 'Debugging model.',
     'timestamp': timestamp,
-    'width':     130,
-    'height':    130,
+    'width':     110,
+    'height':    110,
 }
 
 variable_parameters = {
-    'interventions_on':False, # [False, True], # True, march 8 11:30 was false
+    'interventions_on': False, # [False, True], # True, march 8 11:30 was false
     # 'distances': [None]
     # 'c': [500, 300, 200], 
     #    'price_of_output': [6.6, 10, 15]
@@ -45,7 +45,7 @@ variable_parameters = {
     #   'subsistence_wage': [10000, 30000],#[60000, 40000 30000], # [10000, 30000],
     #    'property_tax_rate': [0.08, 0.04, .02]
     #    'r_prime': [0.12, 0.05, .02], 
-   'r_investor': [0.1, 0.05, .01]
+#    'r_investor': [0.1, 0.05, .01]
     #    'r_investor': [0.025] #, 0.05, .1] 
     #    'gamma': [0.001, 0.02, 0.7],# settled on .12
 }

@@ -87,7 +87,7 @@ class City(Model):
 
         logging.basicConfig(filename=self.log_filepath,
                     filemode='w',
-                    level=logging.DEBUG,
+                    level=logging.INFO,
                     format='%(asctime)s %(name)s %(levelname)s:%(message)s')
         self.logger = logging.getLogger(__name__)
 
@@ -154,6 +154,8 @@ class City(Model):
         # Add workforce manager to track workers, newcomers, and retiring agents
         self.workforce = Workforce()
         self.removed_agents = 0
+
+        self.investor_ownership_share = 0.
 
         # Add class to track retired agents that still own property
         self.unique_id       = 1
@@ -253,7 +255,12 @@ class City(Model):
         if self.interventions:
             self.apply_interventions(self.schedule.time)
 
-        # Reset counters
+        # Record ownership share and reset counters
+        if (self.urban_resident_owners_count + self.urban_investor_owners_count) == 0:
+            self.investor_ownership_share = 0
+        else:
+            self.investor_ownership_share    = self.urban_investor_owners_count / (self.urban_resident_owners_count + self.urban_investor_owners_count)
+
         self.urban_investor_owners_count = 0
         self.urban_resident_owners_count = 0
         self.urban_other_owners_count    = 0
@@ -389,7 +396,8 @@ class City(Model):
             "worker_supply":             lambda m: round(m.firm.worker_supply, self.no_decimals),
             "worker_demand":             lambda m: round(m.firm.worker_demand, self.no_decimals),
             "agglomeration_population":  lambda m: round(m.firm.agglom_pop, self.no_decimals),
-            "investor_ownership_share":  lambda m: m.urban_investor_owners_count / (m.urban_resident_owners_count + m.urban_investor_owners_count) if (m.urban_resident_owners_count + m.urban_investor_owners_count) != 0 else 1,
+            "investor_ownership_share":  lambda m: round(m.investor_ownership_share, self.no_decimals),
+            # "investor_ownership_share":  lambda m: m.urban_investor_owners_count / (m.urban_resident_owners_count + m.urban_investor_owners_count) if (m.urban_resident_owners_count + m.urban_investor_owners_count) != 0 else 1,
         }
         # # Define what data the model will collect in each time step
         # model_reporters = {

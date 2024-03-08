@@ -365,8 +365,8 @@ class Person(Agent):
         # Calculate bid value under each constraint        
         value_bid = self.model.bank.get_max_desired_bid(R_N, r, r_target, m, p_dot, self.capital_gains_tax, transport_cost, self.expectations)
         equity_bid = S/(1-m)
-        income_bid = 0.28 * (wage + r * S) / r_prime # TODO make a parameter for .28
-        #income_bid = 0.28 * (wage + r * S) /( 1+0.28*r) * m   #BETTER see chapter model  line 444 
+        # income_bid = 0.28 * (wage + r * S) / r_prime
+        income_bid = 0.28 * (wage + r * S) /( 1+0.28*r) * m   #BETTER see chapter model  line 444 
 
         # Determine bid type
         P_bid = value_bid
@@ -545,21 +545,23 @@ class Firm(Agent):
         self.agglom_pop       = self.F * self.n 
         self.p_dot            = 0 # TODO fix init p_dot
         self.N                = self.F * self.n
-        self.A_time           = self.model.schedule.time
+        # self.A_time           = self.model.schedule.time
         # N_target   = self.N #  this is an initializaton it can't be in step or N_tarfget is meaningless 
 
         
     def step(self):
-       
-        # STORE INITIAL VALUES FOR CALCULATING CHANGES
-        self.A_time = self.model.schedule.time
-        self.y          = self.A * self.agglom_pop**self.gamma *  self.k**self.alpha * self.n**self.beta
-        self.MPL        =  self.beta + self.y /self.n 
-        N_target   = self.N #  this is an initializaton it can't be in step or N_tarfget is meaningless 
+        self.A = 2000 + (1 - self.model.investor_ownership_share)*1500
+        print(f'Step {self.model.schedule.time}: resident owner share {self.model.investor_ownership_share}, A {self.A} ')
 
-        self.N        = (1 - self.adjN) * self.N + self.adjN * N_target   #
-        n_old        = self.n
-        wage_old     = self.wage
+        # STORE INITIAL VALUES FOR CALCULATING CHANGES
+        # self.A_time = self.model.schedule.time
+        self.y      = self.A * self.agglom_pop**self.gamma *  self.k**self.alpha * self.n**self.beta
+        self.MPL    =  self.beta + self.y /self.n 
+        N_target    = self.N #  this is an initializaton it can't be in step or N_tarfget is meaningless 
+
+        self.N      = (1 - self.adjN) * self.N + self.adjN * N_target   #
+        n_old       = self.n
+        wage_old    = self.wage
         ov         = 1 + self.overhead  # overhead ratio
         VMPL       = self.price_of_output * self.MPL
         revenue    = self.price_of_output * self.y 
@@ -972,15 +974,13 @@ class Realtor(Agent):
                     # Remove retiring agent from the model
                     listing.seller.remove()
                 #  TODO fix this
-                # if isinstance(listing.seller, Investor):
-                #     # TODO check handling of investor sale when no purchase is made
-                #     self.model.logger.debug(f'Investor seller lists homes that do not sell. Investor {listing.seller.unique_id} keeps property {listing.property.unique_id}.')
                 if isinstance(listing.seller, Investor):
-                    self.model.logger.debug(f'Property {listing.sale_property.unique_id}, {listing.sale_property.pos} NOT sold by seller {listing.seller}')
-                    self.rental_listings.append(listing.sale_property)
+                    pass
+                    # TODO check handling of investor sale when no purchase is made
+                    # self.model.logger.debug(f'Investor seller lists homes that do not sell. Investor {listing.seller.unique_id} keeps property {listing.property.unique_id}.')
                 else:
-                    # self.model.logger.debug('Error. Seller is not an investor or a person')
-                    self.model.logger.error('Seller is not an investor or a person')
+                    # pass # TODO add error handling
+                    self.model.logger.error('Seller is not an investor or a person, property does not sell')
 
 
         # Complete transactions for all listings and clear bids
