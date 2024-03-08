@@ -134,7 +134,8 @@ class Land(Agent):
         return False
  
     def change_dist(self, dist):
-        self.model.logger.warning(f'Change distance from center for land {self.unique_id}') # Used in model_fast
+        # TODO add an error if not called by fast
+        # self.model.logger.warning(f'Change distance from center for land {self.unique_id}') # Used in model_fast
         self.distance_from_center     = dist
         self.transport_cost           = self.calculate_transport_cost()
         self.warranted_rent           = self.get_warranted_rent()
@@ -364,7 +365,7 @@ class Person(Agent):
         # Calculate bid value under each constraint        
         value_bid = self.model.bank.get_max_desired_bid(R_N, r, r_target, m, p_dot, self.capital_gains_tax, transport_cost, self.expectations)
         equity_bid = S/(1-m)
-        income_bid = 0.28 * (wage + r * S) / r_prime
+        income_bid = 0.28 * (wage + r * S) / r_prime # TODO make a parameter for .28
 
         # Determine bid type
         P_bid = value_bid
@@ -919,8 +920,12 @@ class Realtor(Agent):
                 # if isinstance(listing.seller, Investor):
                 #     # TODO check handling of investor sale when no purchase is made
                 #     self.model.logger.debug(f'Investor seller lists homes that do not sell. Investor {listing.seller.unique_id} keeps property {listing.property.unique_id}.')
+                if isinstance(listing.seller, Investor):
+                    self.model.logger.debug(f'Property {listing.sale_property.unique_id}, {listing.sale_property.pos} NOT sold by seller {listing.seller}')
+                    self.rental_listings.append(listing.sale_property)
                 else:
                     print('Error. Seller is not an investor or a person')
+                    self.model.logger.error('Seller is not an investor or a person')
 
 
         # Complete transactions for all listings and clear bids
