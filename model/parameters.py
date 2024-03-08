@@ -8,15 +8,15 @@ default_parameters = {
     'interventions_on': False,
     # 'interventions_on': True,
     'interventions':  {
-        'Output price down': {'var': 'firm.price_of_output', 'val':  8, 'time': 25},
-        # 'Output price up':   {'var': 'firm.price_of_output', 'val': 10, 'time': 45},
-        # 'Person capital gains tax down': {'var': 'person.capital_gains_tax', 'val':  .1, 'time': 25},
-        # 'Person capital gains tax up':   {'var': 'person.capital_gains_tax', 'val': .2, 'time': 45},
-        # 'Investor capital gains tax down': {'var': 'investor.capital_gains_tax', 'val':  .1, 'time': 25},
-        # 'Investor capital gains tax up':   {'var': 'investor.capital_gains_tax', 'val': .2, 'time': 45},
-        # 'investor_turnover up': {'var': 'investor.investor_turnover', 'val':  .5, 'time': 10},
-        # 'investor_turnover down':   {'var': 'investor.investor_turnover', 'val': .05, 'time': 20},
-        # Add more interventions...
+        # 'Output price down': {'var': 'firm.price_of_output', 'val':  8, 'time': 25},
+        # 'Output price back':   {'var': 'firm.price_of_output', 'val': 10, 'time': 45},
+    #     # 'Person capital gains tax down': {'var': 'person.capital_gains_tax', 'val':  .1, 'time': 25},
+    #     # 'Person capital gains tax up':   {'var': 'person.capital_gains_tax', 'val': .2, 'time': 45},
+    #     # 'Investor capital gains tax down': {'var': 'investor.capital_gains_tax', 'val':  .1, 'time': 25},
+    #     # 'Investor capital gains tax up':   {'var': 'investor.capital_gains_tax', 'val': .2, 'time': 45},
+    #     # 'investor_turnover up': {'var': 'investor.investor_turnover', 'val':  .5, 'time': 10},
+    #     # 'investor_turnover down':   {'var': 'investor.investor_turnover', 'val': .05, 'time': 20},
+    #     # Add more interventions...
     },
 
     # FLAGS
@@ -48,11 +48,11 @@ default_parameters = {
     'beta':  0.75,
     'gamma': 0.003, ### reduced from .14
     'overhead': .5,
-    'mult': 1.0,
+    'mult': 1.2,
     'adjN': 0.015,
     'adjk': 0.010,
     'adjn': 0.075,
-    'adjF': 0.002,
+    'adjF': 0.3,
     'adjw': 0.002, 
     'adjs': 0.2,  #Adjust worker Supply 
     'adjd': 0.2,  #Adjust worker Demand 
