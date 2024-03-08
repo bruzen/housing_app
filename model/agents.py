@@ -366,6 +366,7 @@ class Person(Agent):
         value_bid = self.model.bank.get_max_desired_bid(R_N, r, r_target, m, p_dot, self.capital_gains_tax, transport_cost, self.expectations)
         equity_bid = S/(1-m)
         income_bid = 0.28 * (wage + r * S) / r_prime # TODO make a parameter for .28
+        #income_bid = 0.28 * (wage + r * S) /( 1+0.28*r) * m   #BETTER see chapter model  line 444 
 
         # Determine bid type
         P_bid = value_bid
@@ -709,7 +710,7 @@ class Bank(Agent):
         # capital_gains_tax = self.model.capital_gains_tax # person and investor send.
 
         if R_N is not None and r is not None and r_target is not None and m is not None and p_dot is not None:
-            R_NT   = ((1 + r)**T - 1) / r * R_N
+            R_NT   = (((1 + r)**T - 1) / r) * R_N
             # return R_NT / ((1 - m) * r_target/(delta**T) - p_dot) 
             return (1 - capital_gains_tax) * R_NT / ((1 - m) * r_target/(delta**T) - expectations * p_dot +(1+r)**T*m) # Revised denominator from eqn 6:20
 
