@@ -133,7 +133,7 @@ class Fast(Model):
                                     # self.params['firm_adjustment_parameter'],
                                     self.params['seed_population'],
                                     self.params['density'],
-                                    A=self.params['A'],
+                                    # A=self.params['A'],
                                     overhead=self.params['overhead'],
                                     mult=self.params['mult'],
                                     adjN=self.params['adjN'],
@@ -148,6 +148,9 @@ class Fast(Model):
                                     init_F=self.params['init_F'],
                                     init_k=self.params['init_k'],
                                     init_n=self.params['init_n'],
+                                    A_productivity_link=self.params['A_productivity_link'],
+                                    A_base=self.params['A_base'],
+                                    A_slope=self.params['A_slope'],
                                     )
         self.grid.place_agent(self.firm, self.center)
         self.schedule.add(self.firm)

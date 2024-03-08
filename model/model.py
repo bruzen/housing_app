@@ -108,6 +108,7 @@ class City(Model):
         self.urban_investor_owners_count = 0
         self.urban_resident_owners_count = 0
         self.urban_other_owners_count    = 0
+        self.investor_ownership_share    = 0.
 
         # # Set the random seed for reproducibility
         # self.random_seed = 42
@@ -155,8 +156,6 @@ class City(Model):
         self.workforce = Workforce()
         self.removed_agents = 0
 
-        self.investor_ownership_share = 0.
-
         # Add class to track retired agents that still own property
         self.unique_id       = 1
         self.retired_agents  = Retired_Agents(self, self.unique_id)
@@ -177,7 +176,7 @@ class City(Model):
                                     # self.params['firm_adjustment_parameter'],
                                     self.params['seed_population'],
                                     self.params['density'],
-                                    A=self.params['A'],
+                                    # A=self.params['A'],
                                     overhead=self.params['overhead'],
                                     mult=self.params['mult'],
                                     adjN=self.params['adjN'],
@@ -192,6 +191,9 @@ class City(Model):
                                     init_F=self.params['init_F'],
                                     init_k=self.params['init_k'],
                                     init_n=self.params['init_n'],
+                                    A_productivity_link=self.params['A_productivity_link'],
+                                    A_base=self.params['A_base'],
+                                    A_slope=self.params['A_slope'],
                                     )
         self.grid.place_agent(self.firm, self.center)
         self.schedule.add(self.firm)

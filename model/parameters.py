@@ -40,10 +40,13 @@ default_parameters = {
     'init_wage_premium_ratio': 0.2, # 1.2, ###
 
     # PARAMETERS MOST LIKELY TO AFFECT SCALE
+    'A_productivity_link': True, # Flag for link between productivity and A. Eqn is A_base + (1-share) * A_slope, where share = 0 if False CHECK
+    'A_base': 2000,  # Intercept for linear equation linking productivity and A
+    'A_slope': 1500, # Slope for linear equation linking productivity and A
     'c': 500.0,                            ### transportation costs
     'price_of_output': 10,                 ######
     'density': 100,                        #####
-    'A': 1800,                             ### 
+    # 'A': 1800,                             ### 
     'alpha': 0.18,
     'beta':  0.75,
     'gamma': 0.003, ### reduced from .14

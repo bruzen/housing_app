@@ -487,7 +487,7 @@ class Firm(Agent):
                 #  firm_adjustment_parameter,
                  seed_population,
                  density,
-                 A,
+                #  A,
                  overhead,
                  mult,
                  adjN,
@@ -502,6 +502,9 @@ class Firm(Agent):
                  init_F,
                  init_k,
                  init_n,
+                 A_productivity_link,
+                 A_base,
+                 A_slope,
                  ):
         super().__init__(unique_id, model)
         self.pos             = pos
@@ -513,7 +516,6 @@ class Firm(Agent):
         self.price_of_output  = price_of_output
         self.seed_population  = seed_population
         self.density  = density
-        self.A        = A
         self.overhead = overhead    # labour overhead costs for firm
         self.mult     = mult
         self.adjN     = adjN
@@ -545,13 +547,24 @@ class Firm(Agent):
         self.agglom_pop       = self.F * self.n 
         self.p_dot            = 0 # TODO fix init p_dot
         self.N                = self.F * self.n
+
+
+        self.A_productivity_link = A_productivity_link
+        self.A_base  = A_base
+        self.A_slope = A_slope
+        self.A       = A_base + A_slope # init value
         # self.A_time           = self.model.schedule.time
         # N_target   = self.N #  this is an initializaton it can't be in step or N_tarfget is meaningless 
 
         
     def step(self):
-        self.A = 2000 + (1 - self.model.investor_ownership_share)*1500
-        print(f'Step {self.model.schedule.time}: resident owner share {self.model.investor_ownership_share}, A {self.A} ')
+        if self.A_productivity_link == False:
+            investor_ownership_impact_share = 0 
+        else:
+            investor_ownership_impact_share = self.model.investor_ownership_share
+
+        self.A = self.A_base + (1 - investor_ownership_impact_share)*self.A_slope
+        self.model.logger.info(f'Step {self.model.schedule.time}: resident owner share {self.model.investor_ownership_share}, A {self.A} ')
 
         # STORE INITIAL VALUES FOR CALCULATING CHANGES
         # self.A_time = self.model.schedule.time

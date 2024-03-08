@@ -16,7 +16,8 @@ parameters = {
 }
 
 variable_parameters = {
-    'interventions_on': False, # [False, True], # True, march 8 11:30 was false
+    'A_productivity_link': [False, True],
+    # 'interventions_on': False, # [False, True], # True, march 8 11:30 was false
     # 'distances': [None]
     # 'c': [500, 300, 200], 
     #    'price_of_output': [6.6, 10, 15]
