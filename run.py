@@ -5,51 +5,62 @@ import model.parameters as params
 import utils.plotting as plotting
 import utils.file_utils as file_utils
 
-num_steps  = 80   
+num_steps  = 100 
 timestamp  = file_utils.generate_timestamp()
 
 parameters = {
     'run_notes': 'Debugging model.',
     'timestamp': timestamp,
-    'width':     110,
-    'height':    110,
+    'width':     130,
+    'height':    130,
 }
 
 variable_parameters = {
-    'A_productivity_link': [False, True],
-    # 'interventions_on': False, # [False, True], # True, march 8 11:30 was false
-    # 'distances': [None]
-    # 'c': [500, 300, 200], 
-    #    'price_of_output': [6.6, 10, 15]
-    # 'density': 100. #[500, 300, 100],#[1200, 600, 100],#[600, 100, 1], #Higher density higher mpl
-    # 'A': 3600, #[1800],#[3000, 2500, 1800],
-    # 'alpha': [.18],#[0.2, 0.16],
-    # 'beta':  [0.75],#  0.70],
-    # 'gamma': [0.001, 0.01],  
-    # 'overhead': 0.5,
-    # 'mult': 1.2,
-    #  'adjN': [0.8, 0.5, 0.2],
-    # 'adjk': [0.10, 0.05, 0.01],
-    # 'adjn': [0.085, 0.075,  0.065],
-    # 'adjF':[0.1, 0.002], # higher F with adfF = .02
-    # 'adjw': [0.1 ,.01, .002], #[0.09 ,.06, .03], # no effect
-    # 'adjd': 0.2,
-    # 'adjs': 0.2,
-    # 'adjp': 0.2,
-    # 'dist': 1, 
-    # 'init_F': 100.0,
-    # 'init_k': 500.0,
-    # 'init_n': [10, 5],  # higher mpl with 100
-    #   `'wealth_sensitivity': [0.15, 0.1, 0.5],
-    # 'cg_tax_per': .5,#  [0.5, 0.4, 0.35, .3, .2],# 3, 4, 5], # share 0-1
-    # 'cg_tax_invest': .75, # [0.5, 0.35, 0.2], #*, # share 0-1
-    #   'subsistence_wage': [10000, 30000],#[60000, 40000 30000], # [10000, 30000],
-    #    'property_tax_rate': [0.08, 0.04, .02]
-    #    'r_prime': [0.12, 0.05, .02], 
-#    'r_investor': [0.1, 0.05, .01]
-    #    'r_investor': [0.025] #, 0.05, .1] 
-    #    'gamma': [0.001, 0.02, 0.7],# settled on .12
+    # 'cg_tax_invest': [1.0, 0.5, 0], # done
+    # 'cg_tax_per': [1.0, 0.5, 0], # dr done
+    # 'r_investor': [0.2, 0.1, .05], # has set up for morning
+    # 'c': [500, 300], # k ran
+    # 'density': [100, 150], # k ran
+    'wealth_sensitivity': [0.15, 0.1, 0.5], # k ran
+    # 'property_tax_rate': [0.1, 0.05, .01], # k ran
 }
+
+# variable_parameters = {
+#     # 'A_productivity_link': [False, True],
+#     # 'interventions_on': False, # [False, True], # True, march 8 11:30 was false
+#     # 'distances': [None]
+#     # 'c': [500, 300], # 'c': [500, 300, 200], 
+#     #    'price_of_output': [6.6, 10, 15]
+#     # 'density': 100. #[500, 300, 100],#[1200, 600, 100],#[600, 100, 1], #Higher density higher mpl
+#     # 'A': 3600, #[1800],#[3000, 2500, 1800],
+#     # 'alpha': [.18],#[0.2, 0.16],
+#     # 'beta':  [0.75],#  0.70],
+#     # 'gamma': [0.001, 0.01],  
+#     # 'overhead': 0.5,
+#     # 'mult': 1.2,
+#     #  'adjN': [0.8, 0.5, 0.2],
+#     # 'adjk': [0.10, 0.05, 0.01],
+#     # 'adjn': [0.085, 0.075,  0.065],
+#     # 'adjF':[0.1, 0.002], # higher F with adfF = .02
+#     # 'adjw': [0.1 ,.01, .002], #[0.09 ,.06, .03], # no effect
+#     # 'adjd': 0.2,
+#     # 'adjs': 0.2,
+#     # 'adjp': 0.2,
+#     # 'dist': 1, 
+#     # 'init_F': 100.0,
+#     # 'init_k': 500.0,
+#     # 'init_n': [10, 5],  # higher mpl with 100
+#     #   'wealth_sensitivity': [0.15, 0.1, 0.5],
+#     # 'cg_tax_per': .5,#  [0.5, 0.4, 0.35, .3, .2],# 3, 4, 5], # share 0-1
+#     # 'cg_tax_invest': [1., .5, 0.], # .75, # [0.5, 0.35, 0.2], #*, # share 0-1
+#     #   'subsistence_wage': [10000, 30000],#[60000, 40000 30000], # [10000, 30000],
+#     #    'property_tax_rate': [0.1, 0.05, .01], #[0.08, 0.04, .02]
+#     #    'r_prime': [0.12, 0.05, .02], 
+#    'r_investor': [0.1, 0.05, .01]
+#     #    'r_investor': [0.025] #, 0.05, .1] 
+#     #    'gamma': [0.001, 0.02, 0.7],# settled on .12
+#     # 'density': [100, 150],
+# }
 
 batch_parameters = {
     'data_collection_period': 2,
