@@ -53,7 +53,7 @@ def small_multiples_lineplot(df, param_mapping, palette=None):
     # Show the plot
     plt.show()
 
-def variables_vs_time(df, variable_parameters = None):
+def variables_vs_time_extended(df, variable_parameters = None):
     set_style()
     plt.rcParams['font.size'] = 10
     
@@ -206,7 +206,7 @@ def variables_vs_time(df, variable_parameters = None):
     plt.savefig(figure_filepath, format='pdf', bbox_inches='tight')
 
 
-def variables_vs_time_short(df, variable_parameters = None):
+def variables_vs_time(df, variable_parameters = None):
     set_style()
     plt.rcParams['font.size'] = 10
     
@@ -257,7 +257,7 @@ def variables_vs_time_short(df, variable_parameters = None):
         # Plot MPL
         # axes[0, 0].plot(subset_df['time_step'], subset_df['MPL'], label=label, color='red', alpha=alpha, linestyle=linestyle, linewidth=linewidth)
         axes[0, 0].plot(subset_df['time_step'], subset_df['wage'], label=label, color=color, alpha=alpha, linestyle=linestyle, linewidth=linewidth)
-        axes[0, 0].set_xlabel('Time Step')
+        # axes[0, 0].set_xlabel('Time Step')
         axes[0, 0].set_ylabel('Wage ($)')
         # axes[0, 0].set_title(f'MPL')
         axes[0, 0].grid(True)
